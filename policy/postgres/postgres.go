@@ -35,7 +35,7 @@ type Store struct {
 }
 
 func New(db *sql.DB) *Store {
-	return &Store{}
+	return &Store{db}
 }
 
 func (s *Store) CreateSchemas() error {

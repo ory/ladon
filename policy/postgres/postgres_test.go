@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	}
 	defer c.KillRemove()
 
-	s = &Store{db}
+	s = New(db)
 	if err = s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not ping database: %v", err)
 	}
