@@ -1,9 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
-	"fmt"
-	_ "github.com/lib/pq"
 	"github.com/ory-am/dockertest"
 	"github.com/ory-am/ladon/policy"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +12,6 @@ import (
 	"time"
 )
 
-var db *sql.DB
 var s *Store
 
 var cases = []*policy.DefaultPolicy{
@@ -28,21 +24,11 @@ var cases = []*policy.DefaultPolicy{
 }
 
 func TestMain(m *testing.M) {
-	c, ip, port, err := dockertest.SetupPostgreSQLContainer(time.Second * 5)
+	c, db, err := dockertest.OpenPostgreSQLContainerConnection(15, time.Millisecond*500)
 	if err != nil {
 		log.Fatalf("Could not set up PostgreSQL container: %v", err)
 	}
 	defer c.KillRemove()
-
-	url := fmt.Sprintf("postgres://%s:%s@%s:%d/postgres?sslmode=disable", dockertest.PostgresUsername, dockertest.PostgresPassword, ip, port)
-	db, err = sql.Open("postgres", url)
-	if err != nil {
-		log.Fatalf("Could not set up PostgreSQL container: %v", err)
-	}
-
-	if err = db.Ping(); err != nil {
-		log.Fatalf("Could not ping database: %v", err)
-	}
 
 	s = &Store{db}
 	if err = s.CreateSchemas(); err != nil {

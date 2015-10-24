@@ -34,10 +34,14 @@ type Store struct {
 	db *sql.DB
 }
 
+func New(db *sql.DB) *Store {
+	return &Store{}
+}
+
 func (s *Store) CreateSchemas() error {
-	for _, sql := range schemas {
-		if _, err := s.db.Exec(sql); err != nil {
-			log.Printf("Error creating schema %s", sql)
+	for _, query := range schemas {
+		if _, err := s.db.Exec(query); err != nil {
+			log.Printf("Error creating schema %s", query)
 			return err
 		}
 	}
