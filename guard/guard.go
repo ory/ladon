@@ -1,4 +1,4 @@
-package Guard
+package guard
 
 import (
 	"fmt"
