@@ -1,4 +1,4 @@
-package Guard
+package guard
 
 import "github.com/ory-am/ladon/policy"
 

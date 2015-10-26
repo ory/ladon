@@ -1,7 +1,8 @@
-package Guard
+package guard_test
 
 import (
 	"fmt"
+	. "github.com/ory-am/ladon/guard"
 	"github.com/ory-am/ladon/policy"
 	"github.com/stretchr/testify/assert"
 	"testing"
