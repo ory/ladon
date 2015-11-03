@@ -22,15 +22,19 @@ type Policy interface {
 
 	// GetPermissions returns the policies permissions.
 	GetPermissions() []string
+
+	// GetConditions returns the policies conditions.
+	GetConditions() []Condition
 }
 
 type DefaultPolicy struct {
-	ID          string
-	Description string
-	Subjects    []string
-	Effect      string
-	Resources   []string
-	Permissions []string
+	ID          string      `json:"id"`
+	Description string      `json:"description"`
+	Subjects    []string    `json:"subjects"`
+	Effect      string      `json:"effect"`
+	Resources   []string    `json:"resources"`
+	Permissions []string    `json:"permissions"`
+	Conditions  []Condition `json:"conditions"`
 }
 
 func (p *DefaultPolicy) GetID() string {
@@ -59,4 +63,8 @@ func (p *DefaultPolicy) GetResources() []string {
 
 func (p *DefaultPolicy) GetPermissions() []string {
 	return p.Permissions
+}
+
+func (p *DefaultPolicy) GetConditions() []Condition {
+	return p.Conditions
 }

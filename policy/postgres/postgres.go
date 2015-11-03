@@ -2,28 +2,32 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"github.com/ory-am/ladon/policy"
+	. "github.com/ory-am/ladon/policy"
 	"log"
 )
 
 var schemas = []string{
-	`CREATE TABLE ladon_policy (
+	`CREATE TABLE IF NOT EXISTS ladon_policy (
 		id           text NOT NULL PRIMARY KEY,
-		description  text,
-		effect       text NOT NULL CHECK (effect='allow' OR effect='deny')
+		description  text DEFAULT '',
+		created_at   timestamp DEFAULT NOW(),
+		previous	 text NULL,
+		effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
+		conditions 	 json DEFAULT '[]'
 	)`,
-	`CREATE TABLE ladon_policy_subject (
+	`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
     	urn text NOT NULL,
     	policy text NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
     	PRIMARY KEY (urn, policy)
 	)`,
-	`CREATE TABLE ladon_policy_permission (
+	`CREATE TABLE IF NOT EXISTS ladon_policy_permission (
     	urn text NOT NULL,
     	policy text NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
     	PRIMARY KEY (urn, policy)
 	)`,
-	`CREATE TABLE ladon_policy_resource (
+	`CREATE TABLE IF NOT EXISTS ladon_policy_resource (
     	urn text NOT NULL,
     	policy text NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
     	PRIMARY KEY (urn, policy)
@@ -48,38 +52,50 @@ func (s *Store) CreateSchemas() error {
 	return nil
 }
 
-func (s *Store) Create(id, description string, effect string, subjects, permissions, resources []string) (policy.Policy, error) {
-	if tx, err := s.db.Begin(); err != nil {
-		return nil, err
-	} else if _, err = tx.Exec("INSERT INTO ladon_policy (id, description, effect) VALUES ($1, $2, $3)", id, description, effect); err != nil {
-		return nil, err
-	} else if err = createLink(tx, "ladon_policy_subject", id, subjects); err != nil {
-		return nil, err
-	} else if err = createLink(tx, "ladon_policy_permission", id, permissions); err != nil {
-		return nil, err
-	} else if err = createLink(tx, "ladon_policy_resource", id, resources); err != nil {
-		return nil, err
-	} else if err = tx.Commit(); err != nil {
-		if rb := tx.Rollback(); rb != nil {
-			return nil, rb
+func (s *Store) Create(policy Policy) (err error) {
+	conditions := []byte("[]")
+	if policy.GetConditions() != nil {
+		cs := policy.GetConditions()
+		conditions, err = json.Marshal(&cs)
+		if err != nil {
+			return err
 		}
+	}
+
+	if tx, err := s.db.Begin(); err != nil {
+		return err
+	} else if _, err = tx.Exec("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES ($1, $2, $3, $4)", policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+		return err
+	} else if err = createLink(tx, "ladon_policy_subject", policy.GetID(), policy.GetSubjects()); err != nil {
+		return err
+	} else if err = createLink(tx, "ladon_policy_permission", policy.GetID(), policy.GetPermissions()); err != nil {
+		return err
+	} else if err = createLink(tx, "ladon_policy_resource", policy.GetID(), policy.GetResources()); err != nil {
+		return err
+	} else if err = tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) Get(id string) (Policy, error) {
+	var p DefaultPolicy
+	var conditions []byte
+	if err := s.db.QueryRow("SELECT id, description, effect, conditions FROM ladon_policy WHERE id=$1", id).Scan(&p.ID, &p.Description, &p.Effect, &conditions); err != nil {
 		return nil, err
 	}
 
-	return &policy.DefaultPolicy{
-		ID:          id,
-		Description: description,
-		Subjects:    subjects,
-		Effect:      effect,
-		Resources:   resources,
-		Permissions: permissions,
-	}, nil
-}
-
-func (s *Store) Get(id string) (policy.Policy, error) {
-	var p policy.DefaultPolicy
-	if err := s.db.QueryRow("SELECT id, description, effect FROM ladon_policy WHERE id=$1", id).Scan(&p.ID, &p.Description, &p.Effect); err != nil {
+	var cs []DefaultCondition
+	if err := json.Unmarshal(conditions, &cs); err != nil {
 		return nil, err
+	}
+
+	for _, v := range cs {
+		p.Conditions = append(p.Conditions, &v)
 	}
 
 	subjects, err := getLinked(s.db, "ladon_policy_subject", id)
@@ -106,7 +122,7 @@ func (s *Store) Delete(id string) error {
 	return err
 }
 
-func (s *Store) FindPoliciesForSubject(subject string) (policies []policy.Policy, err error) {
+func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err error) {
 	find := func(sql string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(sql, args...)
 		if err != nil {

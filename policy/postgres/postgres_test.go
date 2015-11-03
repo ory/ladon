@@ -14,13 +14,17 @@ import (
 
 var s *Store
 
+var conditions = []policy.Condition{
+	&policy.DefaultCondition{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
+}
+
 var cases = []*policy.DefaultPolicy{
-	&policy.DefaultPolicy{"1", "description", []string{"user", "anonymous"}, policy.AllowAccess, []string{"article", "user"}, []string{"create", "update"}},
-	&policy.DefaultPolicy{"2", "description", []string{}, policy.AllowAccess, []string{"article|user"}, []string{"view"}},
-	&policy.DefaultPolicy{"3", "description", []string{"peter|max"}, policy.DenyAccess, []string{"article", "user"}, []string{"view"}},
-	&policy.DefaultPolicy{"4", "description", []string{"user|max|anonymous", "peter"}, policy.DenyAccess, []string{".*"}, []string{"disable"}},
-	&policy.DefaultPolicy{"5", "description", []string{".*"}, policy.AllowAccess, []string{"article|user"}, []string{"view"}},
-	&policy.DefaultPolicy{"6", "description", []string{"us[er]+"}, policy.AllowAccess, []string{"article|user"}, []string{"view"}},
+	{"1", "description", []string{"user", "anonymous"}, policy.AllowAccess, []string{"article", "user"}, []string{"create", "update"}, conditions},
+	{"2", "description", []string{}, policy.AllowAccess, []string{"article|user"}, []string{"view"}, nil},
+	{"3", "description", []string{"peter|max"}, policy.DenyAccess, []string{"article", "user"}, []string{"view"}, conditions},
+	{"4", "description", []string{"user|max|anonymous", "peter"}, policy.DenyAccess, []string{".*"}, []string{"disable"}, conditions},
+	{"5", "description", []string{".*"}, policy.AllowAccess, []string{"article|user"}, []string{"view"}, conditions},
+	{"6", "description", []string{"us[er]+"}, policy.AllowAccess, []string{"article|user"}, []string{"view"}, conditions},
 }
 
 func TestMain(m *testing.M) {
@@ -40,13 +44,12 @@ func TestMain(m *testing.M) {
 
 func TestCreateGetDelete(t *testing.T) {
 	for _, c := range cases {
-		create, err := s.Create(c.GetID(), c.GetDescription(), c.GetEffect(), c.GetSubjects(), c.GetPermissions(), c.GetResources())
+		err := s.Create(c)
 		assert.Nil(t, err)
-		assert.True(t, reflect.DeepEqual(c, create), "%v does not equal %v", c, create)
 
 		get, err := s.Get(c.GetID())
 		assert.Nil(t, err)
-		assert.True(t, reflect.DeepEqual(c, create), "%v does not equal %v", c, get)
+		assert.True(t, reflect.DeepEqual(c, get), "%v does not equal %v", c, get)
 	}
 
 	for _, c := range cases {
@@ -58,8 +61,7 @@ func TestCreateGetDelete(t *testing.T) {
 
 func TestFindPoliciesForSubject(t *testing.T) {
 	for _, c := range cases {
-		_, err := s.Create(c.GetID(), c.GetDescription(), c.GetEffect(), c.GetSubjects(), c.GetPermissions(), c.GetResources())
-		require.Nil(t, err)
+		require.Nil(t, s.Create(c))
 	}
 
 	policies, err := s.FindPoliciesForSubject("user")

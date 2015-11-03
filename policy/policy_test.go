@@ -5,10 +5,14 @@ import (
 	"testing"
 )
 
+var conditions = []Condition{
+	&DefaultCondition{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
+}
+
 var cases = []*DefaultPolicy{
-	&DefaultPolicy{"1", "description", []string{"user"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}},
-	&DefaultPolicy{"2", "description", []string{"user"}, DenyAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}},
-	&DefaultPolicy{"1", "description", []string{"user"}, "foobar", []string{"articles:[0-9]+"}, []string{"create", "update"}},
+	{"1", "description", []string{"user"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}, conditions},
+	{"2", "description", []string{"user"}, DenyAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}, nil},
+	{"1", "description", []string{"user"}, "foobar", []string{"articles:[0-9]+"}, []string{"create", "update"}, conditions},
 }
 
 func TestHasAccess(t *testing.T) {
@@ -23,5 +27,8 @@ func TestGetters(t *testing.T) {
 		assert.Equal(t, c.Description, c.GetDescription())
 		assert.Equal(t, c.Resources, c.GetResources())
 		assert.Equal(t, c.Subjects, c.GetSubjects())
+		assert.Equal(t, c.Conditions, c.GetConditions())
+		assert.Equal(t, c.Effect, c.GetEffect())
+		assert.Equal(t, c.Permissions, c.GetPermissions())
 	}
 }
