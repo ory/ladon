@@ -10,9 +10,9 @@ var conditions = []Condition{
 }
 
 var cases = []*DefaultPolicy{
-	{"1", "description", []string{"user"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}, conditions},
-	{"2", "description", []string{"user"}, DenyAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}, nil},
-	{"1", "description", []string{"user"}, "foobar", []string{"articles:[0-9]+"}, []string{"create", "update"}, conditions},
+	{"1", "description", []string{"user"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"create", "update"}, conditions},
+	{"2", "description", []string{"user"}, DenyAccess, []string{"articles:<[0-9]+>"}, []string{"create", "update"}, nil},
+	{"1", "description", []string{"user"}, "foobar", []string{"articles:<[0-9]+>"}, []string{"create", "update"}, conditions},
 }
 
 func TestHasAccess(t *testing.T) {
@@ -30,5 +30,7 @@ func TestGetters(t *testing.T) {
 		assert.Equal(t, c.Conditions, c.GetConditions())
 		assert.Equal(t, c.Effect, c.GetEffect())
 		assert.Equal(t, c.Permissions, c.GetPermissions())
+		assert.Equal(t, byte('<'), c.GetStartDelimiter())
+		assert.Equal(t, byte('>'), c.GetEndDelimiter())
 	}
 }

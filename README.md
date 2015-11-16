@@ -16,16 +16,16 @@ A policy based authorization library written in [Go](https://golang.org). Ships 
     description: "something humanly readable",
 
     // Who this policy affects. Supports RegExp
-    subjects: ["max", "peter", "zac|ken"],
+    subjects: ["max", "peter", "<zac|ken>"],
 
     // Can be allow or deny
     effect: "allow",
 
     // Which resources this policy affects. Supports RegExp
-    resources: ["urn:something:resource_a", "urn:something:resource_b", "urn:something:foo:.+"],
+    resources: ["urn:something:resource_a", "urn:something:resource_b", "urn:something:foo:<.+>"],
 
     // Which permissions this policy affects. Supports RegExp
-    permission: ["create|delete", "get"],
+    permission: ["<create|delete>", "get"],
 
     // Under which conditions this policy is active.
     conditions: [

@@ -16,16 +16,16 @@ var conditions = map[string][]Condition{
 }
 
 var policies = []Policy{
-	&DefaultPolicy{"1", "description", []string{"zac"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"create", "update", "foo|bar"}, nil},
-	&DefaultPolicy{"2", "description", []string{"zac"}, DenyAccess, []string{"articles:[0-9]+"}, []string{"create", "update"}, nil},
-	&DefaultPolicy{"3", "description", []string{}, AllowAccess, []string{"articles:[0-9]+"}, []string{"view"}, nil},
-	&DefaultPolicy{"4", "description", []string{"zac|anonymous"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"view"}, nil},
-	&DefaultPolicy{"5", "subject is owner condition", []string{"zac"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"create"}, conditions["sio"]},
-	&DefaultPolicy{"6", "subject is not owner condition", []string{"zac"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"create"}, conditions["sino"]},
-	&DefaultPolicy{"7", "invalid condition", []string{"zac"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"update"}, conditions["invalid"]},
-	&DefaultPolicy{"8", "invalid resource regex", []string{"zac"}, AllowAccess, []string{"[0-9+"}, []string{"update"}, nil},
-	&DefaultPolicy{"9", "invalid subject regex", []string{"[0-9+"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"update"}, nil},
-	&DefaultPolicy{"10", "invalid permission regex", []string{"zac"}, AllowAccess, []string{"articles:[0-9]+"}, []string{"[0-9+"}, nil},
+	&DefaultPolicy{"1", "description", []string{"zac"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"create", "update", "<foo|bar>"}, nil},
+	&DefaultPolicy{"2", "description", []string{"zac"}, DenyAccess, []string{"articles:<[0-9]+>"}, []string{"create", "update"}, nil},
+	&DefaultPolicy{"3", "description", []string{}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"view"}, nil},
+	&DefaultPolicy{"4", "description", []string{"<zac|anonymous>"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"view"}, nil},
+	&DefaultPolicy{"5", "subject is owner condition", []string{"zac"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"create"}, conditions["sio"]},
+	&DefaultPolicy{"6", "subject is not owner condition", []string{"zac"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"create"}, conditions["sino"]},
+	&DefaultPolicy{"7", "invalid condition", []string{"zac"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"update"}, conditions["invalid"]},
+	&DefaultPolicy{"8", "invalid resource regex", []string{"zac"}, AllowAccess, []string{"<[0-9+>"}, []string{"update"}, nil},
+	&DefaultPolicy{"9", "invalid subject regex", []string{"<[0-9+>"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"update"}, nil},
+	&DefaultPolicy{"10", "invalid permission regex", []string{"zac"}, AllowAccess, []string{"articles:<[0-9]+>"}, []string{"<[0-9+>"}, nil},
 }
 
 var contexts = map[string]*Context{
