@@ -20,11 +20,11 @@ var conditions = []policy.Condition{
 
 var cases = []*policy.DefaultPolicy{
 	{"1", "description", []string{"user", "anonymous"}, policy.AllowAccess, []string{"article", "user"}, []string{"create", "update"}, conditions},
-	{"2", "description", []string{}, policy.AllowAccess, []string{"article|user"}, []string{"view"}, nil},
-	{"3", "description", []string{"peter|max"}, policy.DenyAccess, []string{"article", "user"}, []string{"view"}, conditions},
-	{"4", "description", []string{"user|max|anonymous", "peter"}, policy.DenyAccess, []string{".*"}, []string{"disable"}, conditions},
-	{"5", "description", []string{".*"}, policy.AllowAccess, []string{"article|user"}, []string{"view"}, conditions},
-	{"6", "description", []string{"us[er]+"}, policy.AllowAccess, []string{"article|user"}, []string{"view"}, conditions},
+	{"2", "description", []string{}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, nil},
+	{"3", "description", []string{"<peter|max>"}, policy.DenyAccess, []string{"article", "user"}, []string{"view"}, conditions},
+	{"4", "description", []string{"<user|max|anonymous>", "peter"}, policy.DenyAccess, []string{".*"}, []string{"disable"}, conditions},
+	{"5", "description", []string{"<.*>"}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
+	{"6", "description", []string{"<us[er]+>"}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
 }
 
 func TestMain(m *testing.M) {
