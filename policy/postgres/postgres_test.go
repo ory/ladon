@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/dockertest"
 	"github.com/ory-am/ladon/policy"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +41,11 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+func TestNotFound(t *testing.T) {
+	_, err := s.Get("asdf")
+	assert.Equal(t, pkg.ErrNotFound, err)
 }
 
 func TestCreateGetDelete(t *testing.T) {
