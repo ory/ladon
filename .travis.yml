@@ -19,3 +19,4 @@ install:
 
 script:
   - ./coverage --coveralls
+  - go test ./... -v -race -bench=".*"

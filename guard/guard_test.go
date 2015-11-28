@@ -1,8 +1,7 @@
-package guard_test
+package guard
 
 import (
 	"fmt"
-	. "github.com/ory-am/ladon/guard"
 	. "github.com/ory-am/ladon/guard/operator"
 	. "github.com/ory-am/ladon/policy"
 	"github.com/stretchr/testify/assert"
@@ -93,5 +92,13 @@ func TestIsGranted(t *testing.T) {
 	for k, c := range cases {
 		result, _ := g.IsGranted(c.resource, c.permission, c.subject, c.policies, c.ctx)
 		assert.Equal(t, c.expect, result, fmt.Sprintf("Failed test case %d: %v", k, c))
+	}
+}
+
+func BenchmarkIsGranted(b *testing.B) {
+	b.ReportAllocs()
+	g := &Guard{disableLogging: true}
+	for i := 0; i < b.N; i++ {
+		_, _ = g.IsGranted("articles:30", "update", "zac", policies, contexts["zac"])
 	}
 }
