@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-var conditions = map[string][]Condition{
-	"sio":     {&DefaultCondition{Operator: "SubjectIsOwner"}},
-	"sino":    {&DefaultCondition{Operator: "SubjectIsNotOwner"}},
-	"invalid": {&DefaultCondition{Operator: "invalid"}},
+var conditions = map[string][]DefaultCondition{
+	"sio":     {DefaultCondition{Operator: "SubjectIsOwner"}},
+	"sino":    {DefaultCondition{Operator: "SubjectIsNotOwner"}},
+	"invalid": {DefaultCondition{Operator: "invalid"}},
 }
 
 var policies = []Policy{

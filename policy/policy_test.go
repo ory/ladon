@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-var conditions = []Condition{
-	&DefaultCondition{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
+var conditions = []DefaultCondition{
+	{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
 }
 
 var cases = []*DefaultPolicy{
@@ -27,7 +27,7 @@ func TestGetters(t *testing.T) {
 		assert.Equal(t, c.Description, c.GetDescription())
 		assert.Equal(t, c.Resources, c.GetResources())
 		assert.Equal(t, c.Subjects, c.GetSubjects())
-		assert.Equal(t, c.Conditions, c.GetConditions())
+		assert.Equal(t, len(c.Conditions), len(c.GetConditions()))
 		assert.Equal(t, c.Effect, c.GetEffect())
 		assert.Equal(t, c.Permissions, c.GetPermissions())
 		assert.Equal(t, byte('<'), c.GetStartDelimiter())
