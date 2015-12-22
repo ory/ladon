@@ -85,7 +85,7 @@ var guardian := new(guard.DefaultGuard)
 var ctx := operator.Context{
     Owner: "ken"
 }
-granted, err := guardian.IsGranted("urn:something:resource_a", "delete", "ken", []policy.Policy{pol}, nil)
+granted, err := guardian.IsGranted("urn:something:resource_a", "delete", "ken", []policy.Policy{pol}, ctx)
 // if err != nil ...
 log.Print(granted) // output: true
 ```
