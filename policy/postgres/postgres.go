@@ -145,7 +145,7 @@ func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err e
 		return ids, nil
 	}
 
-	subjects, err := find("SELECT policy FROM ladon_policy_subject WHERE $1 ~* ('^' || compiled || '$')", subject)
+	subjects, err := find("SELECT policy FROM ladon_policy_subject WHERE $1 ~ ('^' || compiled || '$')", subject)
 	if err != nil {
 		return policies, err
 	}

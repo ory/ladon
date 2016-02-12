@@ -164,7 +164,7 @@ func (s *Store) FindPoliciesForSubject(subject string) (policies []policy.Policy
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
 		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
-			return rdb.Expr(subject).Match(rdb.Expr("(?i)").Add(policy_subject.Field("compiled")))
+			return rdb.Expr(subject).Match(policy_subject.Field("compiled"))
 		}).Or(policy.Field("ladon_policy_subjects").IsEmpty())
 	}).Run(s.session)
 

@@ -114,15 +114,17 @@ func TestFindPoliciesForSubject(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 5, len(policies))
 
-	policies, err = s.FindPoliciesForSubject("USER")
-	assert.Nil(t, err)
-	assert.Equal(t, 5, len(policies))
-
-	policies, err = s.FindPoliciesForSubject("foobar")
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(policies))
-
 	policies, err = s.FindPoliciesForSubject("peter")
 	assert.Nil(t, err)
 	assert.Equal(t, 4, len(policies))
+
+	// Test case-sensitive matching
+	policies, err = s.FindPoliciesForSubject("User")
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(policies))
+
+	// Test user without policy
+	policies, err = s.FindPoliciesForSubject("foobar")
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(policies))
 }
