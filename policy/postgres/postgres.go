@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
 	. "github.com/ory-am/ladon/policy"
-	"log"
 )
 
 var schemas = []string{
@@ -144,7 +145,7 @@ func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err e
 		return ids, nil
 	}
 
-	subjects, err := find("SELECT policy FROM ladon_policy_subject WHERE $1 ~* ('^' || compiled || '$')", subject)
+	subjects, err := find("SELECT policy FROM ladon_policy_subject WHERE $1 ~ ('^' || compiled || '$')", subject)
 	if err != nil {
 		return policies, err
 	}

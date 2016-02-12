@@ -1,11 +1,13 @@
-package postgres
+package rethinkdb
 
 import (
-	"database/sql"
+	"time"
+
+	rdb "github.com/dancannon/gorethink"
+
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/ladon/policy"
@@ -15,8 +17,8 @@ import (
 	"gopkg.in/ory-am/dockertest.v2"
 )
 
+var session *rdb.Session
 var s *Store
-var db *sql.DB
 
 var conditions = []policy.DefaultCondition{
 	{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
@@ -33,34 +35,44 @@ var cases = []*policy.DefaultPolicy{
 }
 
 func TestMain(m *testing.M) {
-	c, err := dockertest.ConnectToPostgreSQL(15, time.Second, func(url string) bool {
-		var err error
-		db, err = sql.Open("postgres", url)
+	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
+		rdbSession, err := rdb.Connect(rdb.ConnectOpts{
+			Address:  url,
+			Database: "hydra"})
 		if err != nil {
 			return false
 		}
-		return db.Ping() == nil
+
+		_, err = rdb.DBCreate("hydra").RunWrite(rdbSession)
+		if err != nil {
+			return false
+		}
+
+		s = New(rdbSession)
+
+		if err := s.CreateTables(); err != nil {
+			return false
+		}
+
+		session = rdbSession
+
+		return true
 	})
 
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
-	s = New(db)
-	if err = s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not ping database: %v", err)
-	}
-
 	retCode := m.Run()
 
 	// force teardown
-	tearDown(c)
+	tearDown(session, c)
 
 	os.Exit(retCode)
 }
 
-func tearDown(c dockertest.ContainerID) {
-	db.Close()
+func tearDown(session *rdb.Session, c dockertest.ContainerID) {
+	defer session.Close()
 	c.KillRemove()
 }
 
