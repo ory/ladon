@@ -9,7 +9,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	. "github.com/ory-am/ladon/policy"
+	. "github.com/ory-am/ladon"
 )
 
 var schemas = []string{

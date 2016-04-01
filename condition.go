@@ -1,4 +1,4 @@
-package policy
+package ladon
 
 type Condition interface {
 	GetOperator() string

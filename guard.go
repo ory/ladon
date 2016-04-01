@@ -1,10 +1,8 @@
-package guard
+package ladon
 
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ory-am/common/compiler"
-	. "github.com/ory-am/ladon/guard/operator"
-	"github.com/ory-am/ladon/policy"
 	"regexp"
 	"strings"
 )

@@ -1,9 +1,7 @@
-package guard
+package ladon
 
 import (
 	"fmt"
-	. "github.com/ory-am/ladon/guard/operator"
-	. "github.com/ory-am/ladon/policy"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -1,4 +1,4 @@
-package operator
+package ladon
 
 import (
 	"github.com/stretchr/testify/assert"

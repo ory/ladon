@@ -1,71 +1,83 @@
-package postgres
+package rethinkdb
 
 import (
-	"database/sql"
+	"time"
+
+	rdb "github.com/dancannon/gorethink"
+
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/ladon/policy"
+	. "github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ory-am/dockertest.v2"
 )
 
+var session *rdb.Session
 var s *Store
-var db *sql.DB
 
-var conditions = []policy.DefaultCondition{
+var conditions = []DefaultCondition{
 	{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
 	{Operator: "bar", Extra: map[string]interface{}{"foo": "baz"}},
 }
 
-var cases = []*policy.DefaultPolicy{
-	{uuid.New(), "description", []string{"user", "anonymous"}, policy.AllowAccess, []string{"article", "user"}, []string{"create", "update"}, conditions},
-	{uuid.New(), "description", []string{}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, nil},
-	{uuid.New(), "description", []string{"<peter|max>"}, policy.DenyAccess, []string{"article", "user"}, []string{"view"}, conditions},
-	{uuid.New(), "description", []string{"<user|max|anonymous>", "peter"}, policy.DenyAccess, []string{".*"}, []string{"disable"}, conditions},
-	{uuid.New(), "description", []string{"<.*>"}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
-	{uuid.New(), "description", []string{"<us[er]+>"}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
+var cases = []*DefaultPolicy{
+	{uuid.New(), "description", []string{"user", "anonymous"}, AllowAccess, []string{"article", "user"}, []string{"create", "update"}, conditions},
+	{uuid.New(), "description", []string{}, AllowAccess, []string{"<article|user>"}, []string{"view"}, nil},
+	{uuid.New(), "description", []string{"<peter|max>"}, DenyAccess, []string{"article", "user"}, []string{"view"}, conditions},
+	{uuid.New(), "description", []string{"<user|max|anonymous>", "peter"}, DenyAccess, []string{".*"}, []string{"disable"}, conditions},
+	{uuid.New(), "description", []string{"<.*>"}, AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
+	{uuid.New(), "description", []string{"<us[er]+>"}, AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
 }
 
 func TestMain(m *testing.M) {
-	c, err := dockertest.ConnectToPostgreSQL(15, time.Second, func(url string) bool {
-		var err error
-		db, err = sql.Open("postgres", url)
+	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
+		rdbSession, err := rdb.Connect(rdb.ConnectOpts{
+			Address:  url,
+			Database: "hydra"})
 		if err != nil {
 			return false
 		}
-		return db.Ping() == nil
+
+		_, err = rdb.DBCreate("hydra").RunWrite(rdbSession)
+		if err != nil {
+			return false
+		}
+
+		s = New(rdbSession)
+
+		if err := s.CreateTables(); err != nil {
+			return false
+		}
+
+		session = rdbSession
+
+		return true
 	})
 
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
-	s = New(db)
-	if err = s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not ping database: %v", err)
-	}
-
 	retCode := m.Run()
 
 	// force teardown
-	tearDown(c)
+	tearDown(session, c)
 
 	os.Exit(retCode)
 }
 
-func tearDown(c dockertest.ContainerID) {
-	db.Close()
+func tearDown(session *rdb.Session, c dockertest.ContainerID) {
+	defer session.Close()
 	c.KillRemove()
 }
 
 func TestCreateErrors(t *testing.T) {
-	assert.NotNil(t, &policy.DefaultPolicy{ID: "invalid-format"})
+	assert.NotNil(t, &DefaultPolicy{ID: "invalid-format"})
 }
 
 func TestGetErrors(t *testing.T) {

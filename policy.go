@@ -1,4 +1,4 @@
-package policy
+package ladon
 
 // Policy represent a policy model.
 type Policy interface {

@@ -1,4 +1,4 @@
-package operator
+package ladon
 
 func SubjectIsOwner(extra map[string]interface{}, ctx *Context) bool {
 	if _, ok := extra[SubjectKey]; !ok {
