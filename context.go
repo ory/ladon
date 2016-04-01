@@ -1,9 +1,10 @@
 package ladon
 
 import (
-	"github.com/ory-am/common/pkg"
 	"net/http"
 	"time"
+
+	"github.com/ory-am/common/pkg"
 )
 
 const SubjectKey = "subject"
@@ -15,19 +16,22 @@ type Context struct {
 	UserAgent string    `json:"userAgent"`
 }
 
-func NewContext() *Context {
-	return &Context{
+func NewContext(req *http.Request, owner string) *Context {
+	c := &Context{
 		Timestamp: time.Now(),
 	}
+	c.SetOwner(owner)
+	c.FromHTTP(req)
+	return c
 }
 
-func (c *Context) HTTP(req *http.Request) *Context {
+func (c *Context) FromHTTP(req *http.Request) *Context {
 	c.ClientIP = pkg.GetIP(req)
 	c.UserAgent = req.Header.Get("User-Agent")
 	return c
 }
 
-func (c *Context) Owner(owner string) *Context {
+func (c *Context) SetOwner(owner string) *Context {
 	c.Owner = owner
 	return c
 }

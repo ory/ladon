@@ -1,8 +1,9 @@
 package ladon
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var extra = map[string]interface{}{"subject": "foo"}

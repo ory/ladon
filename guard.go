@@ -1,15 +1,15 @@
 package ladon
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/ory-am/common/compiler"
 	"regexp"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/ory-am/common/compiler"
 )
 
 type Guard struct {
-	operators      map[string]Operator
-	disableLogging bool
+	operators map[string]Operator
 }
 
 func (g *Guard) SetOperators(ops map[string]Operator) {
@@ -39,18 +39,16 @@ func (g *Guard) GetOperator(name string) (Operator, bool) {
 	return op, ok
 }
 
-func (g *Guard) IsGranted(resource, permission, subject string, policies []policy.Policy, ctx *Context) (allowed bool, err error) {
+func (g *Guard) IsGranted(resource, permission, subject string, policies []Policy, ctx *Context) (allowed bool, err error) {
 	// Iterate through all policies
 	for _, p := range policies {
 		// Does the resource match with one of the policies?
 		if rm, err := Matches(p, p.GetResources(), resource); err != nil {
-			if !g.disableLogging {
-				log.WithFields(log.Fields{
-					"resources": p.GetResources(),
-					"resource":  resource,
-					"error":     err,
-				}).Warn("Could not match resources.")
-			}
+			log.WithFields(log.Fields{
+				"resources": p.GetResources(),
+				"resource":  resource,
+				"error":     err,
+			}).Warn("Could not match resources.")
 			return false, err
 		} else if !rm {
 			continue
@@ -58,13 +56,11 @@ func (g *Guard) IsGranted(resource, permission, subject string, policies []polic
 
 		// Does the action match with one of the policies?
 		if pm, err := Matches(p, p.GetPermissions(), permission); err != nil {
-			if !g.disableLogging {
-				log.WithFields(log.Fields{
-					"permissions": p.GetPermissions(),
-					"permission":  permission,
-					"error":       err,
-				}).Warn("Could not match permissions.")
-			}
+			log.WithFields(log.Fields{
+				"permissions": p.GetPermissions(),
+				"permission":  permission,
+				"error":       err,
+			}).Warn("Could not match permissions.")
 			return false, err
 		} else if !pm {
 			continue
@@ -72,13 +68,11 @@ func (g *Guard) IsGranted(resource, permission, subject string, policies []polic
 
 		// Does the subject match with one of the policies?
 		if sm, err := Matches(p, p.GetSubjects(), subject); err != nil {
-			if !g.disableLogging {
-				log.WithFields(log.Fields{
-					"subjects": p.GetSubjects(),
-					"subject":  subject,
-					"error":    err,
-				}).Warn("Could not match subjects.")
-			}
+			log.WithFields(log.Fields{
+				"subjects": p.GetSubjects(),
+				"subject":  subject,
+				"error":    err,
+			}).Warn("Could not match subjects.")
 			return false, err
 		} else if !sm && len(p.GetSubjects()) > 0 {
 			// If no match exists, but the subjects are scoped, this policy is irrelevant
@@ -98,18 +92,16 @@ func (g *Guard) IsGranted(resource, permission, subject string, policies []polic
 	return allowed, nil
 }
 
-func (g *Guard) PassesConditions(p policy.Policy, ctx *Context, permission, resource, subject string) (passes bool) {
+func (g *Guard) PassesConditions(p Policy, ctx *Context, permission, resource, subject string) (passes bool) {
 	var extra map[string]interface{}
 	passes = len(p.GetConditions()) == 0
 	for _, condition := range p.GetConditions() {
 		op, ok := g.GetOperator(condition.GetOperator())
 		if !ok {
-			if !g.disableLogging {
-				log.WithFields(log.Fields{
-					"subjects": p.GetSubjects(),
-					"subject":  subject,
-				}).Warn("Could not check conditions.")
-			}
+			log.WithFields(log.Fields{
+				"subjects": p.GetSubjects(),
+				"subject":  subject,
+			}).Warn("Could not check conditions.")
 			return false
 		}
 
@@ -126,7 +118,7 @@ func (g *Guard) PassesConditions(p policy.Policy, ctx *Context, permission, reso
 	return passes
 }
 
-func Matches(p policy.Policy, patterns []string, match string) (bool, error) {
+func Matches(p Policy, patterns []string, match string) (bool, error) {
 	var reg *regexp.Regexp
 	var err error
 	var matches bool

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	rdb "github.com/dancannon/gorethink"
-
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
@@ -76,31 +75,31 @@ func (s *Store) tableExists(table string) (bool, error) {
 
 func (s *Store) Create(policy Policy) (err error) {
 	conditions := []byte("[]")
-	if GetConditions() != nil {
-		cs := GetConditions()
+	if policy.GetConditions() != nil {
+		cs := policy.GetConditions()
 		conditions, err = json.Marshal(&cs)
 		if err != nil {
 			return err
 		}
 	}
 
-	policySubjects, err := createLink(policy, GetSubjects())
+	policySubjects, err := createLink(policy, policy.GetSubjects())
 	if err != nil {
 		return err
 	}
-	policyPermissions, err := createLink(policy, GetPermissions())
+	policyPermissions, err := createLink(policy, policy.GetPermissions())
 	if err != nil {
 		return err
 	}
-	policyResources, err := createLink(policy, GetResources())
+	policyResources, err := createLink(policy, policy.GetResources())
 	if err != nil {
 		return err
 	}
 
 	dbPolicy := rethinkPolicy{
-		ID:                GetID(),
-		Description:       GetDescription(),
-		Effect:            GetEffect(),
+		ID:                policy.GetID(),
+		Description:       policy.GetDescription(),
+		Effect:            policy.GetEffect(),
 		CreatedAt:         int64(time.Now().Unix()),
 		Conditions:        conditions,
 		PolicySubjects:    policySubjects,
@@ -146,7 +145,7 @@ func (s *Store) Get(id string) (Policy, error) {
 		Resources:   getLinked(p.PolicyResources),
 	}
 
-	if err := json.Unmarshal(p.Conditions, &orgConditions); err != nil {
+	if err := json.Unmarshal(p.Conditions, &orgPolicy.Conditions); err != nil {
 		return nil, err
 	}
 
@@ -163,9 +162,9 @@ func (s *Store) Delete(id string) error {
 func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err error) {
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
-		return Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
+		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
 			return rdb.Expr(subject).Match(policy_subject.Field("compiled"))
-		}).Or(Field("ladon_policy_subjects").IsEmpty())
+		}).Or(policy.Field("ladon_policy_subjects").IsEmpty())
 	}).Run(s.session)
 
 	if err != nil {
@@ -192,7 +191,7 @@ func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err e
 			Resources:   getLinked(tp.PolicyResources),
 		}
 
-		if err := json.Unmarshal(tp.Conditions, &tempConditions); err != nil {
+		if err := json.Unmarshal(tp.Conditions, &tempPolicy.Conditions); err != nil {
 			return nil, err
 		}
 		policies = append(policies, &tempPolicy)
