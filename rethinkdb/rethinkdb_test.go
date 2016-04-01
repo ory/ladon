@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/ladon/policy"
+	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,23 +18,89 @@ import (
 )
 
 var session *rdb.Session
-var s *Store
+var s *Manager
 
-var conditions = []policy.DefaultCondition{
-	{Operator: "foo", Extra: map[string]interface{}{"bar": "baz"}},
-	{Operator: "bar", Extra: map[string]interface{}{"foo": "baz"}},
-}
-
-var cases = []*policy.DefaultPolicy{
-	{uuid.New(), "description", []string{"user", "anonymous"}, policy.AllowAccess, []string{"article", "user"}, []string{"create", "update"}, conditions},
-	{uuid.New(), "description", []string{}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, nil},
-	{uuid.New(), "description", []string{"<peter|max>"}, policy.DenyAccess, []string{"article", "user"}, []string{"view"}, conditions},
-	{uuid.New(), "description", []string{"<user|max|anonymous>", "peter"}, policy.DenyAccess, []string{".*"}, []string{"disable"}, conditions},
-	{uuid.New(), "description", []string{"<.*>"}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
-	{uuid.New(), "description", []string{"<us[er]+>"}, policy.AllowAccess, []string{"<article|user>"}, []string{"view"}, conditions},
+var cases = []*ladon.DefaultPolicy{
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"user", "anonymous"},
+		Effect:      ladon.AllowAccess,
+		Resources:   []string{"article", "user"},
+		Actions:     []string{"create", "update"},
+		Conditions:  ladon.Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      ladon.AllowAccess,
+		Resources:   []string{"<article|user>"},
+		Actions:     []string{"view"},
+		Conditions:  ladon.Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<peter|max>"},
+		Effect:      ladon.DenyAccess,
+		Resources:   []string{"article", "user"},
+		Actions:     []string{"view"},
+		Conditions: ladon.Conditions{
+			&ladon.CIDRCondition{
+				CIDR: "1234",
+			},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<user|max|anonymous>", "peter"},
+		Effect:      ladon.DenyAccess,
+		Resources:   []string{".*"},
+		Actions:     []string{"disable"},
+		Conditions: ladon.Conditions{
+			&ladon.CIDRCondition{
+				CIDR: "1234",
+			},
+			&ladon.SubjectIsNotOwnerCondition{},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<.*>"},
+		Effect:      ladon.AllowAccess,
+		Resources:   []string{"<article|user>"},
+		Actions:     []string{"view"},
+		Conditions: ladon.Conditions{
+			&ladon.CIDRCondition{
+				CIDR: "1234",
+			},
+			&ladon.SubjectIsNotOwnerCondition{},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<us[er]+>"},
+		Effect:      ladon.AllowAccess,
+		Resources:   []string{"<article|user>"},
+		Actions:     []string{"view"},
+		Conditions: ladon.Conditions{
+			&ladon.CIDRCondition{
+				CIDR: "1234",
+			},
+			&ladon.SubjectIsNotOwnerCondition{},
+		},
+	},
 }
 
 func TestMain(m *testing.M) {
+	if testing.Short() {
+		os.Exit(0)
+	}
+
 	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
 		rdbSession, err := rdb.Connect(rdb.ConnectOpts{
 			Address:  url,
@@ -77,7 +143,9 @@ func tearDown(session *rdb.Session, c dockertest.ContainerID) {
 }
 
 func TestCreateErrors(t *testing.T) {
-	assert.NotNil(t, &policy.DefaultPolicy{ID: "invalid-format"})
+	assert.NotNil(t, &ladon.DefaultPolicy{
+		ID: "invalid-format",
+	})
 }
 
 func TestGetErrors(t *testing.T) {
@@ -94,7 +162,7 @@ func TestCreateGetDelete(t *testing.T) {
 
 		get, err := s.Get(c.GetID())
 		assert.Nil(t, err)
-		pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Permissions")
+		pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Actions")
 		assert.Equal(t, len(c.Conditions), len(get.GetConditions()))
 	}
 
