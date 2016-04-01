@@ -4,19 +4,35 @@ services:
   - docker
 
 env:
-  - DOCKER_BIND_LOCALHOST=true
+  - DOCKER_BIND_LOCALHOST=true GO15VENDOREXPERIMENT=1
 
 language: go
 
 go:
+  - tip
+  - 1.4
   - 1.5
+  - 1.6
+
+matrix:
+  allow_failures:
+    - go: tip
+    - go: 1.4
 
 install:
+  - go get github.com/bradfitz/goimports
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
-  - go get -t ./...
+  - go get github.com/golang/lint/golint
+  - go get github.com/pierrre/gotestcover
+  - go get -t $(go list ./... | grep -v /vendor/)
 
 script:
-  - ./coverage --coveralls
-  - go test ./... -v -race -bench=".*"
+  - goimports -d .
+  - gotestcover -coverprofile="cover.out" -race -covermode="count" $(go list ./... | grep -v /vendor/)
+
+after_success:
+  - go vet -x $(go list ./... | grep -v /vendor/)
+  - golint $(go list ./... | grep -v /vendor/)
+  - goveralls -coverprofile="cover.out"
