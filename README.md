@@ -52,7 +52,7 @@ Easy, right? To create such a policy do:
 ```go
 import github.com/ory-am/ladon/policy
 
-var pol := &policy.DefaultPolicy{
+pol := &policy.DefaultPolicy{
     ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
     Description: "something humanly readable",
     // ...
@@ -69,7 +69,7 @@ Let's see this in action! We're assuming that the passed policy has the same val
 ```go
 import github.com/ory-am/ladon/guard
 
-var guardian := new(guard.DefaultGuard)
+guardian := new(guard.Guard)
 granted, err := guardian.IsGranted("urn:something:resource_a", "delete", "ken", []policy.Policy{pol}, nil)
 // if err != nil ...
 log.Print(granted) // output: false
@@ -83,8 +83,8 @@ Let's try it again:
 import github.com/ory-am/ladon/guard
 import github.com/ory-am/ladon/guard/operator
 
-var guardian := new(guard.DefaultGuard)
-var ctx := operator.Context{
+guardian := new(guard.Guard)
+ctx := operator.Context{
     Owner: "ken"
 }
 granted, err := guardian.IsGranted("urn:something:resource_a", "delete", "ken", []policy.Policy{pol}, ctx)
