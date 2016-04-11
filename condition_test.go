@@ -2,22 +2,12 @@ package ladon
 
 import (
 	"testing"
-
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDefaultCondition(t *testing.T) {
-	for k, c := range []DefaultCondition{
-		{Operator: "op"},
-		{},
-		{Operator: "op", Extra: map[string]interface{}{}},
-		{Operator: "op", Extra: map[string]interface{}{"foo": "bar"}},
-	} {
-		assert.Equal(t, c.Operator, c.GetOperator(), "Case %d", k)
-		if c.Extra == nil {
-			assert.NotNil(t, c.GetExtra())
-		} else {
-			assert.Equal(t, c.Extra, c.GetExtra())
-		}
-	}
+func TestConditionsAppend(t *testing.T) {
+	cs := Conditions{}
+	c := &SubjectIsOwnerCondition{}
+	cs.AddCondition(c)
+	assert.Equal(t, c, cs[0])
 }

@@ -35,6 +35,10 @@ var cases = []*DefaultPolicy{
 }
 
 func TestMain(m *testing.M) {
+	if testing.Short() {
+		os.Exit(0)
+	}
+
 	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
 		rdbSession, err := rdb.Connect(rdb.ConnectOpts{
 			Address:  url,

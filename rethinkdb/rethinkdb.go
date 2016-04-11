@@ -87,7 +87,7 @@ func (s *Store) Create(policy Policy) (err error) {
 	if err != nil {
 		return err
 	}
-	policyPermissions, err := createLink(policy, policy.GetPermissions())
+	policyPermissions, err := createLink(policy, policy.GetActions())
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (s *Store) Get(id string) (Policy, error) {
 		ID:          p.ID,
 		Description: p.Description,
 		Effect:      p.Effect,
-		Permissions: getLinked(p.PolicyPermissions),
+		Actions: getLinked(p.PolicyPermissions),
 		Subjects:    getLinked(p.PolicySubjects),
 		Resources:   getLinked(p.PolicyResources),
 	}
@@ -186,7 +186,7 @@ func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err e
 			ID:          tp.ID,
 			Description: tp.Description,
 			Effect:      tp.Effect,
-			Permissions: getLinked(tp.PolicyPermissions),
+			Actions: getLinked(tp.PolicyPermissions),
 			Subjects:    getLinked(tp.PolicySubjects),
 			Resources:   getLinked(tp.PolicyResources),
 		}

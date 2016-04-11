@@ -12,6 +12,33 @@ Utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](htt
 
 Please be aware that ladon does not have a stable release just yet. Once it does, it will be available through gopkg.in.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [What is this and how does it work?](#what-is-this-and-how-does-it-work)
+- [Usage](#usage)
+  - [Policies](#policies)
+  - [Policy management](#policy-management)
+    - [In memory](#in-memory)
+    - [Using a backend](#using-a-backend)
+      - [PostgreSQL](#postgresql)
+  - [Warden](#warden)
+  - [Examples](#examples)
+    - [Subject mismatch](#subject-mismatch)
+    - [Owner mismatch](#owner-mismatch)
+    - [IP address mismatch](#ip-address-mismatch)
+    - [Working example](#working-example)
+    - [Full code for working example](#full-code-for-working-example)
+- [Good to know](#good-to-know)
+  - [Useful commands](#useful-commands)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+Ladon utilizes ory-am/dockertest for tests.
+Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information of how to setup testing environment.
+
+
 ## What is this and how does it work?
 
 Ladon is an access control library. You might also call it a policy administration and policy decision point. Ladon
@@ -68,7 +95,7 @@ var pol := &ladon.DefaultPolicy{
 }
 ```
 
-## Policy management
+### Policy management
 
 Ladon comes with `ladon.Manager`, a policy management interface which is implemented using RethinkDB and PostgreSQL.
 Storing policies.
@@ -77,7 +104,7 @@ Storing policies.
 Unmarshalling lists with multiple types is not trivial in Go. Ladon comes with creators (factories) for the different conditions.
 The manager receives a list of allowed condition creators who assist him in finding and creating the right condition objects.
 
-### In memory
+#### In memory
 
 ```go
 import "github.com/ory-am/ladon"
@@ -93,7 +120,7 @@ func main() {
 }
 ```
 
-### Using a backend
+#### Using a backend
 
 You will notice that all persistent implementations require an additional argument when setting up. This argument
 is called `allowedConditionCreators` and must contain a list of allowed condition creators (or "factories"). Because it is
@@ -101,7 +128,7 @@ not trivial to unmarshal lists of various types (required by `ladon.Conditions`)
 
 You can always pass `ladon.DefaultConditionCreators` which contains a list of all available condition creators.
 
-#### PostgreSQL
+##### PostgreSQL
 
 ```go
 import "github.com/ory-am/ladon"
@@ -231,7 +258,7 @@ func main() {
 }
 ```
 
-#### All good!
+#### Working example
 
 This request will be allowed because all requirements are met.
 
@@ -257,7 +284,7 @@ func main() {
 }
 ```
 
-#### Full example
+#### Full code for working example
 
 ```go
 import "github.com/ory-am/ladon"
@@ -324,7 +351,7 @@ func main() {
 
 Ladon does not use reflection for matching conditions to their appropriate structs due to security reasons.
 
-### Useful commands
+## Useful commands
 
 **Create mocks**
 ```sh

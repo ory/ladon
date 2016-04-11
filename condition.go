@@ -1,22 +1,11 @@
 package ladon
 
 type Condition interface {
-	GetOperator() string
-	GetExtra() map[string]interface{}
+	FullFills(*Request) bool
 }
 
-type DefaultCondition struct {
-	Operator string                 `json:"op"`
-	Extra    map[string]interface{} `json:"data"`
-}
+type Conditions []Condition
 
-func (c *DefaultCondition) GetOperator() string {
-	return c.Operator
-}
-
-func (c *DefaultCondition) GetExtra() map[string]interface{} {
-	if c.Extra == nil {
-		c.Extra = make(map[string]interface{})
-	}
-	return c.Extra
+func (cs *Conditions) AddCondition(c Condition) {
+	*cs = append(*cs, c)
 }

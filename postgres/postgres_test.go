@@ -15,7 +15,7 @@ import (
 	"gopkg.in/ory-am/dockertest.v2"
 )
 
-var s *Store
+var s *Manager
 var db *sql.DB
 
 var conditions = []DefaultCondition{
@@ -33,6 +33,10 @@ var cases = []*DefaultPolicy{
 }
 
 func TestMain(m *testing.M) {
+	if testing.Short() {
+		os.Exit(0)
+	}
+
 	c, err := dockertest.ConnectToPostgreSQL(15, time.Second, func(url string) bool {
 		var err error
 		db, err = sql.Open("postgres", url)

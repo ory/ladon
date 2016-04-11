@@ -7,8 +7,6 @@ import (
 	"github.com/ory-am/common/pkg"
 )
 
-const SubjectKey = "subject"
-
 type Context struct {
 	Owner     string    `json:"owner"`
 	ClientIP  string    `json:"clientIP"`

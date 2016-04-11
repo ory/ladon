@@ -1,5 +1,7 @@
 package ladon
 
+type Policies []Policy
+
 // Policy represent a policy model.
 type Policy interface {
 	// GetID returns the policies id.
@@ -20,11 +22,11 @@ type Policy interface {
 	// GetResources returns the policies resources.
 	GetResources() []string
 
-	// GetPermissions returns the policies permissions.
-	GetPermissions() []string
+	// GetActions returns the policies actions.
+	GetActions() []string
 
 	// GetConditions returns the policies conditions.
-	GetConditions() []Condition
+	GetConditions() Conditions
 
 	// GetStartDelimiter returns the delimiter which identifies the beginning of a regular expression
 	GetStartDelimiter() byte
@@ -34,13 +36,13 @@ type Policy interface {
 }
 
 type DefaultPolicy struct {
-	ID          string             `json:"id"`
-	Description string             `json:"description"`
-	Subjects    []string           `json:"subjects"`
-	Effect      string             `json:"effect"`
-	Resources   []string           `json:"resources"`
-	Permissions []string           `json:"permissions"`
-	Conditions  []DefaultCondition `json:"conditions"`
+	ID          string     `json:"id"`
+	Description string     `json:"description"`
+	Subjects    []string   `json:"subjects"`
+	Effect      string     `json:"effect"`
+	Resources   []string   `json:"resources"`
+	Actions     []string   `json:"actions"`
+	Conditions  Conditions `json:"conditions"`
 }
 
 func (p *DefaultPolicy) GetID() string {
@@ -67,16 +69,12 @@ func (p *DefaultPolicy) GetResources() []string {
 	return p.Resources
 }
 
-func (p *DefaultPolicy) GetPermissions() []string {
-	return p.Permissions
+func (p *DefaultPolicy) GetActions() []string {
+	return p.Actions
 }
 
-func (p *DefaultPolicy) GetConditions() []Condition {
-	cons := make([]Condition, len(p.Conditions))
-	for k, v := range p.Conditions {
-		cons[k] = &v
-	}
-	return cons
+func (p *DefaultPolicy) GetConditions() Conditions {
+	return p.Conditions
 }
 
 func (p *DefaultPolicy) GetEndDelimiter() byte {
