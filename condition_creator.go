@@ -5,18 +5,21 @@ import (
 	"github.com/go-errors/errors"
 )
 
-type ConditionCreators []ConditionCreator
+type ConditionCreators map[string]ConditionCreator
 
 type ConditionCreator func(map[string]interface{}) (Condition, error)
 
-var DefaultConditionCreators = map[string]ConditionCreator{
-	"SubjectIsOwnerCondition": func(_ map[string]interface{}) (Condition, error) {
+var DefaultConditionCreators = func () (ccs ConditionCreators) {
+	// Not proud of this one
+	ccs[new(SubjectIsOwnerCondition).GetName()] = func(_ map[string]interface{}) (Condition, error) {
 		return new(SubjectIsOwnerCondition), nil
-	},
-	"SubjectIsNotOwnerCondition": func(_ map[string]interface{}) (Condition, error) {
+	}
+
+	ccs[new(SubjectIsNotOwnerCondition).GetName()] = func(_ map[string]interface{}) (Condition, error) {
 		return new(SubjectIsNotOwnerCondition), nil
-	},
-	"CIDRCondition": func(data map[string]interface{}) (Condition, error) {
+	}
+
+	ccs[new(CIDRCondition).GetName()] = func(data map[string]interface{}) (Condition, error) {
 		var cidr string
 		var err error
 		if cidr, err = toString("cidr", data); err != nil {
@@ -26,10 +29,12 @@ var DefaultConditionCreators = map[string]ConditionCreator{
 		return &CIDRCondition{
 			CIDR: cidr,
 		}, nil
-	},
-}
+	}
 
-func CreateCondition(allowedConditionCreators map[string]ConditionCreator, data map[string]interface{}) (c Condition, err error) {
+	return ccs
+} ()
+
+func CreateCondition(allowedConditionCreators ConditionCreators, data map[string]interface{}) (c Condition, err error) {
 	var name string
 	if name, err = toString("condition", data); err != nil {
 		return nil, errors.New(err)
