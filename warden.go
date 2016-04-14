@@ -24,7 +24,7 @@ type Warden interface {
 }
 
 // Ladon is an implementation of Warden.
-type Ladon struct{
+type Ladon struct {
 	Manager Manager
 }
 
@@ -81,7 +81,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	}
 
 	if !allowed {
-		return  errors.New(ErrForbidden)
+		return errors.New(ErrForbidden)
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func Match(p Policy, patterns []string, match string) (bool, error) {
 	return false, nil
 }
 
-func (g *Ladon) passesConditions(p Policy, r *Request) (bool) {
+func (g *Ladon) passesConditions(p Policy, r *Request) bool {
 	for _, condition := range p.GetConditions() {
 		if pass := condition.FullFills(r); !pass {
 			return false

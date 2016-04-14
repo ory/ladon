@@ -1,8 +1,9 @@
 package ladon
 
 import (
-	"github.com/go-errors/errors"
 	"net/http"
+
+	"github.com/go-errors/errors"
 )
 
 type Error struct {
@@ -13,6 +14,6 @@ type Error struct {
 var (
 	ErrForbidden = &Error{
 		Error: errors.New("Forbidden"),
-		Code: http.StatusForbidden,
+		Code:  http.StatusForbidden,
 	}
 )

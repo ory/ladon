@@ -1,8 +1,8 @@
 package memory
 
 import (
-	"github.com/ory-am/ladon"
 	"github.com/go-errors/errors"
+	"github.com/ory-am/ladon"
 )
 
 type Manager struct {

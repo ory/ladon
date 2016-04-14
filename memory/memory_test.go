@@ -2,6 +2,7 @@ package memory
 
 import (
 	"testing"
+
 	"github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,7 +13,7 @@ func TestAll(t *testing.T) {
 	assert.NotNil(t, err)
 
 	p := &ladon.DefaultPolicy{
-		ID: "123",
+		ID:       "123",
 		Subjects: []string{"<ken|zac>", "peter"},
 	}
 	assert.Nil(t, m.Create(p))

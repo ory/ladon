@@ -2,8 +2,9 @@ package ladon_test
 
 import (
 	"testing"
-	"github.com/stretchr/testify/assert"
+
 	. "github.com/ory-am/ladon"
+	"github.com/stretchr/testify/assert"
 )
 
 var policyConditions = Conditions{
@@ -12,13 +13,13 @@ var policyConditions = Conditions{
 
 var policyCases = []*DefaultPolicy{
 	{
-		ID: "1",
+		ID:          "1",
 		Description: "description",
-		Subjects: []string{"user"},
-		Effect: AllowAccess,
-		Resources: []string{"articles:<[0-9]+>"},
-		Actions: []string{"create", "update"},
-		Conditions: policyConditions,
+		Subjects:    []string{"user"},
+		Effect:      AllowAccess,
+		Resources:   []string{"articles:<[0-9]+>"},
+		Actions:     []string{"create", "update"},
+		Conditions:  policyConditions,
 	},
 	{
 		Effect: DenyAccess,
