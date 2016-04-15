@@ -1,36 +1,27 @@
 package ladon
 
-//
+// SubjectIsOwnerCondition is a condition which is fulfilled if the subject of a warden request is also the owner
+// of the requested resource.
 type SubjectIsOwnerCondition struct{}
 
-func (c *SubjectIsOwnerCondition) FullFills(r *Request) bool {
+func (c *SubjectIsOwnerCondition) Fulfills(r *Request) bool {
 	return r.Subject == r.Context.Owner
 }
 
+// GetName returns the name of this condition.
 func (c *SubjectIsOwnerCondition) GetName() string {
 	return "SubjectIsOwnerCondition"
 }
 
-//
+// SubjectIsNotOwnerCondition is a condition which is fulfilled if the subject of a warden request is not the owner.
+// of the requested resource.
 type SubjectIsNotOwnerCondition struct{}
 
-func (c *SubjectIsNotOwnerCondition) FullFills(r *Request) bool {
+func (c *SubjectIsNotOwnerCondition) Fulfills(r *Request) bool {
 	return r.Subject != r.Context.Owner
 }
 
+// GetName returns the name of this condition.
 func (c *SubjectIsNotOwnerCondition) GetName() string {
 	return "SubjectIsNotOwnerCondition"
-}
-
-//
-type CIDRCondition struct {
-	CIDR string `json:"cidr"`
-}
-
-func (c *CIDRCondition) FullFills(r *Request) bool {
-	return r.Context.ClientIP != c.CIDR
-}
-
-func (c *CIDRCondition) GetName() string {
-	return "CIDRCondition"
 }

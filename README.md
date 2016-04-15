@@ -44,7 +44,7 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 Ladon is an access control library. You might also call it a policy administration and policy decision point. Ladon
 answers the question:
 
-> **Who** is **able** to do **what** on **something** in a **context**
+> **Who** is **able** to do **what** on **something** with **context**
 
 * **Who** An arbitrary unique subject name, for example "ken" or "printer-service.mydomain.com".
 * **Able**: The effect which is always "allow" or "deny".

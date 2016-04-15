@@ -107,7 +107,7 @@ func Match(p Policy, patterns []string, match string) (bool, error) {
 
 func (g *Ladon) passesConditions(p Policy, r *Request) bool {
 	for _, condition := range p.GetConditions() {
-		if pass := condition.FullFills(r); !pass {
+		if pass := condition.Fulfill(r); !pass {
 			return false
 		}
 	}
