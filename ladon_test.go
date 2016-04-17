@@ -109,6 +109,6 @@ func TestLadon(t *testing.T) {
 }
 
 func TestLadonEmpty(t *testing.T) {
-	warden := &ladon.Ladon{		Manager: memory.New()	}
+	warden := &ladon.Ladon{Manager: memory.New()}
 	assert.NotNil(t, warden.IsAllowed(&ladon.Request{}))
 }

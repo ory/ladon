@@ -1,8 +1,9 @@
 package ladon
 
 import (
-	"testing"
 	"net/http"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 

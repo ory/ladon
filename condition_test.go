@@ -3,8 +3,9 @@ package ladon
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"encoding/json"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,12 +20,11 @@ func TestMarshalUnmarshal(t *testing.T) {
 	css := &Conditions{
 		&SubjectIsOwnerCondition{},
 		&SubjectIsNotOwnerCondition{},
-		&CIDRCondition{CIDR:"127.0.0.1/0"},
+		&CIDRCondition{CIDR: "127.0.0.1/0"},
 	}
 	out, err := json.Marshal(css)
 	require.Nil(t, err)
 	t.Logf("%s", out)
-
 
 	cs := Conditions{}
 	require.Nil(t, json.Unmarshal([]byte(`[
