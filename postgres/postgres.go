@@ -41,6 +41,7 @@ var schemas = []string{
 	)`,
 }
 
+// Manager is a postgres implementation of ladon.Manager.
 type Manager struct {
 	db *sql.DB
 }

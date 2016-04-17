@@ -5,6 +5,7 @@ import (
 	"github.com/ory-am/ladon"
 )
 
+// Manager is a in-memory implementation of ladon.Manager.
 type Manager struct {
 	Policies map[string]ladon.Policy
 }

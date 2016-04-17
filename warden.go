@@ -1,9 +1,15 @@
 package ladon
 
+// Request is the warden's request object.
 type Request struct {
+	// Resource is the resource that access is requested to.
 	Resource string `json:"resource"`
+	// Action is the action that is requested on the resource.
 	Action   string `json:"action"`
+	// Subejct is the subject that is requesting access.
 	Subject  string `json:"subject"`
+
+	// Context is the request's environmental context.
 	Context  *Context
 }
 

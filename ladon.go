@@ -12,7 +12,7 @@ type Ladon struct {
 	Manager Manager
 }
 
-// IsGranted returns nil if subject s has permission p on resource r with context c or an error otherwise.
+// IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
 func (g *Ladon) IsAllowed(r *Request) (err error) {
 	policies, err := g.Manager.FindPoliciesForSubject(r.Subject)
 	if err != nil {
@@ -71,17 +71,18 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	return nil
 }
 
-func Match(p Policy, patterns []string, match string) (bool, error) {
+// Match matches a needle with an array of regular expressions and returns true if a match was found.
+func Match(p Policy, haystack []string, needle string) (bool, error) {
 	var reg *regexp.Regexp
 	var err error
 	var matches bool
-	for _, h := range patterns {
+	for _, h := range haystack {
 		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())
 		if err != nil {
 			return false, err
 		}
 
-		matches = reg.MatchString(match)
+		matches = reg.MatchString(needle)
 		if matches {
 			return true, nil
 		}

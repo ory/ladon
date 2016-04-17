@@ -31,15 +31,16 @@ type linkedPolicyResource struct {
 	Template string `gorethink:"template"`
 }
 
-type Store struct {
+// Manager is a rethinkdb implementation of ladon.Manager.
+type Manager struct {
 	session *rdb.Session
 }
 
-func New(session *rdb.Session) *Store {
-	return &Store{session}
+func New(session *rdb.Session) *Manager {
+	return &Manager{session}
 }
 
-func (s *Store) CreateTables() error {
+func (s *Manager) CreateTables() error {
 	exists, err := s.tableExists(policyTableName)
 	if err == nil && !exists {
 		_, err := rdb.TableCreate(policyTableName).RunWrite(s.session)
@@ -51,7 +52,7 @@ func (s *Store) CreateTables() error {
 }
 
 // TableExists check if table(s) exists in database
-func (s *Store) tableExists(table string) (bool, error) {
+func (s *Manager) tableExists(table string) (bool, error) {
 
 	res, err := rdb.TableList().Run(s.session)
 	if err != nil {
@@ -73,7 +74,7 @@ func (s *Store) tableExists(table string) (bool, error) {
 	return false, nil
 }
 
-func (s *Store) Create(policy Policy) (err error) {
+func (s *Manager) Create(policy Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -118,7 +119,7 @@ func (s *Store) Create(policy Policy) (err error) {
 	return nil
 }
 
-func (s *Store) Get(id string) (Policy, error) {
+func (s *Manager) Get(id string) (Policy, error) {
 	// Query policy
 	result, err := rdb.Table(policyTableName).Get(id).Run(s.session)
 
@@ -152,14 +153,14 @@ func (s *Store) Get(id string) (Policy, error) {
 	return &orgPolicy, nil
 }
 
-func (s *Store) Delete(id string) error {
+func (s *Manager) Delete(id string) error {
 	if _, err := rdb.Table(policyTableName).Get(id).Delete().RunWrite(s.session); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err error) {
+func (s *Manager) FindPoliciesForSubject(subject string) (policies []Policy, err error) {
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
 		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {

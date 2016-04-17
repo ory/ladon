@@ -18,7 +18,7 @@ import (
 )
 
 var session *rdb.Session
-var s *Store
+var s *Manager
 
 var cases = []*ladon.DefaultPolicy{
 	{
