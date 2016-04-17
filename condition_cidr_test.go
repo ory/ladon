@@ -1,26 +1,28 @@
 package ladon
 
-type item struct {
-	addr    string
-	cidr    string
-	matches bool
-}
-
-var testdata = []item{
-	item{"192.168.1.67", "192.168.1.0/24", true},
-	item{"192.168.1.67", "192.168.1.0/28", false},
-	item{"192.168.1.67", "0.0.0.0/0", true},
-}
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestCIDRMatch(t *testing.T) {
-	for _, it := range testdata {
-		_, cidrnet, err := net.ParseCIDR(it.cidr)
-		if err != nil {
-			panic(err) // assuming I did it right above
+	for _, c := range []struct{
+		cidr string
+		ip string
+		pass bool
+	}{
+		{ip: "192.168.1.67", cidr: "192.168.1.0/24",pass: true},
+		{ip: "192.168.1.67",cidr:  "192.168.1.0/28", pass:false},
+		{ip: "192.168.1.67",cidr:  "0.0.0.0/0", pass: true},
+	} {
+		condition := &CIDRCondition{
+			CIDR: c.cidr,
 		}
-		myaddr := net.ParseIP(it.addr)
-		if cidrnet.Contains(myaddr) != it.matches {
-			t.Fatalf("Wrong on %+v")
-		}
+
+		assert.Equal(t, c.pass, condition.Fulfills(&Request{
+			Context: &Context{
+				ClientIP:c.ip,
+			},
+		}), "%s; %s", c.ip, c.cidr)
 	}
 }

@@ -1,22 +1,26 @@
 package ladon
 
+import (
+	"net"
+)
+
 // CIDRCondition makes sure that the warden requests' IP address is in the given CIDR.
 type CIDRCondition struct {
 	CIDR string `json:"cidr"`
 }
 
 func (c *CIDRCondition) Fulfills(r *Request) bool {
-
-	_, cidrnet, err := net.ParseCIDR(it.cidr)
+	_, cidrnet, err := net.ParseCIDR(c.CIDR)
 	if err != nil {
-		panic(err) // assuming I did it right above
-	}
-	myaddr := net.ParseIP(it.addr)
-	if cidrnet.Contains(myaddr) != it.matches {
-		t.Fatalf("Wrong on %+v")
+		return false
 	}
 
-	return r.Context.ClientIP != c.CIDR
+	ip := net.ParseIP(r.Context.ClientIP)
+	if ip == nil {
+		return false
+	}
+
+	return cidrnet.Contains(ip)
 }
 
 func (c *CIDRCondition) GetName() string {
