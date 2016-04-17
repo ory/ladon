@@ -10,7 +10,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	. "github.com/ory-am/ladon"
+	"github.com/ory-am/ladon"
 )
 
 const policyTableName = "ladon_policy"
@@ -74,7 +74,7 @@ func (s *Manager) tableExists(table string) (bool, error) {
 	return false, nil
 }
 
-func (s *Manager) Create(policy Policy) (err error) {
+func (s *Manager) Create(policy ladon.Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -119,7 +119,7 @@ func (s *Manager) Create(policy Policy) (err error) {
 	return nil
 }
 
-func (s *Manager) Get(id string) (Policy, error) {
+func (s *Manager) Get(id string) (ladon.Policy, error) {
 	// Query policy
 	result, err := rdb.Table(policyTableName).Get(id).Run(s.session)
 
@@ -137,7 +137,7 @@ func (s *Manager) Get(id string) (Policy, error) {
 		return nil, err
 	}
 
-	orgPolicy := DefaultPolicy{
+	orgPolicy := ladon.DefaultPolicy{
 		ID:          p.ID,
 		Description: p.Description,
 		Effect:      p.Effect,
@@ -160,7 +160,7 @@ func (s *Manager) Delete(id string) error {
 	return nil
 }
 
-func (s *Manager) FindPoliciesForSubject(subject string) (policies []Policy, err error) {
+func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Policy, err error) {
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
 		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
@@ -183,7 +183,7 @@ func (s *Manager) FindPoliciesForSubject(subject string) (policies []Policy, err
 	}
 
 	for _, tp := range p {
-		tempPolicy := DefaultPolicy{
+		tempPolicy := ladon.DefaultPolicy{
 			ID:          tp.ID,
 			Description: tp.Description,
 			Effect:      tp.Effect,
@@ -211,7 +211,7 @@ func getLinked(resourceData []linkedPolicyResource) []string {
 	return templates
 }
 
-func createLink(p Policy, templates []string) ([]linkedPolicyResource, error) {
+func createLink(p ladon.Policy, templates []string) ([]linkedPolicyResource, error) {
 	resSlice := make([]linkedPolicyResource, len(templates))
 	for i, template := range templates {
 		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())
