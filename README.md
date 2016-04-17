@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ory-am/ladon.svg?branch=master)](https://travis-ci.org/ory-am/ladon)
 [![Coverage Status](https://coveralls.io/repos/ory-am/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory-am/ladon?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
 
 ![Ladon](https://upload.wikimedia.org/wikipedia/commons/5/5c/Reggio_calabria_museo_nazionale_mosaico_da_kaulon.jpg)
 
