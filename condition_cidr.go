@@ -9,6 +9,7 @@ type CIDRCondition struct {
 	CIDR string `json:"cidr"`
 }
 
+// Fulfills returns true if the the request is fulfilled by the condition.
 func (c *CIDRCondition) Fulfills(r *Request) bool {
 	_, cidrnet, err := net.ParseCIDR(c.CIDR)
 	if err != nil {
@@ -23,6 +24,7 @@ func (c *CIDRCondition) Fulfills(r *Request) bool {
 	return cidrnet.Contains(ip)
 }
 
+// GetName returns the condition's name.
 func (c *CIDRCondition) GetName() string {
 	return "CIDRCondition"
 }

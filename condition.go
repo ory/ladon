@@ -9,7 +9,10 @@ import (
 
 // Condition either do or do not fulfill an access request.
 type Condition interface {
+	// GetName returns the condition's name.
 	GetName() string
+
+	// Fulfills returns true if the the request is fulfilled by the condition.
 	Fulfills(*Request) bool
 }
 
