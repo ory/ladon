@@ -7,11 +7,10 @@ import (
 	"time"
 
 	rdb "github.com/dancannon/gorethink"
-
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/ladon/policy"
+	"github.com/ory-am/ladon"
 )
 
 const policyTableName = "ladon_policy"
@@ -32,15 +31,16 @@ type linkedPolicyResource struct {
 	Template string `gorethink:"template"`
 }
 
-type Store struct {
+// Manager is a rethinkdb implementation of ladon.Manager.
+type Manager struct {
 	session *rdb.Session
 }
 
-func New(session *rdb.Session) *Store {
-	return &Store{session}
+func New(session *rdb.Session) *Manager {
+	return &Manager{session}
 }
 
-func (s *Store) CreateTables() error {
+func (s *Manager) CreateTables() error {
 	exists, err := s.tableExists(policyTableName)
 	if err == nil && !exists {
 		_, err := rdb.TableCreate(policyTableName).RunWrite(s.session)
@@ -52,7 +52,7 @@ func (s *Store) CreateTables() error {
 }
 
 // TableExists check if table(s) exists in database
-func (s *Store) tableExists(table string) (bool, error) {
+func (s *Manager) tableExists(table string) (bool, error) {
 
 	res, err := rdb.TableList().Run(s.session)
 	if err != nil {
@@ -74,7 +74,7 @@ func (s *Store) tableExists(table string) (bool, error) {
 	return false, nil
 }
 
-func (s *Store) Create(policy policy.Policy) (err error) {
+func (s *Manager) Create(policy ladon.Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -88,7 +88,7 @@ func (s *Store) Create(policy policy.Policy) (err error) {
 	if err != nil {
 		return err
 	}
-	policyPermissions, err := createLink(policy, policy.GetPermissions())
+	policyPermissions, err := createLink(policy, policy.GetActions())
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (s *Store) Create(policy policy.Policy) (err error) {
 	return nil
 }
 
-func (s *Store) Get(id string) (policy.Policy, error) {
+func (s *Manager) Get(id string) (ladon.Policy, error) {
 	// Query policy
 	result, err := rdb.Table(policyTableName).Get(id).Run(s.session)
 
@@ -137,11 +137,11 @@ func (s *Store) Get(id string) (policy.Policy, error) {
 		return nil, err
 	}
 
-	orgPolicy := policy.DefaultPolicy{
+	orgPolicy := ladon.DefaultPolicy{
 		ID:          p.ID,
 		Description: p.Description,
 		Effect:      p.Effect,
-		Permissions: getLinked(p.PolicyPermissions),
+		Actions:     getLinked(p.PolicyPermissions),
 		Subjects:    getLinked(p.PolicySubjects),
 		Resources:   getLinked(p.PolicyResources),
 	}
@@ -153,14 +153,14 @@ func (s *Store) Get(id string) (policy.Policy, error) {
 	return &orgPolicy, nil
 }
 
-func (s *Store) Delete(id string) error {
+func (s *Manager) Delete(id string) error {
 	if _, err := rdb.Table(policyTableName).Get(id).Delete().RunWrite(s.session); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Store) FindPoliciesForSubject(subject string) (policies []policy.Policy, err error) {
+func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Policy, err error) {
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
 		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
@@ -183,11 +183,11 @@ func (s *Store) FindPoliciesForSubject(subject string) (policies []policy.Policy
 	}
 
 	for _, tp := range p {
-		tempPolicy := policy.DefaultPolicy{
+		tempPolicy := ladon.DefaultPolicy{
 			ID:          tp.ID,
 			Description: tp.Description,
 			Effect:      tp.Effect,
-			Permissions: getLinked(tp.PolicyPermissions),
+			Actions:     getLinked(tp.PolicyPermissions),
 			Subjects:    getLinked(tp.PolicySubjects),
 			Resources:   getLinked(tp.PolicyResources),
 		}
@@ -211,7 +211,7 @@ func getLinked(resourceData []linkedPolicyResource) []string {
 	return templates
 }
 
-func createLink(p policy.Policy, templates []string) ([]linkedPolicyResource, error) {
+func createLink(p ladon.Policy, templates []string) ([]linkedPolicyResource, error) {
 	resSlice := make([]linkedPolicyResource, len(templates))
 	for i, template := range templates {
 		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())

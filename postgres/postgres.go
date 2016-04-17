@@ -9,7 +9,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	. "github.com/ory-am/ladon/policy"
+	"github.com/ory-am/ladon"
 )
 
 var schemas = []string{
@@ -41,15 +41,16 @@ var schemas = []string{
 	)`,
 }
 
-type Store struct {
+// Manager is a postgres implementation of ladon.Manager.
+type Manager struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) *Store {
-	return &Store{db}
+func New(db *sql.DB) *Manager {
+	return &Manager{db}
 }
 
-func (s *Store) CreateSchemas() error {
+func (s *Manager) CreateSchemas() error {
 	for _, query := range schemas {
 		if _, err := s.db.Exec(query); err != nil {
 			log.Printf("Error creating schema %s", query)
@@ -59,7 +60,7 @@ func (s *Store) CreateSchemas() error {
 	return nil
 }
 
-func (s *Store) Create(policy Policy) (err error) {
+func (s *Manager) Create(policy ladon.Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -75,7 +76,7 @@ func (s *Store) Create(policy Policy) (err error) {
 		return err
 	} else if err = createLink(tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
 		return err
-	} else if err = createLink(tx, "ladon_policy_permission", policy, policy.GetPermissions()); err != nil {
+	} else if err = createLink(tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
 		return err
 	} else if err = createLink(tx, "ladon_policy_resource", policy, policy.GetResources()); err != nil {
 		return err
@@ -89,8 +90,8 @@ func (s *Store) Create(policy Policy) (err error) {
 	return nil
 }
 
-func (s *Store) Get(id string) (Policy, error) {
-	var p DefaultPolicy
+func (s *Manager) Get(id string) (ladon.Policy, error) {
+	var p ladon.DefaultPolicy
 	var conditions []byte
 	if err := s.db.QueryRow("SELECT id, description, effect, conditions FROM ladon_policy WHERE id=$1", id).Scan(&p.ID, &p.Description, &p.Effect, &conditions); err == sql.ErrNoRows {
 		return nil, pkg.ErrNotFound
@@ -115,18 +116,18 @@ func (s *Store) Get(id string) (Policy, error) {
 		return nil, err
 	}
 
-	p.Permissions = permissions
+	p.Actions = permissions
 	p.Subjects = subjects
 	p.Resources = resources
 	return &p, nil
 }
 
-func (s *Store) Delete(id string) error {
+func (s *Manager) Delete(id string) error {
 	_, err := s.db.Exec("DELETE FROM ladon_policy WHERE id=$1", id)
 	return err
 }
 
-func (s *Store) FindPoliciesForSubject(subject string) (policies []Policy, err error) {
+func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Policy, err error) {
 	find := func(query string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(query, args...)
 		if err == sql.ErrNoRows {
@@ -185,7 +186,7 @@ func getLinked(db *sql.DB, table, policy string) ([]string, error) {
 	return urns, nil
 }
 
-func createLink(tx *sql.Tx, table string, p Policy, templates []string) error {
+func createLink(tx *sql.Tx, table string, p ladon.Policy, templates []string) error {
 	for _, template := range templates {
 		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())
 
