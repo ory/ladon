@@ -27,8 +27,8 @@ var policyCases = []*DefaultPolicy{
 }
 
 func TestHasAccess(t *testing.T) {
-	assert.True(t, policyCases[0].HasAccess())
-	assert.False(t, policyCases[1].HasAccess())
+	assert.True(t, policyCases[0].AllowAccess())
+	assert.False(t, policyCases[1].AllowAccess())
 }
 
 func TestGetters(t *testing.T) {

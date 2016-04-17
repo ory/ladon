@@ -14,7 +14,7 @@ type Policy interface {
 	GetSubjects() []string
 
 	// HasAccess returns true if the policy effect is allow, otherwise false.
-	HasAccess() bool
+	AllowAccess() bool
 
 	// GetEffect returns the policies effect which might be 'allow' or 'deny'.
 	GetEffect() string
@@ -57,7 +57,7 @@ func (p *DefaultPolicy) GetSubjects() []string {
 	return p.Subjects
 }
 
-func (p *DefaultPolicy) HasAccess() bool {
+func (p *DefaultPolicy) AllowAccess() bool {
 	return p.Effect == AllowAccess
 }
 

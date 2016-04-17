@@ -61,38 +61,44 @@ Policies are an essential part of Ladon. Policies are documents which define who
 Policies must implement the `ladon.Policy` interface. A standard implementation of this interface is `ladon.DefaultPolicy`:
 
 ```go
-import github.com/ory-am/ladon
+import "github.com/ory-am/ladon"
 
-var pol := &ladon.DefaultPolicy{
-    // A required unique identifier. Used primarily for database retrieval.
-    ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
+var pol = &ladon.DefaultPolicy{
+	// A required unique identifier. Used primarily for database retrieval.
+	ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
 
-    // A optional human readable description.
-    Description: "something humanly readable",
+	// A optional human readable description.
+	Description: "something humanly readable",
 
-    // A subject can be an user or a service. It is the "who" in "who is allowed to do what on something".
-    // As you can see here, you can use regular expressions inside < >.
-    Subjects: []string{"max", "peter", "<zac|ken>"},
+	// A subject can be an user or a service. It is the "who" in "who is allowed to do what on something".
+	// As you can see here, you can use regular expressions inside < >.
+	Subjects: []string{"max", "peter", "<zac|ken>"},
 
-    // Which resources this policy affects.
-    // Again, you can put regular expressions in inside < >.
-    Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+	// Which resources this policy affects.
+	// Again, you can put regular expressions in inside < >.
+	Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
 
-    // Which actions this policy affects. Supports RegExp
-    // Again, you can put regular expressions in inside < >.
-    Actions: []string{"<create|delete>", "get"},
+	// Which actions this policy affects. Supports RegExp
+	// Again, you can put regular expressions in inside < >.
+	Actions: []string{"<create|delete>", "get"},
 
-    // Under which conditions this policy is "active".
-    Conditions: Conditions{
-        // In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-        ConditionSubjectIsOwner{},
+	// Should access be allowed or denied?
+	// Note: If multiple policies match an access request, ladon.DenyAccess will always override ladon.AllowAccess
+	// and thus deny access.
+	Effect: ladon.AllowAccess,
 
-        // Additionally, the policy will only match if the requests remote ip address matches 127.0.0.1
-        CIDRCondition{
-            CIDR: "127.0.0.1/32",
-        },
-    }
+	// Under which conditions this policy is "active".
+	Conditions: ladon.Conditions{
+		// In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
+		&ladon.SubjectIsOwnerCondition{},
+
+		// Additionally, the policy will only match if the requests remote ip address matches 127.0.0.1
+		&ladon.CIDRCondition{
+			CIDR: "127.0.0.1/32",
+		},
+	},
 }
+
 ```
 
 ### Policy management
@@ -107,14 +113,17 @@ The manager receives a list of allowed condition creators who assist him in find
 #### In memory
 
 ```go
-import "github.com/ory-am/ladon"
-import "github.com/ory-am/ladon/memory"
+import (
+	"github.com/ory-am/ladon"
+	"github.com/ory-am/ladon/memory"
+)
 
 
 func main() {
-    warden := ladon.Ladon{
-        Manager: memory.New()
-    }
+	warden := &ladon.Ladon{
+		Manager: memory.New(),
+	}
+	err := warden.Manager.Create(pol)
 
     // ...
 }
@@ -142,13 +151,8 @@ func main() {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
-	manager = postgres.New(db, ladon.DefaultConditionCreators)
-	if err = s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not create schemas: %v", err)
-	}
-
     warden := ladon.Ladon{
-        Manager: manager,
+        Manager: postgres.New(db),
     }
 
     // ...
@@ -221,9 +225,9 @@ func main() {
         Subject: "ken",
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
-        Context: ladon.Context{
-            Owner: "peter"
-        }
+        Context: &ladon.Context{
+            Owner: "peter",
+        },
     }); err != nil {
         log.Print("Access denied")
     }
@@ -247,9 +251,9 @@ func main() {
         Subject: "peter",
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
-        Context: ladon.Context{
-            Owner: "peter"
-        }
+        Context: &ladon.Context{
+            Owner: "peter",
+        },
     }); err != nil {
         log.Print("Access denied")
     }
@@ -275,7 +279,7 @@ func main() {
         Context: ladon.Context{
             Owner: "peter",
             ClientIP: "127.0.0.1",
-        }
+        },
     }); err != nil {
         log.Print("Access denied")
     }
@@ -286,63 +290,7 @@ func main() {
 
 #### Full code for working example
 
-```go
-import "github.com/ory-am/ladon"
-
-var pol := &ladon.DefaultPolicy{
-    // A required unique identifier. Used primarily for database retrieval.
-    ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
-
-    // A optional human readable description.
-    Description: "something humanly readable",
-
-    // A subject can be an user or a service. It is the "who" in "who is allowed to do what on something".
-    // As you can see here, you can use regular expressions inside < >.
-    Subjects: []string{"max", "peter", "<zac|ken>"},
-
-    // Which resources this policy affects.
-    // Again, you can put regular expressions in inside < >.
-    Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
-
-    // Which actions this policy affects. Supports RegExp
-    // Again, you can put regular expressions in inside < >.
-    Actions: []string{"<create|delete>", "get"},
-
-    // Under which conditions this policy is "active".
-    Conditions: Conditions{
-        // In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-        ConditionSubjectIsOwner{},
-
-        // Additionally, the policy will only match if the requests remote ip address matches 127.0.0.1
-        CIDRCondition{
-            CIDR: "127.0.0.1/32",
-        },
-    }
-}
-
-
-func main() {
-    // ...
-    warden := ladon.Ladon{
-        Manager: memory.New()
-    }
-    warden.Manager.Create(pol)
-
-    if err := warden.IsAllowed(&ladon.Request{
-        Subject: "peter",
-        Action: "delete",
-        Resource: "myrn:some.domain.com:resource:123",
-        Context: ladon.Context{
-            Owner: "peter",
-            ClientIP: "127.0.0.1",
-        }
-    }); err != nil {
-        log.Print("Access denied")
-    }
-
-    // ...
-}
-```
+To view the example's full code, click [here](ladon_test.go). To run it, call `go test -run=TestLadon .`
 
 ## Good to know
 
