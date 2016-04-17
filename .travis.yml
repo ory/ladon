@@ -12,8 +12,12 @@ go:
   - 1.5
   - 1.6
 
+allowed_failures:
+  - tip
+  - 1.4
+  - 1.3
+
 install:
-  - go get golang.org/x/tools/cmd/vet
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
@@ -22,8 +26,10 @@ install:
   - go get -t $(go list ./... | grep -v /vendor/)
 
 script:
+  - goimports -d .
   - gotestcover -coverprofile="cover.out" -race -covermode="count" $(go list ./... | grep -v /vendor/)
 
 after_success:
-  - go vet -x ./...
+  - go vet -x $(go list ./... | grep -v /vendor/)
+  - golint $(go list ./... | grep -v /vendor/)
   - goveralls -coverprofile="cover.out"
