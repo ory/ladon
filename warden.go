@@ -4,8 +4,10 @@ package ladon
 type Request struct {
 	// Resource is the resource that access is requested to.
 	Resource string `json:"resource"`
+
 	// Action is the action that is requested on the resource.
 	Action string `json:"action"`
+
 	// Subejct is the subject that is requesting access.
 	Subject string `json:"subject"`
 
