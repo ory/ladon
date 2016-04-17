@@ -18,6 +18,7 @@ func TestConditionsAppend(t *testing.T) {
 func TestMarshalUnmarshal(t *testing.T) {
 	css := &Conditions{
 		&SubjectIsOwnerCondition{},
+		&SubjectIsNotOwnerCondition{},
 		&CIDRCondition{CIDR:"127.0.0.1/0"},
 	}
 	out, err := json.Marshal(css)
