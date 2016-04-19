@@ -10,7 +10,7 @@ type CIDRCondition struct {
 }
 
 // Fulfills returns true if the the request is fulfilled by the condition.
-func (c *CIDRCondition) Fulfills(value interface{}) bool {
+func (c *CIDRCondition) Fulfills(value interface{}, _ *Request) bool {
 	ips, ok := value.(string)
 	if !ok {
 		return false

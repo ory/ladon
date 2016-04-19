@@ -11,14 +11,14 @@ import (
 func TestConditionsAppend(t *testing.T) {
 	cs := Conditions{}
 	c := &CIDRCondition{}
-	cs.AddCondition(c)
-	assert.Equal(t, c, cs[0])
+	cs.AddCondition("clientIP", c)
+	assert.Equal(t, c, cs["clientIP"])
 }
 
 func TestMarshalUnmarshal(t *testing.T) {
 	css := &Conditions{
 		"clientIP": &CIDRCondition{CIDR: "127.0.0.1/0"},
-		"owner":    &StringMatchCondition{Matches: "peter"},
+		"owner":    &StringEqualCondition{Equals: "peter"},
 	}
 	out, err := json.Marshal(css)
 	require.Nil(t, err)
@@ -41,6 +41,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 }`), &cs))
 
 	require.Len(t, cs, 2)
-	assert.IsType(t, &StringMatchCondition{}, "clientIP")
+	assert.IsType(t, &StringEqualCondition{}, "clientIP")
 	assert.IsType(t, &CIDRCondition{}, "owner")
 }

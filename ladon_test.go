@@ -36,10 +36,10 @@ var pol = &ladon.DefaultPolicy{
 	// Under which conditions this policy is "active".
 	Conditions: ladon.Conditions{
 		// In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-		&ladon.SubjectIsOwnerCondition{},
+		"owner": &ladon.EqualsSubjectCondition{},
 
 		// Additionally, the policy will only match if the requests remote ip address matches 127.0.0.1
-		&ladon.CIDRCondition{
+		"clientIP": &ladon.CIDRCondition{
 			CIDR: "127.0.0.1/32",
 		},
 	},
@@ -64,8 +64,8 @@ func TestLadon(t *testing.T) {
 				Resource: "myrn:some.domain.com:resource:123",
 
 				Context: &ladon.Context{
-					Owner:    "peter",
-					ClientIP: "0.0.0.0",
+					"owner": "peter",
+					"clientIP": "0.0.0.0",
 				},
 			},
 			expectErr: true,
@@ -78,8 +78,8 @@ func TestLadon(t *testing.T) {
 				Resource: "myrn:some.domain.com:resource:123",
 
 				Context: &ladon.Context{
-					Owner:    "zac",
-					ClientIP: "127.0.0.1",
+					"owner": "zac",
+					"clientIP": "127.0.0.1",
 				},
 			},
 			expectErr: true,
@@ -92,8 +92,8 @@ func TestLadon(t *testing.T) {
 				Resource: "myrn:some.domain.com:resource:123",
 
 				Context: &ladon.Context{
-					Owner:    "peter",
-					ClientIP: "127.0.0.1",
+					"owner": "peter",
+					"clientIP": "127.0.0.1",
 				},
 			},
 			expectErr: false,

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/go-errors/errors"
-	"net/url"
 )
 
 // Condition either do or do not fulfill an access request.
@@ -13,7 +12,7 @@ type Condition interface {
 	GetName() string
 
 	// Fulfills returns true if the request is fulfilled by the condition.
-	Fulfills(interface{}) bool
+	Fulfills(interface{}, *Request) bool
 }
 
 // Conditions is a collection of conditions.
@@ -73,8 +72,8 @@ type jsonCondition struct {
 }
 
 var conditionFactories = map[string]func() Condition{
-	new(StringMatchCondition).GetName(): func() Condition {
-		return new(StringMatchCondition)
+	new(StringEqualCondition).GetName(): func() Condition {
+		return new(StringEqualCondition)
 	},
 	new(CIDRCondition).GetName(): func() Condition {
 		return new(CIDRCondition)
