@@ -10,13 +10,18 @@ type CIDRCondition struct {
 }
 
 // Fulfills returns true if the the request is fulfilled by the condition.
-func (c *CIDRCondition) Fulfills(r *Request) bool {
+func (c *CIDRCondition) Fulfills(value interface{}) bool {
+	ip, ok := value.(string)
+	if !ok {
+		return false
+	}
+
 	_, cidrnet, err := net.ParseCIDR(c.CIDR)
 	if err != nil {
 		return false
 	}
 
-	ip := net.ParseIP(r.Context.ClientIP)
+	ip := net.ParseIP(ip)
 	if ip == nil {
 		return false
 	}
@@ -26,5 +31,5 @@ func (c *CIDRCondition) Fulfills(r *Request) bool {
 
 // GetName returns the condition's name.
 func (c *CIDRCondition) GetName() string {
-	return "CIDRCondition"
+	return "CIDR"
 }

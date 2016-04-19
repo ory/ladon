@@ -12,12 +12,12 @@ type Condition interface {
 	// GetName returns the condition's name.
 	GetName() string
 
-	// Fulfills returns true if the the request is fulfilled by the condition.
-	Fulfills(*Request) bool
+	// Fulfills returns true if the request is fulfilled by the condition.
+	Fulfills(interface{}) bool
 }
 
 // Conditions is a collection of conditions.
-type Conditions []Condition
+type Conditions map[string]Condition
 
 // AddCondition adds a condition to the collection.
 func (cs *Conditions) AddCondition(c Condition) {
@@ -26,7 +26,7 @@ func (cs *Conditions) AddCondition(c Condition) {
 
 // MarshalJSON marshals a list of conditions to json.
 func (cs *Conditions) MarshalJSON() ([]byte, error) {
-	out := make([]jsonCondition, len(*cs))
+	out := make(map[string]jsonCondition, len(*cs))
 	for k, c := range *cs {
 		raw, err := json.Marshal(c)
 		if err != nil {
@@ -34,19 +34,17 @@ func (cs *Conditions) MarshalJSON() ([]byte, error) {
 		}
 
 		out[k] = jsonCondition{
-			Name:    c.GetName(),
+			Type:    c.GetName(),
 			Options: json.RawMessage(raw),
 		}
 	}
-
-	fmt.Printf("%s\n", out)
 
 	return json.Marshal(out)
 }
 
 // UnmarshalJSON unmarshals a list of conditions from json.
 func (cs *Conditions) UnmarshalJSON(data []byte) error {
-	var jcs []jsonCondition
+	var jcs map[string]jsonCondition
 	var dc Condition
 	if err := json.Unmarshal(data, &jcs); err != nil {
 		return errors.New(err)
@@ -54,7 +52,7 @@ func (cs *Conditions) UnmarshalJSON(data []byte) error {
 
 	for _, jc := range jcs {
 		for name, c := range conditionFactories {
-			if name == jc.Name {
+			if name == jc.Type {
 				dc = c()
 				if err := json.Unmarshal(jc.Options, dc); err != nil {
 					return err
@@ -70,16 +68,13 @@ func (cs *Conditions) UnmarshalJSON(data []byte) error {
 }
 
 type jsonCondition struct {
-	Name    string          `json:"name"`
+	Type    string          `json:"type"`
 	Options json.RawMessage `json:"options"`
 }
 
 var conditionFactories = map[string]func() Condition{
-	new(SubjectIsOwnerCondition).GetName(): func() Condition {
-		return new(SubjectIsOwnerCondition)
-	},
-	new(SubjectIsNotOwnerCondition).GetName(): func() Condition {
-		return new(SubjectIsNotOwnerCondition)
+	new(StringMatchCondition).GetName(): func() Condition {
+		return new(StringMatchCondition)
 	},
 	new(CIDRCondition).GetName(): func() Condition {
 		return new(CIDRCondition)
