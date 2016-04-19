@@ -11,7 +11,7 @@ type CIDRCondition struct {
 
 // Fulfills returns true if the the request is fulfilled by the condition.
 func (c *CIDRCondition) Fulfills(value interface{}) bool {
-	ip, ok := value.(string)
+	ips, ok := value.(string)
 	if !ok {
 		return false
 	}
@@ -21,7 +21,7 @@ func (c *CIDRCondition) Fulfills(value interface{}) bool {
 		return false
 	}
 
-	ip := net.ParseIP(ip)
+	ip := net.ParseIP(ips)
 	if ip == nil {
 		return false
 	}

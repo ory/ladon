@@ -2,9 +2,9 @@ package ladon
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/go-errors/errors"
+	"net/url"
 )
 
 // Condition either do or do not fulfill an access request.
@@ -20,14 +20,14 @@ type Condition interface {
 type Conditions map[string]Condition
 
 // AddCondition adds a condition to the collection.
-func (cs *Conditions) AddCondition(c Condition) {
-	*cs = append(*cs, c)
+func (cs Conditions) AddCondition(key string, c Condition) {
+	cs[key] = c
 }
 
 // MarshalJSON marshals a list of conditions to json.
-func (cs *Conditions) MarshalJSON() ([]byte, error) {
-	out := make(map[string]jsonCondition, len(*cs))
-	for k, c := range *cs {
+func (cs Conditions) MarshalJSON() ([]byte, error) {
+	out := make(map[string]jsonCondition, len(cs))
+	for k, c := range cs {
 		raw, err := json.Marshal(c)
 		if err != nil {
 			return []byte{}, errors.New(err)
@@ -43,14 +43,14 @@ func (cs *Conditions) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON unmarshals a list of conditions from json.
-func (cs *Conditions) UnmarshalJSON(data []byte) error {
+func (cs Conditions) UnmarshalJSON(data []byte) error {
 	var jcs map[string]jsonCondition
 	var dc Condition
 	if err := json.Unmarshal(data, &jcs); err != nil {
 		return errors.New(err)
 	}
 
-	for _, jc := range jcs {
+	for k, jc := range jcs {
 		for name, c := range conditionFactories {
 			if name == jc.Type {
 				dc = c()
@@ -58,7 +58,7 @@ func (cs *Conditions) UnmarshalJSON(data []byte) error {
 					return err
 				}
 
-				*cs = append(*cs, dc)
+				cs[k] = dc
 				break
 			}
 		}

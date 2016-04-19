@@ -22,10 +22,6 @@ func TestCIDRMatch(t *testing.T) {
 			CIDR: c.cidr,
 		}
 
-		assert.Equal(t, c.pass, condition.Fulfills(&Request{
-			Context: &Context{
-				ClientIP: c.ip,
-			},
-		}), "%s; %s", c.ip, c.cidr)
+		assert.Equal(t, c.pass, condition.Fulfills(c.ip), "%s; %s", c.ip, c.cidr)
 	}
 }
