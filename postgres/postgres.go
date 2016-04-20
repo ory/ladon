@@ -99,6 +99,7 @@ func (s *Manager) Get(id string) (ladon.Policy, error) {
 		return nil, errors.New(err)
 	}
 
+	p.Conditions = ladon.Conditions{}
 	if err := json.Unmarshal(conditions, &p.Conditions); err != nil {
 		return nil, errors.New(err)
 	}

@@ -144,6 +144,7 @@ func (s *Manager) Get(id string) (ladon.Policy, error) {
 		Actions:     getLinked(p.PolicyPermissions),
 		Subjects:    getLinked(p.PolicySubjects),
 		Resources:   getLinked(p.PolicyResources),
+		Conditions:  ladon.Conditions{},
 	}
 
 	if err := json.Unmarshal(p.Conditions, &orgPolicy.Conditions); err != nil {
@@ -190,6 +191,7 @@ func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Polic
 			Actions:     getLinked(tp.PolicyPermissions),
 			Subjects:    getLinked(tp.PolicySubjects),
 			Resources:   getLinked(tp.PolicyResources),
+			Conditions:  ladon.Conditions{},
 		}
 
 		if err := json.Unmarshal(tp.Conditions, &tempPolicy.Conditions); err != nil {
