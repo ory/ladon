@@ -25,14 +25,14 @@ func (cs Conditions) AddCondition(key string, c Condition) {
 
 // MarshalJSON marshals a list of conditions to json.
 func (cs Conditions) MarshalJSON() ([]byte, error) {
-	out := make(map[string]jsonCondition, len(cs))
+	out := make(map[string]*jsonCondition, len(cs))
 	for k, c := range cs {
 		raw, err := json.Marshal(c)
 		if err != nil {
 			return []byte{}, errors.New(err)
 		}
 
-		out[k] = jsonCondition{
+		out[k] = &jsonCondition{
 			Type:    c.GetName(),
 			Options: json.RawMessage(raw),
 		}
@@ -45,6 +45,7 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 func (cs Conditions) UnmarshalJSON(data []byte) error {
 	var jcs map[string]jsonCondition
 	var dc Condition
+
 	if err := json.Unmarshal(data, &jcs); err != nil {
 		return errors.New(err)
 	}
@@ -77,5 +78,8 @@ var conditionFactories = map[string]func() Condition{
 	},
 	new(CIDRCondition).GetName(): func() Condition {
 		return new(CIDRCondition)
+	},
+	new(EqualsSubjectCondition).GetName(): func() Condition {
+		return new(EqualsSubjectCondition)
 	},
 }

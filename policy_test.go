@@ -8,7 +8,7 @@ import (
 )
 
 var policyConditions = Conditions{
-	&SubjectIsOwnerCondition{},
+	"owner": &EqualsSubjectCondition{},
 }
 
 var policyCases = []*DefaultPolicy{

@@ -93,8 +93,8 @@ func Match(p Policy, haystack []string, needle string) (bool, error) {
 }
 
 func (g *Ladon) passesConditions(p Policy, r *Request) bool {
-	for _, condition := range p.GetConditions() {
-		if pass := condition.Fulfills(r); !pass {
+	for key, condition := range p.GetConditions() {
+		if pass := condition.Fulfills(r.Context[key], r); !pass {
 			return false
 		}
 	}

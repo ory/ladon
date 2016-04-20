@@ -63,7 +63,7 @@ func TestLadon(t *testing.T) {
 				Action:   "delete",
 				Resource: "myrn:some.domain.com:resource:123",
 
-				Context: &ladon.Context{
+				Context: ladon.Context{
 					"owner": "peter",
 					"clientIP": "0.0.0.0",
 				},
@@ -77,7 +77,7 @@ func TestLadon(t *testing.T) {
 				Action:   "delete",
 				Resource: "myrn:some.domain.com:resource:123",
 
-				Context: &ladon.Context{
+				Context: ladon.Context{
 					"owner": "zac",
 					"clientIP": "127.0.0.1",
 				},
@@ -91,7 +91,7 @@ func TestLadon(t *testing.T) {
 				Action:   "delete",
 				Resource: "myrn:some.domain.com:resource:123",
 
-				Context: &ladon.Context{
+				Context: ladon.Context{
 					"owner": "peter",
 					"clientIP": "127.0.0.1",
 				},

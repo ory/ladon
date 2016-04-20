@@ -18,7 +18,7 @@ func TestConditionsAppend(t *testing.T) {
 func TestMarshalUnmarshal(t *testing.T) {
 	css := &Conditions{
 		"clientIP": &CIDRCondition{CIDR: "127.0.0.1/0"},
-		"owner":    &StringEqualCondition{Equals: "peter"},
+		"owner":    &EqualsSubjectCondition{},
 	}
 	out, err := json.Marshal(css)
 	require.Nil(t, err)
@@ -27,13 +27,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 	cs := Conditions{}
 	require.Nil(t, json.Unmarshal([]byte(`{
 	"owner": {
-		"name": "SubjectIsOwnerCondition",
+		"type": "EqualsSubjectCondition",
 		"options": {
 			"matches": "peter"
 		}
 	},
 	"clientIP": {
-		"name": "CIDRCondition",
+		"type": "CIDRCondition",
 		"options": {
 			"cidr": "127.0.0.1/0"
 		}
@@ -41,6 +41,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 }`), &cs))
 
 	require.Len(t, cs, 2)
-	assert.IsType(t, &StringEqualCondition{}, "clientIP")
-	assert.IsType(t, &CIDRCondition{}, "owner")
+	assert.IsType(t, &EqualsSubjectCondition{}, cs["owner"])
+	assert.IsType(t, &CIDRCondition{}, cs["clientIP"])
 }

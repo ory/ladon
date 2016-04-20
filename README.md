@@ -142,7 +142,7 @@ A valid access request and policy requires at least the affected subject, action
 
 ### Access request with resource and context
 
-The next example uses resources and (context) conditions to refine access control requests further.
+The next example uses resources and (context) conditions to further refine access control requests.
 
 ```
 > curl \
@@ -160,7 +160,7 @@ The next example uses resources and (context) conditions to refine access contro
           ],
           "conditions": {
             "remoteIP": {
-                "name": "CIDR",
+                "type": "CIDRCondition",
                 "options": {
                     "cidr": "192.168.0.1/16"
                 }

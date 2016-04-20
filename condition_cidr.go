@@ -31,5 +31,5 @@ func (c *CIDRCondition) Fulfills(value interface{}, _ *Request) bool {
 
 // GetName returns the condition's name.
 func (c *CIDRCondition) GetName() string {
-	return "CIDR"
+	return "CIDRCondition"
 }
