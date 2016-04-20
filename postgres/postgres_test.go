@@ -45,9 +45,10 @@ var cases = []*ladon.DefaultPolicy{
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"view"},
 		Conditions: ladon.Conditions{
-			&ladon.CIDRCondition{
+			"ip": &ladon.CIDRCondition{
 				CIDR: "1234",
 			},
+			"owner": &ladon.EqualsSubjectCondition{},
 		},
 	},
 	{
@@ -58,10 +59,10 @@ var cases = []*ladon.DefaultPolicy{
 		Resources:   []string{".*"},
 		Actions:     []string{"disable"},
 		Conditions: ladon.Conditions{
-			&ladon.CIDRCondition{
+			"ip": &ladon.CIDRCondition{
 				CIDR: "1234",
 			},
-			&ladon.SubjectIsNotOwnerCondition{},
+			"owner": &ladon.EqualsSubjectCondition{},
 		},
 	},
 	{
@@ -72,10 +73,10 @@ var cases = []*ladon.DefaultPolicy{
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
 		Conditions: ladon.Conditions{
-			&ladon.CIDRCondition{
+			"ip": &ladon.CIDRCondition{
 				CIDR: "1234",
 			},
-			&ladon.SubjectIsNotOwnerCondition{},
+			"owner": &ladon.EqualsSubjectCondition{},
 		},
 	},
 	{
@@ -86,10 +87,10 @@ var cases = []*ladon.DefaultPolicy{
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
 		Conditions: ladon.Conditions{
-			&ladon.CIDRCondition{
+			"ip": &ladon.CIDRCondition{
 				CIDR: "1234",
 			},
-			&ladon.SubjectIsNotOwnerCondition{},
+			"owner": &ladon.EqualsSubjectCondition{},
 		},
 	},
 }
