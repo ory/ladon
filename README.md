@@ -104,7 +104,7 @@ if you want to use Protobuf, RESTful, HTTP, AMPQ, or some other protocol. It's u
 
 The following examples will give you a better understanding of what you can do with Ladon.
 
-### Access request without resource and context
+### Access request without context
 
 A valid access request and policy requires at least the affected subject, action and effect:
 
@@ -118,6 +118,9 @@ A valid access request and policy requires at least the affected subject, action
           "description": "One policy to rule them all.",
           "subjects": ["users:peter", "users:ken", "groups:admins"],
           "actions" : ["delete"],
+          "resources": [
+            "<.*>"
+          ],
           "effect": "allow"
       }
   EOF
@@ -139,6 +142,8 @@ A valid access request and policy requires at least the affected subject, action
     "allowed": true
 }
 ```
+
+**Note:** Because *resources* matches everything (`.*`), it is not required to pass a resource name to the warden.
 
 ### Access request with resource and context
 
