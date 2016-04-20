@@ -38,15 +38,13 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 		// Does the subject match with one of the policies?
 		if sm, err := Match(p, p.GetSubjects(), r.Subject); err != nil {
 			return err
-		} else if !sm && len(p.GetSubjects()) > 0 {
+		} else if !sm {
 			// no, continue to next policy
 			continue
 		}
 
-		// If no resource is given, the policy should not be scoped to resources as well.
-		if r.Resource == "" && len(p.GetResources()) == 0 {
-			// Does the resource match with one of the policies?
-		} else if rm, err := Match(p, p.GetResources(), r.Resource); err != nil {
+		// Does the resource match with one of the policies?
+		if rm, err := Match(p, p.GetResources(), r.Resource); err != nil {
 			return errors.New(err)
 		} else if !rm {
 			// no, continue to next policy

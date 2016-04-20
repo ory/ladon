@@ -9,39 +9,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var pol = &ladon.DefaultPolicy{
-	// A required unique identifier. Used primarily for database retrieval.
-	ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
-
-	// A optional human readable description.
-	Description: "something humanly readable",
-
-	// A subject can be an user or a service. It is the "who" in "who is allowed to do what on something".
-	// As you can see here, you can use regular expressions inside < >.
-	Subjects: []string{"max", "peter", "<zac|ken>"},
-
-	// Which resources this policy affects.
-	// Again, you can put regular expressions in inside < >.
-	Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
-
-	// Which actions this policy affects. Supports RegExp
-	// Again, you can put regular expressions in inside < >.
-	Actions: []string{"<create|delete>", "get"},
-
-	// Should access be allowed or denied?
-	// Note: If multiple policies match an access request, ladon.DenyAccess will always override ladon.AllowAccess
-	// and thus deny access.
-	Effect: ladon.AllowAccess,
-
-	// Under which conditions this policy is "active".
-	Conditions: ladon.Conditions{
-		// In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-		"owner": &ladon.EqualsSubjectCondition{},
-
-		// Additionally, the policy will only match if the requests remote ip address matches 127.0.0.1
-		"clientIP": &ladon.CIDRCondition{
-			CIDR: "127.0.0.1/32",
+var pols = []ladon.Policy{
+	&ladon.DefaultPolicy{
+		ID:          "68819e5a-738b-41ec-b03c-b58a1b19d043",
+		Description: "something humanly readable",
+		Subjects:    []string{"max", "peter", "<zac|ken>"},
+		Resources:   []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+		Actions:     []string{"<create|delete>", "get"},
+		Effect:      ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"owner": &ladon.EqualsSubjectCondition{},
+			"clientIP": &ladon.CIDRCondition{
+				CIDR: "127.0.0.1/32",
+			},
 		},
+	},
+	&ladon.DefaultPolicy{
+		ID:        "38819e5a-738b-41ec-b03c-b58a1b19d041",
+		Subjects:  []string{"max"},
+		Actions:   []string{"update"},
+		Resources: []string{"<.*>"},
+		Effect:    ladon.AllowAccess,
+	},
+	&ladon.DefaultPolicy{
+		ID:        "38919e5a-738b-41ec-b03c-b58a1b19d041",
+		Subjects:  []string{"max"},
+		Actions:   []string{"broadcast"},
+		Resources: []string{"<.*>"},
+		Effect:    ladon.DenyAccess,
 	},
 }
 
@@ -49,7 +44,9 @@ func TestLadon(t *testing.T) {
 	warden := &ladon.Ladon{
 		Manager: memory.New(),
 	}
-	require.Nil(t, warden.Manager.Create(pol))
+	for _, pol := range pols {
+		require.Nil(t, warden.Manager.Create(pol))
+	}
 
 	for k, c := range []struct {
 		d         string
@@ -97,6 +94,41 @@ func TestLadon(t *testing.T) {
 				},
 			},
 			expectErr: false,
+		},
+		{
+			d: "should pass because max is allowed to update all resources",
+			r: &ladon.Request{
+				Subject:  "max",
+				Action:   "update",
+				Resource: "myrn:some.domain.com:resource:123",
+			},
+			expectErr: false,
+		},
+		{
+			d: "should pass because max is allowed to update all resource, even if none is given",
+			r: &ladon.Request{
+				Subject:  "max",
+				Action:   "update",
+				Resource: "",
+			},
+			expectErr: false,
+		},
+		{
+			d: "should be rejected",
+			r: &ladon.Request{
+				Subject:  "max",
+				Action:   "broadcast",
+				Resource: "myrn:some.domain.com:resource:123",
+			},
+			expectErr: true,
+		},
+		{
+			d: "should be rejected",
+			r: &ladon.Request{
+				Subject: "max",
+				Action:  "broadcast",
+			},
+			expectErr: true,
 		},
 	} {
 		t.Logf("Joining (%d) %s", k, c.d)
