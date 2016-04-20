@@ -159,7 +159,12 @@ The next example uses resources and (context) conditions to refine access contro
             "resource:articles<.*>"
           ],
           "conditions": {
-            "remoteIP": "192.168.0.1/16"
+            "remoteIP": {
+                "name": "CIDR",
+                "options": {
+                    "cidr": "192.168.0.1/16"
+                }
+            }
           }
       }
   EOF
@@ -223,7 +228,7 @@ var pol = &ladon.DefaultPolicy{
 	// Under which conditions this policy is "active".
 	Conditions: ladon.Conditions{
 		// In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-		"owner": &ladon.SubjectIsOwnerCondition{},
+		"resourceOwner": &ladon.EqualsSubjectCondition{},
 
 		// Additionally, the policy will only match if the requests remote ip address matches address range 127.0.0.1/32
 		"remoteIPAddress": &ladon.CIDRCondition{
@@ -410,7 +415,7 @@ func main() {
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: ladon.Context{
-            "owner": "peter",
+            "resourceOwner": "peter",
             "remoteIPAddress": "127.0.0.1",
         },
     }); err != nil {
