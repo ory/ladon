@@ -364,7 +364,7 @@ func main() {
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: &ladon.Context{
-            "owner": "peter",
+            "resourceOwner": "peter",
         },
     }); err != nil {
         log.Print("Access denied")
@@ -390,7 +390,7 @@ func main() {
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: &ladon.Context{
-            "owner": "peter",
+            "resourceOwner": "peter",
         },
     }); err != nil {
         log.Print("Access denied")
