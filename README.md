@@ -18,6 +18,11 @@ Please be aware that ladon does not have a stable release just yet. Once it does
 **Table of Contents**
 
 - [What is this and how does it work?](#what-is-this-and-how-does-it-work)
+  - [Ladon vs ACL](#ladon-vs-acl)
+  - [Ladon vs RBAC](#ladon-vs-rbac)
+- [How could Ladon work in my environment?](#how-could-ladon-work-in-my-environment)
+  - [Access request without resource and context](#access-request-without-resource-and-context)
+  - [Access request with resource and context](#access-request-with-resource-and-context)
 - [Usage](#usage)
   - [Policies](#policies)
   - [Policy management](#policy-management)
@@ -32,7 +37,7 @@ Please be aware that ladon does not have a stable release just yet. Once it does
     - [Working example](#working-example)
     - [Full code for working example](#full-code-for-working-example)
 - [Good to know](#good-to-know)
-  - [Useful commands](#useful-commands)
+- [Useful commands](#useful-commands)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -45,14 +50,141 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 Ladon is an access control library. You might also call it a policy administration and policy decision point. Ladon
 answers the question:
 
-> **Who** is **able** to do **what** on **something** with **context**
+> **Who** is **able** to do **what** on **something** with some **context**
 
 * **Who** An arbitrary unique subject name, for example "ken" or "printer-service.mydomain.com".
 * **Able**: The effect which is always "allow" or "deny".
 * **What**: An arbitrary action name, for example "delete", "create" or "scoped:action:something".
 * **Something**: An arbitrary unique resource name, for example "something", "resources:articles:1234" or some uniform
-  resource name like "urn:isbn:3827370191".
-* **Context**: The current context which may environment information like the IP Address, request date or the resource owner name amongst other things.
+    resource name like "urn:isbn:3827370191".
+* **Context**: The current context which may environment information like the IP Address,
+    request date, the resource owner name, the department ken is working in and anything you like.
+
+### Ladon vs ACL
+
+> An access control list (ACL), with respect to a computer file system, is a list of permissions attached to an object.
+  An ACL specifies which users or system processes are granted access to objects, as well as what operations are allowed on given objects.
+  Each entry in a typical ACL specifies a subject and an operation. For instance, if a file object has an ACL that contains
+  (Alice: read,write; Bob: read), this would give Alice permission to read and write the file and Bob to only read it.
+  \- *[Source](https://en.wikipedia.org/wiki/Access_control_list)*
+
+Compare this with Ladon and you get:
+
+* **Who**: The ACL subject (Alice, Bob).
+* **What**: The Operation or permission.
+* **Something**: The object.
+
+ACL however is a white list (Alice is granted permission read on object foo). Ladon however can be used to blacklist as well:
+Alice is disallowed permission read on object foo.
+
+Without tweaking, ACL does not support departments, ip addresses, request dates and other environmental information. Ladon does.
+
+### Ladon vs RBAC
+
+> In computer systems security, role-based access control (RBAC) is an approach to restricting system access to authorized users.
+  RBAC is sometimes referred to as role-based security. Within an organization, roles are created for various job functions.
+  The permissions to perform certain operations are assigned to specific roles. Members or staff (or other system users)
+  are assigned particular roles, and through those role assignments acquire the computer permissions to perform particular
+  computer-system functions. Since users are not assigned permissions directly, but only acquire them through their role (or roles),
+  management of individual user rights becomes a matter of simply assigning appropriate roles to the user's account;
+  this simplifies common operations, such as adding a user, or changing a user's department.
+  \- *[Source](https://en.wikipedia.org/wiki/Role-based_access_control)*
+
+Compare this with Ladon and you get:
+
+* **Who**: The role
+* **What**: The Operation or permission.
+
+Again, RBAC is a white list. RBAC does not know objects (*something*) neither does RBAC know contexts.
+
+## How could Ladon work in my environment?
+
+Ladon does not come with a HTTP handler. We believe that it is your job to decide
+if you want to use Protobuf, RESTful, HTTP, AMPQ, or some other protocol. It's up to you to write handlers!
+
+The following examples will give you a better understanding of what you can do with Ladon.
+
+### Access request without resource and context
+
+A valid access request and policy requires at least the affected subject, action and effect:
+
+```
+> curl \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d@- \
+      "https://ladon.myorg.com/policies" <<EOF
+      {
+          "description": "One policy to rule them all.",
+          "subjects": ["users:peter", "users:ken", "groups:admins"],
+          "actions" : ["delete"],
+          "effect": "allow"
+      }
+  EOF
+```
+
+```
+> curl \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d@- \
+      "https://ladon.myorg.com/warden" <<EOF
+      {
+          "subject": "users:peter",
+          "action" : "delete"
+      }
+  EOF
+
+{
+    "allowed": true
+}
+```
+
+### Access request with resource and context
+
+The next example uses resources and (context) conditions to refine access control requests further.
+
+```
+> curl \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d@- \
+      "https://ladon.myorg.com/policies" <<EOF
+      {
+          "description": "One policy to rule them all.",
+          "subjects": ["users:peter", "users:ken", "groups:admins"],
+          "actions" : ["delete"],
+          "effect": "allow",
+          "resources": [
+            "resource:articles<.*>"
+          ],
+          "conditions": {
+            "remoteIP": "192.168.0.1/16"
+          }
+      }
+  EOF
+```
+
+```
+> curl \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d@- \
+      "https://ladon.myorg.com/warden" <<EOF
+      {
+          "subject": "users:peter",
+          "action" : "delete",
+          "resource": "resource:articles:ladon-introduction",
+          "context": {
+            "remoteIP": "192.168.0.5"
+          }
+      }
+  EOF
+
+{
+    "allowed": true
+}
+```
 
 ## Usage
 
@@ -91,10 +223,10 @@ var pol = &ladon.DefaultPolicy{
 	// Under which conditions this policy is "active".
 	Conditions: ladon.Conditions{
 		// In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-		&ladon.SubjectIsOwnerCondition{},
+		"owner": &ladon.SubjectIsOwnerCondition{},
 
-		// Additionally, the policy will only match if the requests remote ip address matches 127.0.0.1
-		&ladon.CIDRCondition{
+		// Additionally, the policy will only match if the requests remote ip address matches address range 127.0.0.1/32
+		"remoteIPAddress": &ladon.CIDRCondition{
 			CIDR: "127.0.0.1/32",
 		},
 	},
@@ -227,7 +359,7 @@ func main() {
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: &ladon.Context{
-            Owner: "peter",
+            "owner": "peter",
         },
     }); err != nil {
         log.Print("Access denied")
@@ -253,7 +385,7 @@ func main() {
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: &ladon.Context{
-            Owner: "peter",
+            "owner": "peter",
         },
     }); err != nil {
         log.Print("Access denied")
@@ -278,8 +410,8 @@ func main() {
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: ladon.Context{
-            Owner: "peter",
-            ClientIP: "127.0.0.1",
+            "owner": "peter",
+            "remoteIPAddress": "127.0.0.1",
         },
     }); err != nil {
         log.Print("Access denied")
