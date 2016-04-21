@@ -161,12 +161,12 @@ func (s *Manager) Delete(id string) error {
 	return nil
 }
 
-func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Policy, err error) {
+func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policies, err error) {
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
 		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
 			return rdb.Expr(subject).Match(policy_subject.Field("compiled"))
-		}).Or(policy.Field("ladon_policy_subjects").IsEmpty())
+		})
 	}).Run(s.session)
 
 	if err != nil {

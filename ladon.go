@@ -75,15 +75,13 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 func Match(p Policy, haystack []string, needle string) (bool, error) {
 	var reg *regexp.Regexp
 	var err error
-	var matches bool
 	for _, h := range haystack {
 		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())
 		if err != nil {
 			return false, err
 		}
 
-		matches = reg.MatchString(needle)
-		if matches {
+		if reg.MatchString(needle) {
 			return true, nil
 		}
 	}

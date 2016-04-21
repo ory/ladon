@@ -14,29 +14,29 @@ import (
 
 var schemas = []string{
 	`CREATE TABLE IF NOT EXISTS ladon_policy (
-		id           uuid NOT NULL PRIMARY KEY,
+		id           text NOT NULL PRIMARY KEY,
 		description  text DEFAULT '',
 		created_at   timestamp DEFAULT NOW(),
-		previous	 uuid NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
+		previous	 text NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
 		effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
 		conditions 	 json DEFAULT '[]'
 	)`,
 	`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
     	compiled text NOT NULL,
     	template text NOT NULL,
-    	policy uuid NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
+    	policy   text NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
     	PRIMARY KEY (template, policy)
 	)`,
 	`CREATE TABLE IF NOT EXISTS ladon_policy_permission (
     	compiled text NOT NULL,
     	template text NOT NULL,
-    	policy uuid NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
+    	policy   text NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
     	PRIMARY KEY (template, policy)
 	)`,
 	`CREATE TABLE IF NOT EXISTS ladon_policy_resource (
     	compiled text NOT NULL,
     	template text NOT NULL,
-    	policy uuid NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
+    	policy   text NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE,
     	PRIMARY KEY (template, policy)
 	)`,
 }
@@ -128,7 +128,7 @@ func (s *Manager) Delete(id string) error {
 	return err
 }
 
-func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Policy, err error) {
+func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policies, err error) {
 	find := func(query string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(query, args...)
 		if err == sql.ErrNoRows {
@@ -151,13 +151,8 @@ func (s *Manager) FindPoliciesForSubject(subject string) (policies []ladon.Polic
 	if err != nil {
 		return policies, err
 	}
-	globals, err := find("SELECT id FROM ladon_policy p LEFT JOIN ladon_policy_subject ps ON p.id = ps.policy WHERE ps.policy IS NULL")
-	if err != nil {
-		return policies, err
-	}
 
-	ids := append(subjects, globals...)
-	for _, id := range ids {
+	for _, id := range subjects {
 		p, err := s.Get(id)
 		if err != nil {
 			return nil, err

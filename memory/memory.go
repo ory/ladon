@@ -17,6 +17,10 @@ func New() *Manager {
 }
 
 func (m *Manager) Create(policy ladon.Policy) error {
+	if _, found := m.Policies[policy.GetID()]; found {
+		return errors.New("Policy exists")
+	}
+
 	m.Policies[policy.GetID()] = policy
 	return nil
 }

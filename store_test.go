@@ -1,4 +1,4 @@
-package postgres
+package ladon_test
 
 import (
 	"database/sql"
@@ -13,12 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ory-am/dockertest.v2"
+	"github.com/ory-am/ladon/postgres"
+	rdb "github.com/dancannon/gorethink"
+	"github.com/ory-am/ladon/rethinkdb"
+	"github.com/ory-am/ladon/memory"
 )
 
-var s *Manager
-var db *sql.DB
-
-var cases = []*ladon.DefaultPolicy{
+var managerPolicies = []*ladon.DefaultPolicy{
 	{
 		ID:          uuid.New(),
 		Description: "description",
@@ -45,9 +46,6 @@ var cases = []*ladon.DefaultPolicy{
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"view"},
 		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
-				CIDR: "1234",
-			},
 			"owner": &ladon.EqualsSubjectCondition{},
 		},
 	},
@@ -95,11 +93,30 @@ var cases = []*ladon.DefaultPolicy{
 	},
 }
 
+var managers = map[string]ladon.Manager{}
+
+var containers = []dockertest.ContainerID{}
+
 func TestMain(m *testing.M) {
-	if testing.Short() {
-		os.Exit(0)
+	connectPG()
+	connectRDB()
+	connectMEM()
+
+	retCode := m.Run()
+
+	for _, c := range containers {
+		c.KillRemove()
 	}
 
+	os.Exit(retCode)
+}
+
+func connectMEM() {
+	managers["memory"] =  memory.New()
+}
+
+func connectPG() {
+	var db *sql.DB
 	c, err := dockertest.ConnectToPostgreSQL(15, time.Second, func(url string) bool {
 		var err error
 		db, err = sql.Open("postgres", url)
@@ -113,75 +130,101 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
-	s = New(db)
+	containers = append(containers, c)
+	s := postgres.New(db)
+
 	if err = s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not ping database: %v", err)
 	}
 
-	retCode := m.Run()
-
-	// force teardown
-	tearDown(c)
-
-	os.Exit(retCode)
+	managers["postgres"] = s
 }
 
-func tearDown(c dockertest.ContainerID) {
-	db.Close()
-	c.KillRemove()
-}
 
-func TestCreateErrors(t *testing.T) {
-	assert.NotNil(t, &ladon.DefaultPolicy{
-		ID: "invalid-format",
+func connectRDB() {
+	var err error
+	var rdbSession *rdb.Session
+
+	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
+		if rdbSession, err = rdb.Connect(rdb.ConnectOpts{
+			Address:  url,
+			Database: "hydra",
+		}); err != nil {
+			return false
+		}
+
+		if _, err = rdb.DBCreate("hydra").RunWrite(rdbSession); err != nil {
+			return false
+		}
+
+		return true
 	})
+
+	if err != nil {
+		log.Fatalf("Could not connect to database: %s", err)
+	}
+
+	containers = append(containers, c)
+	s := rethinkdb.New(rdbSession)
+
+	if err := s.CreateTables(); err != nil {
+		log.Fatalf("Could not create tables: %s", err)
+	}
+
+	managers["rethinkdb"] = s
 }
 
 func TestGetErrors(t *testing.T) {
-	_, err := s.Get(uuid.New())
-	assert.Equal(t, pkg.ErrNotFound, err)
-	_, err = s.Get("asdf")
-	assert.NotNil(t, err)
-}
-
-func TestCreateGetDelete(t *testing.T) {
-	for _, c := range cases {
-		err := s.Create(c)
-		assert.Nil(t, err)
-
-		get, err := s.Get(c.GetID())
-		assert.Nil(t, err)
-		pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Actions")
-		assert.Equal(t, len(c.Conditions), len(get.GetConditions()))
-	}
-
-	for _, c := range cases {
-		assert.Nil(t, s.Delete(c.GetID()))
-		_, err := s.Get(c.GetID())
+	for k, s := range managers {
+		_, err := s.Get(uuid.New())
+		assert.EqualError(t, err,pkg.ErrNotFound.Error(), k)
+		_, err = s.Get("asdf")
 		assert.NotNil(t, err)
 	}
 }
 
-func TestFindPoliciesForSubject(t *testing.T) {
-	for _, c := range cases {
-		require.Nil(t, s.Create(c))
+func TestCreateGetDelete(t *testing.T) {
+	for k, s := range managers {
+		for _, c := range managerPolicies {
+			err := s.Create(c)
+			assert.Nil(t, err, k)
+
+			get, err := s.Get(c.GetID())
+			assert.Nil(t, err, k)
+			pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Actions")
+			assert.Equal(t, len(c.Conditions), len(get.GetConditions()), k)
+		}
+
+		for _, c := range managerPolicies {
+			assert.Nil(t, s.Delete(c.GetID()), k)
+			_, err := s.Get(c.GetID())
+			assert.NotNil(t, err, k)
+		}
 	}
+}
 
-	policies, err := s.FindPoliciesForSubject("user")
-	assert.Nil(t, err)
-	assert.Equal(t, 5, len(policies))
+func TestFindPoliciesForSubject(t *testing.T) {
+	for k, s := range managers {
+		for _, c := range managerPolicies {
+			require.Nil(t, s.Create(c), k)
+		}
 
-	policies, err = s.FindPoliciesForSubject("peter")
-	assert.Nil(t, err)
-	assert.Equal(t, 4, len(policies))
+		policies, err := s.FindPoliciesForSubject("user")
+		assert.Nil(t, err)
+		assert.Equal(t, 4, len(policies), k)
 
-	// Test case-sensitive matching
-	policies, err = s.FindPoliciesForSubject("User")
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(policies))
+		policies, err = s.FindPoliciesForSubject("peter")
+		assert.Nil(t, err)
+		assert.Equal(t, 3, len(policies), k)
 
-	// Test user without policy
-	policies, err = s.FindPoliciesForSubject("foobar")
-	assert.Nil(t, err)
-	assert.Equal(t, 2, len(policies))
+		// Test case-sensitive matching
+		policies, err = s.FindPoliciesForSubject("User")
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(policies), k)
+
+		// Test user without policy
+		policies, err = s.FindPoliciesForSubject("foobar")
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(policies), k)
+	}
 }
