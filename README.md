@@ -11,17 +11,16 @@ A policy based authorization library written in [Go](https://golang.org). Ships 
 
 Utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information on how to setup testing environment.
 
-Please be aware that ladon does not have a stable release just yet. Once it does, it will be available through gopkg.in.
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
+- [Installation](#installation)
 - [What is this and how does it work?](#what-is-this-and-how-does-it-work)
   - [Ladon vs ACL](#ladon-vs-acl)
   - [Ladon vs RBAC](#ladon-vs-rbac)
 - [How could Ladon work in my environment?](#how-could-ladon-work-in-my-environment)
-  - [Access request without resource and context](#access-request-without-resource-and-context)
+  - [Access request without context](#access-request-without-context)
   - [Access request with resource and context](#access-request-with-resource-and-context)
 - [Usage](#usage)
   - [Policies](#policies)
@@ -44,6 +43,14 @@ Please be aware that ladon does not have a stable release just yet. Once it does
 Ladon utilizes ory-am/dockertest for tests.
 Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information of how to setup testing environment.
 
+## Installation
+
+```
+go get github.com/ory-am/fosite
+```
+
+We recommend to use [Glide](https://github.com/Masterminds/glide) or [Godep](https://github.com/tools/godep), because
+there might be breaking changes in the future.
 
 ## What is this and how does it work?
 

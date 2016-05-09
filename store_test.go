@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
+	rdb "github.com/dancannon/gorethink"
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/ladon"
+	"github.com/ory-am/ladon/memory"
+	"github.com/ory-am/ladon/postgres"
+	"github.com/ory-am/ladon/rethinkdb"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ory-am/dockertest.v2"
-	"github.com/ory-am/ladon/postgres"
-	rdb "github.com/dancannon/gorethink"
-	"github.com/ory-am/ladon/rethinkdb"
-	"github.com/ory-am/ladon/memory"
 )
 
 var managerPolicies = []*ladon.DefaultPolicy{
@@ -112,7 +112,7 @@ func TestMain(m *testing.M) {
 }
 
 func connectMEM() {
-	managers["memory"] =  memory.New()
+	managers["memory"] = memory.New()
 }
 
 func connectPG() {
@@ -139,7 +139,6 @@ func connectPG() {
 
 	managers["postgres"] = s
 }
-
 
 func connectRDB() {
 	var err error
@@ -177,7 +176,7 @@ func connectRDB() {
 func TestGetErrors(t *testing.T) {
 	for k, s := range managers {
 		_, err := s.Get(uuid.New())
-		assert.EqualError(t, err,pkg.ErrNotFound.Error(), k)
+		assert.EqualError(t, err, pkg.ErrNotFound.Error(), k)
 		_, err = s.Get("asdf")
 		assert.NotNil(t, err)
 	}
