@@ -1,4 +1,4 @@
-package ladon_test
+package ladon
 
 import (
 	"database/sql"
@@ -9,91 +9,87 @@ import (
 
 	rdb "github.com/dancannon/gorethink"
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/ladon"
-	"github.com/ory-am/ladon/memory"
-	"github.com/ory-am/ladon/postgres"
-	"github.com/ory-am/ladon/rethinkdb"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ory-am/dockertest.v2"
 )
 
-var managerPolicies = []*ladon.DefaultPolicy{
+var managerPolicies = []*DefaultPolicy{
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"user", "anonymous"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"create", "update"},
-		Conditions:  ladon.Conditions{},
+		Conditions:  Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions:  ladon.Conditions{},
+		Conditions:  Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<peter|max>"},
-		Effect:      ladon.DenyAccess,
+		Effect:      DenyAccess,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"view"},
-		Conditions: ladon.Conditions{
-			"owner": &ladon.EqualsSubjectCondition{},
+		Conditions: Conditions{
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<user|max|anonymous>", "peter"},
-		Effect:      ladon.DenyAccess,
+		Effect:      DenyAccess,
 		Resources:   []string{".*"},
 		Actions:     []string{"disable"},
-		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &ladon.EqualsSubjectCondition{},
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<.*>"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &ladon.EqualsSubjectCondition{},
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<us[er]+>"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &ladon.EqualsSubjectCondition{},
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 }
 
-var managers = map[string]ladon.Manager{}
+var managers = map[string]Manager{}
 
 var containers = []dockertest.ContainerID{}
 
@@ -112,7 +108,7 @@ func TestMain(m *testing.M) {
 }
 
 func connectMEM() {
-	managers["memory"] = memory.New()
+	managers["memory"] = NewMemoryManager()
 }
 
 func connectPG() {
@@ -131,7 +127,7 @@ func connectPG() {
 	}
 
 	containers = append(containers, c)
-	s := postgres.New(db)
+	s := NewPostgres(db)
 
 	if err = s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not ping database: %v", err)
@@ -164,7 +160,7 @@ func connectRDB() {
 	}
 
 	containers = append(containers, c)
-	s := rethinkdb.New(rdbSession)
+	s := NewRethinkDB(rdbSession)
 
 	if err := s.CreateTables(); err != nil {
 		log.Fatalf("Could not create tables: %s", err)

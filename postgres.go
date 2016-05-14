@@ -1,4 +1,4 @@
-package postgres
+package ladon
 
 import (
 	"database/sql"
@@ -9,7 +9,6 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/ladon"
 )
 
 var schemas = []string{
@@ -41,16 +40,16 @@ var schemas = []string{
 	)`,
 }
 
-// Manager is a postgres implementation of ladon.Manager.
-type Manager struct {
+// Manager is a postgres implementation of Manager.
+type PostgresManager struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) *Manager {
-	return &Manager{db}
+func NewPostgres(db *sql.DB) *PostgresManager {
+	return &PostgresManager{db}
 }
 
-func (s *Manager) CreateSchemas() error {
+func (s *PostgresManager) CreateSchemas() error {
 	for _, query := range schemas {
 		if _, err := s.db.Exec(query); err != nil {
 			log.Printf("Error creating schema %s", query)
@@ -60,7 +59,7 @@ func (s *Manager) CreateSchemas() error {
 	return nil
 }
 
-func (s *Manager) Create(policy ladon.Policy) (err error) {
+func (s *PostgresManager) Create(policy Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -74,11 +73,11 @@ func (s *Manager) Create(policy ladon.Policy) (err error) {
 		return err
 	} else if _, err = tx.Exec("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES ($1, $2, $3, $4)", policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
 		return err
-	} else if err = createLink(tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
+	} else if err = createLinkPG(tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
 		return err
-	} else if err = createLink(tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
+	} else if err = createLinkPG(tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
 		return err
-	} else if err = createLink(tx, "ladon_policy_resource", policy, policy.GetResources()); err != nil {
+	} else if err = createLinkPG(tx, "ladon_policy_resource", policy, policy.GetResources()); err != nil {
 		return err
 	} else if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
@@ -90,8 +89,8 @@ func (s *Manager) Create(policy ladon.Policy) (err error) {
 	return nil
 }
 
-func (s *Manager) Get(id string) (ladon.Policy, error) {
-	var p ladon.DefaultPolicy
+func (s *PostgresManager) Get(id string) (Policy, error) {
+	var p DefaultPolicy
 	var conditions []byte
 	if err := s.db.QueryRow("SELECT id, description, effect, conditions FROM ladon_policy WHERE id=$1", id).Scan(&p.ID, &p.Description, &p.Effect, &conditions); err == sql.ErrNoRows {
 		return nil, pkg.ErrNotFound
@@ -99,20 +98,20 @@ func (s *Manager) Get(id string) (ladon.Policy, error) {
 		return nil, errors.New(err)
 	}
 
-	p.Conditions = ladon.Conditions{}
+	p.Conditions = Conditions{}
 	if err := json.Unmarshal(conditions, &p.Conditions); err != nil {
 		return nil, errors.New(err)
 	}
 
-	subjects, err := getLinked(s.db, "ladon_policy_subject", id)
+	subjects, err := getLinkedPG(s.db, "ladon_policy_subject", id)
 	if err != nil {
 		return nil, err
 	}
-	permissions, err := getLinked(s.db, "ladon_policy_permission", id)
+	permissions, err := getLinkedPG(s.db, "ladon_policy_permission", id)
 	if err != nil {
 		return nil, err
 	}
-	resources, err := getLinked(s.db, "ladon_policy_resource", id)
+	resources, err := getLinkedPG(s.db, "ladon_policy_resource", id)
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +122,12 @@ func (s *Manager) Get(id string) (ladon.Policy, error) {
 	return &p, nil
 }
 
-func (s *Manager) Delete(id string) error {
+func (s *PostgresManager) Delete(id string) error {
 	_, err := s.db.Exec("DELETE FROM ladon_policy WHERE id=$1", id)
 	return err
 }
 
-func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policies, err error) {
+func (s *PostgresManager) FindPoliciesForSubject(subject string) (policies Policies, err error) {
 	find := func(query string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(query, args...)
 		if err == sql.ErrNoRows {
@@ -162,7 +161,7 @@ func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policie
 	return policies, nil
 }
 
-func getLinked(db *sql.DB, table, policy string) ([]string, error) {
+func getLinkedPG(db *sql.DB, table, policy string) ([]string, error) {
 	urns := []string{}
 	rows, err := db.Query(fmt.Sprintf("SELECT template FROM %s WHERE policy=$1", table), policy)
 	if err == sql.ErrNoRows {
@@ -182,7 +181,7 @@ func getLinked(db *sql.DB, table, policy string) ([]string, error) {
 	return urns, nil
 }
 
-func createLink(tx *sql.Tx, table string, p ladon.Policy, templates []string) error {
+func createLinkPG(tx *sql.Tx, table string, p Policy, templates []string) error {
 	for _, template := range templates {
 		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())
 
