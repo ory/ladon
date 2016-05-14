@@ -41,7 +41,7 @@ var pols = []ladon.Policy{
 
 func TestLadon(t *testing.T) {
 	warden := &ladon.Ladon{
-		Manager: memory.NewMemoryManager(),
+		Manager: ladon.NewMemoryManager(),
 	}
 	for _, pol := range pols {
 		require.Nil(t, warden.Manager.Create(pol))
