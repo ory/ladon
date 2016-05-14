@@ -10,9 +10,6 @@ import (
 	rdb "github.com/dancannon/gorethink"
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/ladon"
-	"github.com/ory-am/ladon/memory"
-	"github.com/ory-am/ladon/postgres"
-	"github.com/ory-am/ladon/rethinkdb"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -112,7 +109,7 @@ func TestMain(m *testing.M) {
 }
 
 func connectMEM() {
-	managers["memory"] = memory.New()
+	managers["memory"] = ladon.NewMemoryManager()
 }
 
 func connectPG() {
@@ -131,7 +128,7 @@ func connectPG() {
 	}
 
 	containers = append(containers, c)
-	s := postgres.New(db)
+	s := ladon.NewPostgresManager(db)
 
 	if err = s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not ping database: %v", err)
@@ -164,7 +161,7 @@ func connectRDB() {
 	}
 
 	containers = append(containers, c)
-	s := rethinkdb.New(rdbSession)
+	s := ladon.NewRethinkDBManager(rdbSession)
 
 	if err := s.CreateTables(); err != nil {
 		log.Fatalf("Could not create tables: %s", err)

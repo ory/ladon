@@ -1,5 +1,4 @@
-// Package rethinkdb is a ladon storage backend for rethinkDB.
-package rethinkdb
+package ladon
 
 import (
 	"encoding/json"
@@ -10,7 +9,6 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/ladon"
 )
 
 const policyTableName = "ladon_policy"
@@ -31,16 +29,16 @@ type linkedPolicyResource struct {
 	Template string `gorethink:"template"`
 }
 
-// Manager is a rethinkdb implementation of ladon.Manager.
-type Manager struct {
+// Manager is a rethinkdb implementation of Manager.
+type RethinkDBManager struct {
 	session *rdb.Session
 }
 
-func New(session *rdb.Session) *Manager {
-	return &Manager{session}
+func NewRethinkDBManager(session *rdb.Session) *RethinkDBManager {
+	return &RethinkDBManager{session}
 }
 
-func (s *Manager) CreateTables() error {
+func (s *RethinkDBManager) CreateTables() error {
 	exists, err := s.tableExists(policyTableName)
 	if err == nil && !exists {
 		_, err := rdb.TableCreate(policyTableName).RunWrite(s.session)
@@ -52,7 +50,7 @@ func (s *Manager) CreateTables() error {
 }
 
 // TableExists check if table(s) exists in database
-func (s *Manager) tableExists(table string) (bool, error) {
+func (s *RethinkDBManager) tableExists(table string) (bool, error) {
 
 	res, err := rdb.TableList().Run(s.session)
 	if err != nil {
@@ -74,7 +72,7 @@ func (s *Manager) tableExists(table string) (bool, error) {
 	return false, nil
 }
 
-func (s *Manager) Create(policy ladon.Policy) (err error) {
+func (s *RethinkDBManager) Create(policy Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
@@ -84,15 +82,15 @@ func (s *Manager) Create(policy ladon.Policy) (err error) {
 		}
 	}
 
-	policySubjects, err := createLink(policy, policy.GetSubjects())
+	policySubjects, err := createLinkRDB(policy, policy.GetSubjects())
 	if err != nil {
 		return err
 	}
-	policyPermissions, err := createLink(policy, policy.GetActions())
+	policyPermissions, err := createLinkRDB(policy, policy.GetActions())
 	if err != nil {
 		return err
 	}
-	policyResources, err := createLink(policy, policy.GetResources())
+	policyResources, err := createLinkRDB(policy, policy.GetResources())
 	if err != nil {
 		return err
 	}
@@ -119,7 +117,7 @@ func (s *Manager) Create(policy ladon.Policy) (err error) {
 	return nil
 }
 
-func (s *Manager) Get(id string) (ladon.Policy, error) {
+func (s *RethinkDBManager) Get(id string) (Policy, error) {
 	// Query policy
 	result, err := rdb.Table(policyTableName).Get(id).Run(s.session)
 
@@ -137,14 +135,14 @@ func (s *Manager) Get(id string) (ladon.Policy, error) {
 		return nil, err
 	}
 
-	orgPolicy := ladon.DefaultPolicy{
+	orgPolicy := DefaultPolicy{
 		ID:          p.ID,
 		Description: p.Description,
 		Effect:      p.Effect,
-		Actions:     getLinked(p.PolicyPermissions),
-		Subjects:    getLinked(p.PolicySubjects),
-		Resources:   getLinked(p.PolicyResources),
-		Conditions:  ladon.Conditions{},
+		Actions:     getLinkedRDB(p.PolicyPermissions),
+		Subjects:    getLinkedRDB(p.PolicySubjects),
+		Resources:   getLinkedRDB(p.PolicyResources),
+		Conditions:  Conditions{},
 	}
 
 	if err := json.Unmarshal(p.Conditions, &orgPolicy.Conditions); err != nil {
@@ -154,14 +152,14 @@ func (s *Manager) Get(id string) (ladon.Policy, error) {
 	return &orgPolicy, nil
 }
 
-func (s *Manager) Delete(id string) error {
+func (s *RethinkDBManager) Delete(id string) error {
 	if _, err := rdb.Table(policyTableName).Get(id).Delete().RunWrite(s.session); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policies, err error) {
+func (s *RethinkDBManager) FindPoliciesForSubject(subject string) (policies Policies, err error) {
 	// Query all appliccable policies for subject
 	res, err := rdb.Table(policyTableName).Filter(func(policy rdb.Term) rdb.Term {
 		return policy.Field("ladon_policy_subjects").Contains(func(policy_subject rdb.Term) rdb.Term {
@@ -184,14 +182,14 @@ func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policie
 	}
 
 	for _, tp := range p {
-		tempPolicy := ladon.DefaultPolicy{
+		tempPolicy := DefaultPolicy{
 			ID:          tp.ID,
 			Description: tp.Description,
 			Effect:      tp.Effect,
-			Actions:     getLinked(tp.PolicyPermissions),
-			Subjects:    getLinked(tp.PolicySubjects),
-			Resources:   getLinked(tp.PolicyResources),
-			Conditions:  ladon.Conditions{},
+			Actions:     getLinkedRDB(tp.PolicyPermissions),
+			Subjects:    getLinkedRDB(tp.PolicySubjects),
+			Resources:   getLinkedRDB(tp.PolicyResources),
+			Conditions:  Conditions{},
 		}
 
 		if err := json.Unmarshal(tp.Conditions, &tempPolicy.Conditions); err != nil {
@@ -203,7 +201,7 @@ func (s *Manager) FindPoliciesForSubject(subject string) (policies ladon.Policie
 	return policies, nil
 }
 
-func getLinked(resourceData []linkedPolicyResource) []string {
+func getLinkedRDB(resourceData []linkedPolicyResource) []string {
 	templates := make([]string, len(resourceData))
 
 	for i, data := range resourceData {
@@ -213,7 +211,7 @@ func getLinked(resourceData []linkedPolicyResource) []string {
 	return templates
 }
 
-func createLink(p ladon.Policy, templates []string) ([]linkedPolicyResource, error) {
+func createLinkRDB(p Policy, templates []string) ([]linkedPolicyResource, error) {
 	resSlice := make([]linkedPolicyResource, len(templates))
 	for i, template := range templates {
 		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/ory-am/ladon"
-	"github.com/ory-am/ladon/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +41,7 @@ var pols = []ladon.Policy{
 
 func TestLadon(t *testing.T) {
 	warden := &ladon.Ladon{
-		Manager: memory.New(),
+		Manager: memory.NewMemoryManager(),
 	}
 	for _, pol := range pols {
 		require.Nil(t, warden.Manager.Create(pol))
@@ -141,6 +140,6 @@ func TestLadon(t *testing.T) {
 }
 
 func TestLadonEmpty(t *testing.T) {
-	warden := &ladon.Ladon{Manager: memory.New()}
+	warden := &ladon.Ladon{Manager: ladon.NewMemoryManager()}
 	assert.NotNil(t, warden.IsAllowed(&ladon.Request{}))
 }
