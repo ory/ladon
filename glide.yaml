@@ -1,0 +1,11 @@
+package: github.com/ory-am/ladon
+import:
+- package: github.com/dancannon/gorethink
+- package: github.com/go-errors/errors
+- package: github.com/golang/mock
+  subpackages:
+  - gomock
+- package: github.com/ory-am/common
+  subpackages:
+  - compiler
+  - pkg
