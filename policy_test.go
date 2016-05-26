@@ -2,12 +2,12 @@ package ladon_test
 
 import (
 	"testing"
-
 	"encoding/json"
 
-	"github.com/ory-am/hydra/pkg"
 	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
+	"github.com/go-errors/errors"
+	"github.com/stretchr/testify/require"
 )
 
 var policyConditions = Conditions{
@@ -41,11 +41,11 @@ func TestMarshalling(t *testing.T) {
 			Conditions: make(Conditions),
 		}
 		data, err := json.Marshal(c)
-		pkg.RequireError(t, false, err)
+		RequireError(t, false, err)
 
 		t.Logf("Got data: %s\n", data)
 		json.Unmarshal(data, &cc)
-		pkg.RequireError(t, false, err)
+		RequireError(t, false, err)
 		assert.Equal(t, c, &cc)
 	}
 }
@@ -62,4 +62,16 @@ func TestGetters(t *testing.T) {
 		assert.Equal(t, byte('<'), c.GetStartDelimiter())
 		assert.Equal(t, byte('>'), c.GetEndDelimiter())
 	}
+}
+
+func RequireError(t *testing.T, expectError bool, err error, args ...interface{}) {
+	if err != nil && !expectError {
+		t.Logf("Unexpected error: %s\n", err.Error())
+		t.Logf("Arguments: %v\n", args)
+		if e, ok := err.(*errors.Error); ok {
+			t.Logf("Stack:\n%s\n", e.ErrorStack())
+		}
+		t.Logf("\n\n")
+	}
+	require.Equal(t, expectError, err != nil)
 }
