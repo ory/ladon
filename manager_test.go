@@ -7,12 +7,13 @@ import (
 	"testing"
 	"time"
 
-	rdb "github.com/dancannon/gorethink"
+	r "github.com/dancannon/gorethink"
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 	"gopkg.in/ory-am/dockertest.v2"
 )
 
@@ -137,37 +138,41 @@ func connectPG() {
 	managers["postgres"] = s
 }
 
+var rethinkManager *ladon.RethinkManager
+
 func connectRDB() {
 	var err error
-	var rdbSession *rdb.Session
+	var session *r.Session
 
 	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
-		if rdbSession, err = rdb.Connect(rdb.ConnectOpts{
-			Address:  url,
-			Database: "hydra",
-		}); err != nil {
+		if session, err = r.Connect(r.ConnectOpts{Address: url, Database: "hydra"}); err != nil {
+			return false
+		} else if _, err = r.DBCreate("hydra").RunWrite(session); err != nil {
+			log.Printf("Database exists: %s", err)
+			return false
+		} else if _, err = r.TableCreate("hydra_policies").RunWrite(session); err != nil {
+			log.Printf("Could not create table: %s", err)
 			return false
 		}
 
-		if _, err = rdb.DBCreate("hydra").RunWrite(rdbSession); err != nil {
-			return false
+		rethinkManager = &ladon.RethinkManager{
+			Session:  session,
+			Table:    r.Table("hydra_policies"),
+			Policies: make(map[string]ladon.Policy),
 		}
 
+		if err := rethinkManager.Watch(context.Background()); err != nil {
+			log.Printf("Could not watch: %s", err)
+			return false
+		}
 		return true
 	})
-
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
 	containers = append(containers, c)
-	s := ladon.NewRethinkDBManager(rdbSession)
-
-	if err := s.CreateTables(); err != nil {
-		log.Fatalf("Could not create tables: %s", err)
-	}
-
-	managers["rethinkdb"] = s
+	managers["rethink"] = rethinkManager
 }
 
 func TestGetErrors(t *testing.T) {
@@ -183,18 +188,18 @@ func TestCreateGetDelete(t *testing.T) {
 	for k, s := range managers {
 		for _, c := range managerPolicies {
 			err := s.Create(c)
-			assert.Nil(t, err, k)
+			assert.Nil(t, err, "%s: %s", k, err)
 
 			get, err := s.Get(c.GetID())
-			assert.Nil(t, err, k)
+			assert.Nil(t, err, "%s: %s", k, err)
 			pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Actions")
-			assert.Equal(t, len(c.Conditions), len(get.GetConditions()), k)
+			assert.Equal(t, len(c.Conditions), len(get.GetConditions()), "%s", k)
 		}
 
 		for _, c := range managerPolicies {
 			assert.Nil(t, s.Delete(c.GetID()), k)
 			_, err := s.Get(c.GetID())
-			assert.NotNil(t, err, k)
+			assert.NotNil(t, err, "%s: %s", k, err)
 		}
 	}
 }

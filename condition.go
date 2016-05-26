@@ -43,6 +43,10 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON unmarshals a list of conditions from json.
 func (cs Conditions) UnmarshalJSON(data []byte) error {
+	if cs == nil {
+		return errors.New("Can not be nil")
+	}
+
 	var jcs map[string]jsonCondition
 	var dc Condition
 
@@ -54,6 +58,12 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 		for name, c := range conditionFactories {
 			if name == jc.Type {
 				dc = c()
+
+				if len(jc.Options) == 0 {
+					cs[k] = dc
+					break
+				}
+
 				if err := json.Unmarshal(jc.Options, dc); err != nil {
 					return err
 				}
