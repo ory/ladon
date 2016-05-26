@@ -15,6 +15,19 @@ func TestConditionsAppend(t *testing.T) {
 	assert.Equal(t, c, cs["clientIP"])
 }
 
+func TestMarshalUnmarshalNative(t *testing.T) {
+	css := &Conditions{
+		"clientIP": &CIDRCondition{CIDR: "127.0.0.1/0"},
+		"owner":    &EqualsSubjectCondition{},
+	}
+	out, err := json.Marshal(css)
+	require.Nil(t, err)
+	t.Logf("%s", out)
+
+	cs := Conditions{}
+	require.Nil(t, cs.UnmarshalJSON(out))
+}
+
 func TestMarshalUnmarshal(t *testing.T) {
 	css := &Conditions{
 		"clientIP": &CIDRCondition{CIDR: "127.0.0.1/0"},
@@ -27,10 +40,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	cs := Conditions{}
 	require.Nil(t, json.Unmarshal([]byte(`{
 	"owner": {
-		"type": "EqualsSubjectCondition",
-		"options": {
-			"matches": "peter"
-		}
+		"type": "EqualsSubjectCondition"
 	},
 	"clientIP": {
 		"type": "CIDRCondition",

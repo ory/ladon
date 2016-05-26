@@ -3,6 +3,9 @@ package ladon_test
 import (
 	"testing"
 
+	"encoding/json"
+
+	"github.com/ory-am/hydra/pkg"
 	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,13 +25,29 @@ var policyCases = []*DefaultPolicy{
 		Conditions:  policyConditions,
 	},
 	{
-		Effect: DenyAccess,
+		Effect:     DenyAccess,
+		Conditions: make(Conditions),
 	},
 }
 
 func TestHasAccess(t *testing.T) {
 	assert.True(t, policyCases[0].AllowAccess())
 	assert.False(t, policyCases[1].AllowAccess())
+}
+
+func TestMarshalling(t *testing.T) {
+	for _, c := range policyCases {
+		var cc = DefaultPolicy{
+			Conditions: make(Conditions),
+		}
+		data, err := json.Marshal(c)
+		pkg.RequireError(t, false, err)
+
+		t.Logf("Got data: %s\n", data)
+		json.Unmarshal(data, &cc)
+		pkg.RequireError(t, false, err)
+		assert.Equal(t, c, &cc)
+	}
 }
 
 func TestGetters(t *testing.T) {

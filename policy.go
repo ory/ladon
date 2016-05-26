@@ -1,5 +1,11 @@
 package ladon
 
+import (
+	"encoding/json"
+
+	"github.com/go-errors/errors"
+)
+
 // Policies is an array of policies.
 type Policies []Policy
 
@@ -38,13 +44,42 @@ type Policy interface {
 
 // DefaultPolicy is the default implementation of the policy interface.
 type DefaultPolicy struct {
-	ID          string     `json:"id"`
-	Description string     `json:"description"`
-	Subjects    []string   `json:"subjects"`
-	Effect      string     `json:"effect"`
-	Resources   []string   `json:"resources"`
-	Actions     []string   `json:"actions"`
-	Conditions  Conditions `json:"conditions"`
+	ID          string     `json:"id" gorethink:"id"`
+	Description string     `json:"description" gorethink:"description"`
+	Subjects    []string   `json:"subjects" gorethink:"subjects"`
+	Effect      string     `json:"effect" gorethink:"effect"`
+	Resources   []string   `json:"resources" gorethink:"resources"`
+	Actions     []string   `json:"actions" gorethink:"actions"`
+	Conditions  Conditions `json:"conditions" gorethink:"conditions"`
+}
+
+func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
+	var pol = struct {
+		ID          string     `json:"id" gorethink:"id"`
+		Description string     `json:"description" gorethink:"description"`
+		Subjects    []string   `json:"subjects" gorethink:"subjects"`
+		Effect      string     `json:"effect" gorethink:"effect"`
+		Resources   []string   `json:"resources" gorethink:"resources"`
+		Actions     []string   `json:"actions" gorethink:"actions"`
+		Conditions  Conditions `json:"conditions" gorethink:"conditions"`
+	}{
+		Conditions: Conditions{},
+	}
+
+	if err := json.Unmarshal(data, &pol); err != nil {
+		return errors.New(err)
+	}
+
+	*p = *&DefaultPolicy{
+		ID:          pol.ID,
+		Description: pol.Description,
+		Subjects:    pol.Subjects,
+		Effect:      pol.Effect,
+		Resources:   pol.Resources,
+		Actions:     pol.Actions,
+		Conditions:  pol.Conditions,
+	}
+	return nil
 }
 
 // GetID returns the policies id.
