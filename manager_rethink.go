@@ -70,16 +70,20 @@ type RethinkManager struct {
 
 func (m *RethinkManager) ColdStart() error {
 	m.Policies = map[string]Policy{}
-	clients, err := m.Table.Run(m.Session)
+	policies, err := m.Table.Run(m.Session)
 	if err != nil {
 		return errors.New(err)
 	}
 
-	var policy DefaultPolicy
+	var tbl rdbSchema
 	m.Lock()
 	defer m.Unlock()
-	for clients.Next(&policy) {
-		m.Policies[policy.ID] = &policy
+	for policies.Next(&tbl) {
+		policy, err := rdbToPolicy(&tbl)
+		if err != nil {
+			return err
+		}
+		m.Policies[tbl.ID] = policy
 	}
 
 	return nil

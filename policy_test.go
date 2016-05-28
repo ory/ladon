@@ -1,12 +1,12 @@
 package ladon_test
 
 import (
-	"testing"
 	"encoding/json"
+	"testing"
 
+	"github.com/go-errors/errors"
 	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
-	"github.com/go-errors/errors"
 	"github.com/stretchr/testify/require"
 )
 
