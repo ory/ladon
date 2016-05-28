@@ -175,6 +175,33 @@ func connectRDB() {
 	managers["rethink"] = rethinkManager
 }
 
+func TestColdStartRethinkManager(t *testing.T) {
+	id := uuid.New()
+	err := rethinkManager.Create(&ladon.DefaultPolicy{
+		ID:          id,
+		Description: "description",
+		Subjects:    []string{"user", "anonymous"},
+		Effect:      ladon.AllowAccess,
+		Resources:   []string{"article", "user"},
+		Actions:     []string{"create", "update"},
+		Conditions:  ladon.Conditions{},
+	})
+	assert.Nil(t, err)
+	time.Sleep(500 * time.Millisecond)
+	_, err = rethinkManager.Get(id)
+	assert.Nil(t, err)
+
+	rethinkManager.Policies = make(map[string]ladon.Policy)
+	_, err = rethinkManager.Get(id)
+	assert.NotNil(t, err)
+
+	rethinkManager.ColdStart()
+	_, err = rethinkManager.Get(id)
+	assert.Nil(t, err)
+
+	rethinkManager.Policies = make(map[string]ladon.Policy)
+}
+
 func TestGetErrors(t *testing.T) {
 	for k, s := range managers {
 		_, err := s.Get(uuid.New())
