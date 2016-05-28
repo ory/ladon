@@ -195,7 +195,9 @@ func TestColdStartRethinkManager(t *testing.T) {
 	_, err = rethinkManager.Get(id)
 	assert.NotNil(t, err)
 
-	rethinkManager.ColdStart()
+	err = rethinkManager.ColdStart()
+	assert.Nil(t, err)
+
 	_, err = rethinkManager.Get(id)
 	assert.Nil(t, err)
 
