@@ -29,6 +29,7 @@ Utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](htt
     - [Using a backend](#using-a-backend)
       - [PostgreSQL](#postgresql)
   - [Warden](#warden)
+  - [Conditions](#conditions)
   - [Examples](#examples)
     - [Subject mismatch](#subject-mismatch)
     - [Owner mismatch](#owner-mismatch)
@@ -332,6 +333,14 @@ func main() {
     // ...
 }
 ```
+
+### Conditions
+
+There are a couple of conditions available:
+
+* [CIDR Condition](condition_cidr.go): Matches CIDR IP Ranges.
+* [String Equal Condition](condition_string_equal.go): Matches two strings.
+* [Subject Condition](condition_subject_equal.go): Matches when the condition field is equal to the subject field.
 
 ### Examples
 
