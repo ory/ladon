@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	r "github.com/dancannon/gorethink"
+	r "gopkg.in/dancannon/gorethink.v2"
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
