@@ -47,7 +47,7 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 ## Installation
 
 ```
-go get github.com/ory-am/fosite
+go get github.com/ory-am/ladon
 ```
 
 We recommend to use [Glide](https://github.com/Masterminds/glide) or [Godep](https://github.com/tools/godep), because
