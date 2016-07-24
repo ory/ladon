@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	r "gopkg.in/dancannon/gorethink.v2"
 	"github.com/go-errors/errors"
 	"golang.org/x/net/context"
+	r "gopkg.in/dancannon/gorethink.v2"
 )
 
 // stupid hack
@@ -99,6 +99,9 @@ func (m *RethinkManager) Create(policy Policy) error {
 
 // Get retrieves a policy.
 func (m *RethinkManager) Get(id string) (Policy, error) {
+	m.RLock()
+	defer m.RUnlock()
+
 	p, ok := m.Policies[id]
 	if !ok {
 		return nil, errors.New("Not found")
@@ -118,6 +121,9 @@ func (m *RethinkManager) Delete(id string) error {
 
 // Finds all policies associated with the subject.
 func (m *RethinkManager) FindPoliciesForSubject(subject string) (Policies, error) {
+	m.RLock()
+	defer m.RUnlock()
+
 	ps := Policies{}
 	for _, p := range m.Policies {
 		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {

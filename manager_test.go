@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	r "gopkg.in/dancannon/gorethink.v2"
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
+	r "gopkg.in/dancannon/gorethink.v2"
 	"gopkg.in/ory-am/dockertest.v2"
 )
 
