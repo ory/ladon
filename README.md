@@ -264,13 +264,12 @@ The manager receives a list of allowed condition creators who assist him in find
 ```go
 import (
 	"github.com/ory-am/ladon"
-	"github.com/ory-am/ladon/memory"
 )
 
 
 func main() {
 	warden := &ladon.Ladon{
-		Manager: memory.New(),
+		Manager: ladon.NewMemoryManager(),
 	}
 	err := warden.Manager.Create(pol)
 
@@ -290,7 +289,6 @@ You can always pass `ladon.DefaultConditionCreators` which contains a list of al
 
 ```go
 import "github.com/ory-am/ladon"
-import "github.com/ory-am/ladon/postgres"
 import "database/sql"
 import _ "github.com/lib/pq"
 
@@ -301,7 +299,7 @@ func main() {
 	}
 
     warden := ladon.Ladon{
-        Manager: postgres.New(db),
+        Manager: ladon.NewPostgresManager(db),
     }
 
     // ...
