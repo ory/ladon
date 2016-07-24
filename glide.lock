@@ -1,10 +1,10 @@
 hash: 439035a8a1fe9b3462c3750d62196a4cb6a6fb37d230f148794b2228d85c7a46
-updated: 2016-05-30T08:18:21.6452625+02:00
+updated: 2016-07-24T16:53:30.7139313+02:00
 imports:
-- name: github.com/cenkalti/backoff
-  version: a6030178a585d5972d4d33ce61f4a1fa40eaaed0
+- name: github.com/cenk/backoff
+  version: cdf48bbc1eb78d1349cbda326a4a037f7ba565c6
 - name: github.com/dancannon/gorethink
-  version: de072a9c0eff5bd52ef81fe45b6abeccde74bd13
+  version: c5ed2858e1bf5840d4d1e8897467dd433a80a64d
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -16,7 +16,7 @@ imports:
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
-  version: 9e6977f30c91c78396e719e164e57f9287fff42c
+  version: 874264fbbb43f4d91e999fecb4b40143ed611400
   subpackages:
   - proto
 - name: github.com/hailocab/go-hostpool
@@ -33,30 +33,30 @@ imports:
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: 6d9ae300aaf85d6acd2e5424081c7fcddb21dab8
+  version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/stretchr/testify
-  version: 8d64eb7173c7753d6419fd4a9caf057398611364
+  version: d77da356e56a7428ad25149ca77381849a6a5232
   subpackages:
   - assert
   - require
 - name: golang.org/x/crypto
-  version: 5bcd134fee4dd1475da17714aac19c0aa0142e2f
+  version: 911fafb28f4ee7c7bd483539a6c96190bbbccc3f
   subpackages:
   - pbkdf2
 - name: golang.org/x/net
-  version: 30db96677b74e24b967e23f911eb3364fc61a011
+  version: 4d38db76854b199960801a1734443fd02870d7e1
   subpackages:
   - context
 - name: golang.org/x/sys
-  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: gopkg.in/dancannon/gorethink.v2
-  version: de072a9c0eff5bd52ef81fe45b6abeccde74bd13
+  version: c5ed2858e1bf5840d4d1e8897467dd433a80a64d
   subpackages:
   - encoding
   - ql2
   - types
 - name: gopkg.in/fatih/pool.v2
-  version: cba550ebf9bce999a02e963296d4bc7a486cb715
+  version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
 devImports: []
