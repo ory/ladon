@@ -1,8 +1,9 @@
 package ladon
 
 import (
-	"github.com/go-errors/errors"
 	"sync"
+
+	"github.com/go-errors/errors"
 )
 
 // Manager is a in-memory implementation of Manager.

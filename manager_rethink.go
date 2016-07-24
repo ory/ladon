@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	r "gopkg.in/dancannon/gorethink.v2"
 	"github.com/go-errors/errors"
 	"golang.org/x/net/context"
+	r "gopkg.in/dancannon/gorethink.v2"
 )
 
 // stupid hack
