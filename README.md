@@ -5,9 +5,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
-A policy based authorization library written in [Go](https://golang.org). Ships with PostgreSQL and RethinkDB storage interfaces.
+A policy based authorization library written in [Go](https://golang.org). Ships with PostgreSQL and RethinkDB storage and utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information on how to setup testing environment.
 
-Utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information on how to setup testing environment.
+Be aware that ladon is only a library. If you are looking for runnable server, check out **[Hydra](https://github.com/ory-am/hydra)**.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
