@@ -160,10 +160,8 @@ func connectRDB() {
 			Policies: make(map[string]Policy),
 		}
 
-		if err := rethinkManager.Watch(context.Background()); err != nil {
-			log.Printf("Could not watch: %s", err)
-			return false
-		}
+		rethinkManager.Watch(context.Background())
+		time.Sleep(time.Second)
 		return true
 	})
 	if err != nil {

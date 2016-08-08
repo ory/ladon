@@ -1,10 +1,11 @@
-package ladon
+package ladon_test
 
 import (
 	"testing"
 
 	"github.com/go-errors/errors"
 	"github.com/golang/mock/gomock"
+	. "github.com/ory-am/ladon"
 	"github.com/ory-am/ladon/internal"
 	"github.com/stretchr/testify/assert"
 )
