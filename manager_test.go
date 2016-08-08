@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/ory-am/common/pkg"
+	"github.com/ory-am/dockertest"
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
-	r "github.com/dancannon/gorethink"
-	"gopkg.in/ory-am/dockertest.v2"
+	r "gopkg.in/dancannon/gorethink.v2"
 )
 
 var managerPolicies = []*ladon.DefaultPolicy{
