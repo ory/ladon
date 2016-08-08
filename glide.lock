@@ -1,10 +1,10 @@
-hash: 439035a8a1fe9b3462c3750d62196a4cb6a6fb37d230f148794b2228d85c7a46
-updated: 2016-07-24T16:53:30.7139313+02:00
+hash: 4751eb8261075e331ee05f5a0ad9cc5f85e1d1f56a55ac4ef495648b53770e07
+updated: 2016-08-08T11:09:28.0890663+02:00
 imports:
 - name: github.com/cenk/backoff
   version: cdf48bbc1eb78d1349cbda326a4a037f7ba565c6
 - name: github.com/dancannon/gorethink
-  version: c5ed2858e1bf5840d4d1e8897467dd433a80a64d
+  version: 27d3045458910e2fc56025a0b52caaaa96414a26
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -16,7 +16,7 @@ imports:
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
-  version: 874264fbbb43f4d91e999fecb4b40143ed611400
+  version: c3cefd437628a0b7d31b34fe44b3a7a540e98527
   subpackages:
   - proto
 - name: github.com/hailocab/go-hostpool
@@ -40,11 +40,11 @@ imports:
   - assert
   - require
 - name: golang.org/x/crypto
-  version: 911fafb28f4ee7c7bd483539a6c96190bbbccc3f
+  version: e0d166c33c321d0ff863f459a5882096e334f508
   subpackages:
   - pbkdf2
 - name: golang.org/x/net
-  version: 4d38db76854b199960801a1734443fd02870d7e1
+  version: 075e191f18186a8ff2becaf64478e30f4545cdad
   subpackages:
   - context
 - name: golang.org/x/sys
@@ -52,11 +52,11 @@ imports:
   subpackages:
   - unix
 - name: gopkg.in/dancannon/gorethink.v2
-  version: c5ed2858e1bf5840d4d1e8897467dd433a80a64d
+  version: 27d3045458910e2fc56025a0b52caaaa96414a26
   subpackages:
   - encoding
   - ql2
   - types
 - name: gopkg.in/fatih/pool.v2
   version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
-devImports: []
+testImports: []
