@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"sync"
 
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/go-errors/errors"
 	"golang.org/x/net/context"
-	r "github.com/dancannon/gorethink"
+	r "gopkg.in/dancannon/gorethink.v2"
 )
 
 // stupid hack
@@ -75,9 +77,9 @@ func (m *RethinkManager) ColdStart() error {
 		return errors.New(err)
 	}
 
-	var tbl rdbSchema
 	m.Lock()
 	defer m.Unlock()
+	var tbl rdbSchema
 	for policies.Next(&tbl) {
 		policy, err := rdbToPolicy(&tbl)
 		if err != nil {
@@ -171,50 +173,69 @@ func (m *RethinkManager) publishDelete(id string) error {
 	return nil
 }
 
-func (m *RethinkManager) Watch(ctx context.Context) error {
-	policies, err := m.Table.Changes().Run(m.Session)
-	if err != nil {
-		return errors.New(err)
-	}
-
-	go func() {
-		for {
-			var update = make(map[string]*rdbSchema)
-			for policies.Next(&update) {
-				newVal, err := rdbToPolicy(update["new_val"])
-				if err != nil {
-					logrus.Error(err)
-					continue
-				}
-
-				oldVal, err := rdbToPolicy(update["old_val"])
-				if err != nil {
-					logrus.Error(err)
-					continue
-				}
-
-				m.Lock()
-				if newVal == nil && oldVal != nil {
-					delete(m.Policies, oldVal.GetID())
-				} else if newVal != nil && oldVal != nil {
-					delete(m.Policies, oldVal.GetID())
-					m.Policies[newVal.GetID()] = newVal
-				} else {
-					m.Policies[newVal.GetID()] = newVal
-				}
-				m.Unlock()
-			}
-
-			policies.Close()
-			if policies.Err() != nil {
-				logrus.Error(errors.New(policies.Err()))
-			}
-
-			policies, err = m.Table.Changes().Run(m.Session)
-			if err != nil {
-				logrus.Error(errors.New(policies.Err()))
-			}
+func (m *RethinkManager) Watch(ctx context.Context) {
+	go retry(time.Second*15, time.Minute, func() error {
+		policies, err := m.Table.Changes().Run(m.Session)
+		if err != nil {
+			return errors.New(err)
 		}
-	}()
-	return nil
+
+		defer policies.Close()
+		var update = make(map[string]*rdbSchema)
+		for policies.Next(&update) {
+			logrus.Debug("Received update from RethinkDB Cluster in policy manager.")
+			newVal, err := rdbToPolicy(update["new_val"])
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+
+			oldVal, err := rdbToPolicy(update["old_val"])
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+
+			m.Lock()
+			if newVal == nil && oldVal != nil {
+				delete(m.Policies, oldVal.GetID())
+			} else if newVal != nil && oldVal != nil {
+				delete(m.Policies, oldVal.GetID())
+				m.Policies[newVal.GetID()] = newVal
+			} else {
+				m.Policies[newVal.GetID()] = newVal
+			}
+			m.Unlock()
+		}
+
+		if policies.Err() != nil {
+			logrus.Error(errors.New(policies.Err()))
+		}
+		return nil
+	})
+}
+
+func retry(maxWait time.Duration, failAfter time.Duration, f func() error) (err error) {
+	var lastStart time.Time
+	err = errors.New("Did not connect.")
+	loopWait := time.Millisecond * 500
+	retryStart := time.Now()
+	for retryStart.Add(failAfter).After(time.Now()) {
+		lastStart = time.Now()
+		if err = f(); err == nil {
+			return nil
+		}
+
+		if lastStart.Add(maxWait * 2).Before(time.Now()) {
+			retryStart = time.Now()
+		}
+
+		logrus.Infof("Retrying in %f seconds...", loopWait.Seconds())
+		time.Sleep(loopWait)
+		loopWait = loopWait * time.Duration(int64(2))
+		if loopWait > maxWait {
+			loopWait = maxWait
+		}
+	}
+	return err
 }

@@ -1,12 +1,10 @@
-hash: 4751eb8261075e331ee05f5a0ad9cc5f85e1d1f56a55ac4ef495648b53770e07
-updated: 2016-08-08T11:09:28.0890663+02:00
+hash: 474331f43c1ace049653f5b5af58bc6086335d56a3509bacc35993a0e43e5cee
+updated: 2016-08-08T18:39:39.888278251+02:00
 imports:
 - name: github.com/cenk/backoff
   version: cdf48bbc1eb78d1349cbda326a4a037f7ba565c6
-- name: github.com/dancannon/gorethink
-  version: 27d3045458910e2fc56025a0b52caaaa96414a26
 - name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  version: 2df174808ee097f90d259e432cc04442cf60be21
   subpackages:
   - spew
 - name: github.com/go-errors/errors
@@ -27,15 +25,16 @@ imports:
   version: 930cc805232909c38f2e68310b1e21f71b056d59
   subpackages:
   - compiler
+  - env
   - pkg
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - name: github.com/Sirupsen/logrus
-  version: a283a10442df8dc09befd873fab202bf8a253d6a
+  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/stretchr/testify
-  version: d77da356e56a7428ad25149ca77381849a6a5232
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
   subpackages:
   - assert
   - require
@@ -59,4 +58,19 @@ imports:
   - types
 - name: gopkg.in/fatih/pool.v2
   version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
-testImports: []
+testImports:
+- name: github.com/go-sql-driver/mysql
+  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
+- name: github.com/lib/pq
+  version: 80f8150043c80fb52dee6bc863a709cdac7ec8f8
+  subpackages:
+  - oid
+- name: github.com/ory-am/dockertest
+  version: 1b35e25f4895dff0155ac7b67f69f9aa3a275a76
+- name: github.com/pborman/uuid
+  version: c55201b036063326c5b1b89ccfe45a184973d073
+- name: github.com/stretchr/testify
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  subpackages:
+  - assert
+  - require

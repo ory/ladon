@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-errors/errors"
 	"github.com/golang/mock/gomock"
-	"github.com/ory-am/ladon"
+	. "github.com/ory-am/ladon"
 	"github.com/ory-am/ladon/internal"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,44 +15,44 @@ func TestWardenIsGranted(t *testing.T) {
 	m := internal.NewMockManager(ctrl)
 	defer ctrl.Finish()
 
-	w := &ladon.Ladon{
+	w := &Ladon{
 		Manager: m,
 	}
 
 	for k, c := range []struct {
-		r           *ladon.Request
+		r           *Request
 		description string
 		setup       func()
 		expectErr   bool
 	}{
 		{
 			description: "should fail because no policies are found for peter",
-			r:           &ladon.Request{Subject: "peter"},
+			r:           &Request{Subject: "peter"},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("peter").Return(ladon.Policies{}, nil)
+				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{}, nil)
 			},
 			expectErr: true,
 		},
 		{
 			description: "should fail because lookup failure when accessing policies for peter",
-			r:           &ladon.Request{Subject: "peter"},
+			r:           &Request{Subject: "peter"},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("peter").Return(ladon.Policies{}, errors.New("asdf"))
+				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{}, errors.New("asdf"))
 			},
 			expectErr: true,
 		},
 		{
 			description: "should pass",
-			r: &ladon.Request{
+			r: &Request{
 				Subject:  "peter",
 				Resource: "articles:1234",
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("peter").Return(ladon.Policies{
-					&ladon.DefaultPolicy{
+				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{
+					&DefaultPolicy{
 						Subjects:  []string{"<zac|peter>"},
-						Effect:    ladon.AllowAccess,
+						Effect:    AllowAccess,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"view"},
 					},
@@ -62,16 +62,16 @@ func TestWardenIsGranted(t *testing.T) {
 		},
 		{
 			description: "should fail because subjects don't match (unlikely event)",
-			r: &ladon.Request{
+			r: &Request{
 				Subject:  "ken",
 				Resource: "articles:1234",
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(ladon.Policies{
-					&ladon.DefaultPolicy{
+				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+					&DefaultPolicy{
 						Subjects:  []string{"<zac|peter>"},
-						Effect:    ladon.AllowAccess,
+						Effect:    AllowAccess,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"view"},
 					},
@@ -81,16 +81,16 @@ func TestWardenIsGranted(t *testing.T) {
 		},
 		{
 			description: "should fail because resources mismatch",
-			r: &ladon.Request{
+			r: &Request{
 				Subject:  "ken",
 				Resource: "printers:321",
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(ladon.Policies{
-					&ladon.DefaultPolicy{
+				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
-						Effect:    ladon.AllowAccess,
+						Effect:    AllowAccess,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"view"},
 					},
@@ -100,16 +100,16 @@ func TestWardenIsGranted(t *testing.T) {
 		},
 		{
 			description: "should fail because action mismatch",
-			r: &ladon.Request{
+			r: &Request{
 				Subject:  "ken",
 				Resource: "articles:321",
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(ladon.Policies{
-					&ladon.DefaultPolicy{
+				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
-						Effect:    ladon.AllowAccess,
+						Effect:    AllowAccess,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"<foo|bar>"},
 					},
@@ -119,16 +119,16 @@ func TestWardenIsGranted(t *testing.T) {
 		},
 		{
 			description: "should pass",
-			r: &ladon.Request{
+			r: &Request{
 				Subject:  "ken",
 				Resource: "articles:321",
 				Action:   "foo",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(ladon.Policies{
-					&ladon.DefaultPolicy{
+				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
-						Effect:    ladon.AllowAccess,
+						Effect:    AllowAccess,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"<foo|bar>"},
 					},
