@@ -1,5 +1,5 @@
-hash: 3271d14ade8d634187ed4667d3bfa069a45c736583e61522362669c2e176f8d1
-updated: 2016-08-08T17:46:23.057910034+02:00
+hash: 474331f43c1ace049653f5b5af58bc6086335d56a3509bacc35993a0e43e5cee
+updated: 2016-08-08T18:39:39.888278251+02:00
 imports:
 - name: github.com/cenk/backoff
   version: cdf48bbc1eb78d1349cbda326a4a037f7ba565c6
@@ -25,9 +25,8 @@ imports:
   version: 930cc805232909c38f2e68310b1e21f71b056d59
   subpackages:
   - compiler
+  - env
   - pkg
-- name: github.com/ory-am/dockertest
-  version: 1b35e25f4895dff0155ac7b67f69f9aa3a275a76
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -60,6 +59,16 @@ imports:
 - name: gopkg.in/fatih/pool.v2
   version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
 testImports:
+- name: github.com/go-sql-driver/mysql
+  version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
+- name: github.com/lib/pq
+  version: 80f8150043c80fb52dee6bc863a709cdac7ec8f8
+  subpackages:
+  - oid
+- name: github.com/ory-am/dockertest
+  version: 1b35e25f4895dff0155ac7b67f69f9aa3a275a76
+- name: github.com/pborman/uuid
+  version: c55201b036063326c5b1b89ccfe45a184973d073
 - name: github.com/stretchr/testify
   version: f390dcf405f7b83c997eac1b06768bb9f44dec18
   subpackages:

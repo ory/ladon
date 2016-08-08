@@ -1,4 +1,4 @@
-package ladon_test
+package ladon
 
 import (
 	"database/sql"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/ory-am/common/pkg"
 	"github.com/ory-am/dockertest"
-	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,81 +16,81 @@ import (
 	r "gopkg.in/dancannon/gorethink.v2"
 )
 
-var managerPolicies = []*ladon.DefaultPolicy{
+var managerPolicies = []*DefaultPolicy{
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"user", "anonymous"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"create", "update"},
-		Conditions:  ladon.Conditions{},
+		Conditions:  Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions:  ladon.Conditions{},
+		Conditions:  Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<peter|max>"},
-		Effect:      ladon.DenyAccess,
+		Effect:      DenyAccess,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"view"},
-		Conditions: ladon.Conditions{
-			"owner": &ladon.EqualsSubjectCondition{},
+		Conditions: Conditions{
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<user|max|anonymous>", "peter"},
-		Effect:      ladon.DenyAccess,
+		Effect:      DenyAccess,
 		Resources:   []string{".*"},
 		Actions:     []string{"disable"},
-		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &ladon.EqualsSubjectCondition{},
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<.*>"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &ladon.EqualsSubjectCondition{},
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<us[er]+>"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: ladon.Conditions{
-			"ip": &ladon.CIDRCondition{
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &ladon.EqualsSubjectCondition{},
+			"owner": &EqualsSubjectCondition{},
 		},
 	},
 }
 
-var managers = map[string]ladon.Manager{}
+var managers = map[string]Manager{}
 
 var containers = []dockertest.ContainerID{}
 
@@ -110,7 +109,7 @@ func TestMain(m *testing.M) {
 }
 
 func connectMEM() {
-	managers["memory"] = ladon.NewMemoryManager()
+	managers["memory"] = NewMemoryManager()
 }
 
 func connectPG() {
@@ -129,7 +128,7 @@ func connectPG() {
 	}
 
 	containers = append(containers, c)
-	s := ladon.NewPostgresManager(db)
+	s := NewPostgresManager(db)
 
 	if err = s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not ping database: %v", err)
@@ -138,7 +137,7 @@ func connectPG() {
 	managers["postgres"] = s
 }
 
-var rethinkManager *ladon.RethinkManager
+var rethinkManager *RethinkManager
 
 func connectRDB() {
 	var err error
@@ -155,10 +154,10 @@ func connectRDB() {
 			return false
 		}
 
-		rethinkManager = &ladon.RethinkManager{
+		rethinkManager = &RethinkManager{
 			Session:  session,
 			Table:    r.Table("hydra_policies"),
-			Policies: make(map[string]ladon.Policy),
+			Policies: make(map[string]Policy),
 		}
 
 		if err := rethinkManager.Watch(context.Background()); err != nil {
@@ -177,21 +176,21 @@ func connectRDB() {
 
 func TestColdStartRethinkManager(t *testing.T) {
 	id := uuid.New()
-	err := rethinkManager.Create(&ladon.DefaultPolicy{
+	err := rethinkManager.Create(&DefaultPolicy{
 		ID:          id,
 		Description: "description",
 		Subjects:    []string{"user", "anonymous"},
-		Effect:      ladon.AllowAccess,
+		Effect:      AllowAccess,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"create", "update"},
-		Conditions:  ladon.Conditions{},
+		Conditions:  Conditions{},
 	})
 	assert.Nil(t, err)
 	time.Sleep(500 * time.Millisecond)
 	_, err = rethinkManager.Get(id)
 	assert.Nil(t, err)
 
-	rethinkManager.Policies = make(map[string]ladon.Policy)
+	rethinkManager.Policies = make(map[string]Policy)
 	_, err = rethinkManager.Get(id)
 	assert.NotNil(t, err)
 
@@ -201,7 +200,7 @@ func TestColdStartRethinkManager(t *testing.T) {
 	_, err = rethinkManager.Get(id)
 	assert.Nil(t, err)
 
-	rethinkManager.Policies = make(map[string]ladon.Policy)
+	rethinkManager.Policies = make(map[string]Policy)
 }
 
 func TestGetErrors(t *testing.T) {
