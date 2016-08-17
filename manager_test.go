@@ -172,32 +172,22 @@ func connectRDB() {
 	managers["rethink"] = rethinkManager
 }
 
-func TestColdStartRethinkManager(t *testing.T) {
-	id := uuid.New()
-	err := rethinkManager.Create(&DefaultPolicy{
-		ID:          id,
-		Description: "description",
-		Subjects:    []string{"user", "anonymous"},
-		Effect:      AllowAccess,
-		Resources:   []string{"article", "user"},
-		Actions:     []string{"create", "update"},
-		Conditions:  Conditions{},
-	})
-	assert.Nil(t, err)
-	time.Sleep(500 * time.Millisecond)
-	_, err = rethinkManager.Get(id)
-	assert.Nil(t, err)
+func TestColdStart(t *testing.T) {
+	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "foo", Description: "description foo"}))
+	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "bar", Description: "description bar"}))
 
+	time.Sleep(time.Second / 2)
 	rethinkManager.Policies = make(map[string]Policy)
-	_, err = rethinkManager.Get(id)
-	assert.NotNil(t, err)
+	assert.Nil(t, rethinkManager.ColdStart())
 
-	err = rethinkManager.ColdStart()
+	c1, err := rethinkManager.Get("foo")
+	assert.Nil(t, err)
+	c2, err := rethinkManager.Get("bar")
 	assert.Nil(t, err)
 
-	_, err = rethinkManager.Get(id)
-	assert.Nil(t, err)
-
+	assert.NotEqual(t, c1, c2)
+	assert.Equal(t, "description foo", c1.GetDescription())
+	assert.Equal(t, "description bar", c2.GetDescription())
 	rethinkManager.Policies = make(map[string]Policy)
 }
 
