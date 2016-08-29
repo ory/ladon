@@ -338,6 +338,22 @@ There are a couple of conditions available:
 * [String Equal Condition](condition_string_equal.go): Matches two strings.
 * [Subject Condition](condition_subject_equal.go): Matches when the condition field is equal to the subject field.
 
+You can add custom conditions by using `ladon.ConditionFactories` (for more information see condition.go):
+
+```go
+import "github.com/ory-am/ladon"
+
+func main() {
+    // ...
+
+    ladon.ConditionFactories[new(CustomCondition).GetName()] = func() Condition {
+        return new(CustomCondition)
+    }
+
+    // ...
+}
+```
+
 ### Examples
 
 Let's assume that we are using the policy from above for the following requests.

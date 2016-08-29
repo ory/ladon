@@ -55,7 +55,7 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 	}
 
 	for k, jc := range jcs {
-		for name, c := range conditionFactories {
+		for name, c := range ConditionFactories {
 			if name == jc.Type {
 				dc = c()
 
@@ -82,7 +82,8 @@ type jsonCondition struct {
 	Options json.RawMessage `json:"options"`
 }
 
-var conditionFactories = map[string]func() Condition{
+// You can add custom conditions to ConditionFactories
+var ConditionFactories = map[string]func() Condition{
 	new(StringEqualCondition).GetName(): func() Condition {
 		return new(StringEqualCondition)
 	},
