@@ -6,18 +6,20 @@ import (
 	"github.com/go-errors/errors"
 )
 
-// Manager is a in-memory implementation of Manager.
+// MemoryManager is an in-memory (non-persistent) implementation of Manager.
 type MemoryManager struct {
 	Policies map[string]Policy
 	sync.RWMutex
 }
 
+// NewMemoryManager constructs and initalizes new MemoryManager with no policies
 func NewMemoryManager() *MemoryManager {
 	return &MemoryManager{
 		Policies: map[string]Policy{},
 	}
 }
 
+// Create a new pollicy to MemoryManager
 func (m *MemoryManager) Create(policy Policy) error {
 	m.Lock()
 	defer m.Unlock()
@@ -49,7 +51,7 @@ func (m *MemoryManager) Delete(id string) error {
 	return nil
 }
 
-// Finds all policies associated with the subject.
+// FindPoliciesForSubject finds all policies associated with the subject.
 func (m *MemoryManager) FindPoliciesForSubject(subject string) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()

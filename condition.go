@@ -82,7 +82,7 @@ type jsonCondition struct {
 	Options json.RawMessage `json:"options"`
 }
 
-// You can add custom conditions to ConditionFactories
+// ConditionFactories is where you can add custom conditions
 var ConditionFactories = map[string]func() Condition{
 	new(StringEqualCondition).GetName(): func() Condition {
 		return new(StringEqualCondition)

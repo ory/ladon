@@ -62,6 +62,7 @@ func rdbFromPolicy(p Policy) (*rdbSchema, error) {
 	}, err
 }
 
+// RethinkManager is a rethinkdb implementation of Manager to store policies persistently
 type RethinkManager struct {
 	Session *r.Session
 	Table   r.Term
@@ -70,6 +71,7 @@ type RethinkManager struct {
 	Policies map[string]Policy
 }
 
+// ColdStart loads all policies from rethinkdb without warming up the cache
 func (m *RethinkManager) ColdStart() error {
 	m.Policies = map[string]Policy{}
 	policies, err := m.Table.Run(m.Session)
@@ -91,6 +93,7 @@ func (m *RethinkManager) ColdStart() error {
 	return nil
 }
 
+// Create inserts a new policy
 func (m *RethinkManager) Create(policy Policy) error {
 	if err := m.publishCreate(policy); err != nil {
 		return err
@@ -121,7 +124,7 @@ func (m *RethinkManager) Delete(id string) error {
 	return nil
 }
 
-// Finds all policies associated with the subject.
+// FindPoliciesForSubject returns Policies (an array of policy) for a given subject
 func (m *RethinkManager) FindPoliciesForSubject(subject string) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()
@@ -173,6 +176,8 @@ func (m *RethinkManager) publishDelete(id string) error {
 	return nil
 }
 
+// Watch is used to watch for changes on rethinkdb (which happens
+// asynchronous) and updates manager's policy accordingly
 func (m *RethinkManager) Watch(ctx context.Context) {
 	go retry(time.Second*15, time.Minute, func() error {
 		policies, err := m.Table.Changes().Run(m.Session)

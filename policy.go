@@ -53,6 +53,7 @@ type DefaultPolicy struct {
 	Conditions  Conditions `json:"conditions" gorethink:"conditions"`
 }
 
+// UnmarshalJSON overwrite own policy with values of the given in policy in JSON format
 func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
 	var pol = struct {
 		ID          string     `json:"id" gorethink:"id"`

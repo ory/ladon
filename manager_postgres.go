@@ -40,15 +40,17 @@ var schemas = []string{
 	)`,
 }
 
-// Manager is a postgres implementation of Manager.
+// PostgresManager is a postgres implementation for Manager to store policies persistently
 type PostgresManager struct {
 	db *sql.DB
 }
 
+// NewPostgresManager initializes a new PostgresManager for given db instance
 func NewPostgresManager(db *sql.DB) *PostgresManager {
 	return &PostgresManager{db}
 }
 
+// CreateSchemas creates ladon_policy tables
 func (s *PostgresManager) CreateSchemas() error {
 	for _, query := range schemas {
 		if _, err := s.db.Exec(query); err != nil {
@@ -59,6 +61,7 @@ func (s *PostgresManager) CreateSchemas() error {
 	return nil
 }
 
+// Create inserts a new policy
 func (s *PostgresManager) Create(policy Policy) (err error) {
 	conditions := []byte("[]")
 	if policy.GetConditions() != nil {
@@ -89,6 +92,7 @@ func (s *PostgresManager) Create(policy Policy) (err error) {
 	return nil
 }
 
+// Get retrieves a policy.
 func (s *PostgresManager) Get(id string) (Policy, error) {
 	var p DefaultPolicy
 	var conditions []byte
@@ -122,11 +126,13 @@ func (s *PostgresManager) Get(id string) (Policy, error) {
 	return &p, nil
 }
 
+// Delete removes a policy.
 func (s *PostgresManager) Delete(id string) error {
 	_, err := s.db.Exec("DELETE FROM ladon_policy WHERE id=$1", id)
 	return err
 }
 
+// FindPoliciesForSubject returns Policies (an array of policy) for a given subject
 func (s *PostgresManager) FindPoliciesForSubject(subject string) (policies Policies, err error) {
 	find := func(query string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(query, args...)
