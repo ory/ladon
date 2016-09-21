@@ -133,7 +133,7 @@ func TestLadon(t *testing.T) {
 		err := warden.IsAllowed(c.r)
 		assert.Equal(t, c.expectErr, err != nil, "Failed (%d) %s", k, c.d)
 		if err != nil {
-			t.Logf("Error (%d) %s: %s", err.Error(), k, c.d)
+			t.Logf("Error (%s) %d: %s", err.Error(), k, c.d)
 		}
 	}
 }
