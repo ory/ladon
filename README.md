@@ -25,6 +25,7 @@ Be aware that ladon is only a library. If you are looking for runnable server, c
   - [Policy management](#policy-management)
     - [In memory](#in-memory)
     - [Using a backend](#using-a-backend)
+      - [MySQL](#mysql)
       - [PostgreSQL](#postgresql)
   - [Warden](#warden)
   - [Conditions](#conditions)
@@ -252,8 +253,7 @@ var pol = &ladon.DefaultPolicy{
 
 ### Policy management
 
-Ladon comes with `ladon.Manager`, a policy management interface which is implemented using RethinkDB and PostgreSQL.
-Storing policies.
+Ladon comes with `ladon.Manager`, a policy management interface which ships with implementations for RethinkDB, PostgreSQL and MySQL.
 
 **A word on Condition creators**
 Unmarshalling lists with multiple types is not trivial in Go. Ladon comes with creators (factories) for the different conditions.
@@ -285,6 +285,27 @@ not trivial to unmarshal lists of various types (required by `ladon.Conditions`)
 
 You can always pass `ladon.DefaultConditionCreators` which contains a list of all available condition creators.
 
+##### MySQL
+
+```go
+import "github.com/ory-am/ladon"
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
+
+func main() {
+    db, err = sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
+	if err != nil {
+		log.Fatalf("Could not connect to database: %s", err)
+	}
+
+    warden := ladon.Ladon{
+        Manager: ladon.NewSQLManager(db),
+    }
+
+    // ...
+}
+```
+
 ##### PostgreSQL
 
 ```go
@@ -299,7 +320,7 @@ func main() {
 	}
 
     warden := ladon.Ladon{
-        Manager: ladon.NewPostgresManager(db),
+        Manager: ladon.NewSQLManager(db),
     }
 
     // ...

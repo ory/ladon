@@ -3,7 +3,7 @@ package ladon
 import (
 	"encoding/json"
 
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 )
 
 // Condition either do or do not fulfill an access request.
@@ -29,7 +29,7 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 	for k, c := range cs {
 		raw, err := json.Marshal(c)
 		if err != nil {
-			return []byte{}, errors.New(err)
+			return []byte{}, errors.Wrap(err, "")
 		}
 
 		out[k] = &jsonCondition{
@@ -51,7 +51,7 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 	var dc Condition
 
 	if err := json.Unmarshal(data, &jcs); err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 
 	for k, jc := range jcs {

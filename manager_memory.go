@@ -3,7 +3,7 @@ package ladon
 import (
 	"sync"
 
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 )
 
 // MemoryManager is an in-memory (non-persistent) implementation of Manager.
