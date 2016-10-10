@@ -5,21 +5,23 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
-A policy based authorization library written in [Go](https://golang.org). Ships with PostgreSQL and RethinkDB storage and utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information on how to setup testing environment.
 
-Be aware that ladon is only a library. If you are looking for runnable server, check out **[Hydra](https://github.com/ory-am/hydra)**.
+Ladon is a library written in [Go](https://golang.org) for access control policies, similar to [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control)
+or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list). 
+In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control)
+you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
+and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
+
+Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL) and RethinkDB (community supported).
+
+**[Hydra](https://github.com/ory-am/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
 - [Installation](#installation)
-- [What is this and how does it work?](#what-is-this-and-how-does-it-work)
-  - [Ladon vs ACL](#ladon-vs-acl)
-  - [Ladon vs RBAC](#ladon-vs-rbac)
-- [How could Ladon work in my environment?](#how-could-ladon-work-in-my-environment)
-  - [Access request without context](#access-request-without-context)
-  - [Access request with resource and context](#access-request-with-resource-and-context)
+- [Concepts](#concepts)
 - [Usage](#usage)
   - [Policies](#policies)
   - [Policy management](#policy-management)
@@ -49,126 +51,81 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 go get github.com/ory-am/ladon
 ```
 
-We recommend to use [Glide](https://github.com/Masterminds/glide) or [Godep](https://github.com/tools/godep), because
-there might be breaking changes in the future.
+We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
+versioning](http://semver.org/) and versions beginning with zero (`0.1.2`) might introduce backwards compatibility
+breaks with [each minor version](http://semver.org/#how-should-i-deal-with-revisions-in-the-0yz-initial-development-phase).
 
-## What is this and how does it work?
+## Concepts
 
-Ladon is an access control library. You might also call it a policy administration and policy decision point. Ladon
-answers the question:
+Ladon is an access control library that answers the question:
 
-> **Who** is **able** to do **what** on **something** with some **context**
+> **Who** is **able** to do **what** on **something** given some **context**
 
 * **Who** An arbitrary unique subject name, for example "ken" or "printer-service.mydomain.com".
-* **Able**: The effect which is always "allow" or "deny".
+* **Able**: The effect which can be either "allow" or "deny".
 * **What**: An arbitrary action name, for example "delete", "create" or "scoped:action:something".
-* **Something**: An arbitrary unique resource name, for example "something", "resources:articles:1234" or some uniform
+* **Something**: An arbitrary unique resource name, for example "something", "resources.articles.1234" or some uniform
     resource name like "urn:isbn:3827370191".
-* **Context**: The current context which may environment information like the IP Address,
-    request date, the resource owner name, the department ken is working in and anything you like.
+* **Context**: The current context containing information about the environment such as the IP Address,
+    request date, the resource owner name, the department ken is working in or any other information you want to pass along.
+    (optional)
 
-### Ladon vs ACL
+To decide what the answer is, Ladon uses policy documents which can be represented as JSON
 
-> An access control list (ACL), with respect to a computer file system, is a list of permissions attached to an object.
-  An ACL specifies which users or system processes are granted access to objects, as well as what operations are allowed on given objects.
-  Each entry in a typical ACL specifies a subject and an operation. For instance, if a file object has an ACL that contains
-  (Alice: read,write; Bob: read), this would give Alice permission to read and write the file and Bob to only read it.
-  \- *[Source](https://en.wikipedia.org/wiki/Access_control_list)*
-
-Compare this with Ladon and you get:
-
-* **Who**: The ACL subject (Alice, Bob).
-* **What**: The Operation or permission.
-* **Something**: The object.
-
-ACL however is a white list (Alice is granted permission read on object foo). Ladon however can be used to blacklist as well:
-Alice is disallowed permission read on object foo.
-
-Without tweaking, ACL does not support departments, ip addresses, request dates and other environmental information. Ladon does.
-
-### Ladon vs RBAC
-
-> In computer systems security, role-based access control (RBAC) is an approach to restricting system access to authorized users.
-  RBAC is sometimes referred to as role-based security. Within an organization, roles are created for various job functions.
-  The permissions to perform certain operations are assigned to specific roles. Members or staff (or other system users)
-  are assigned particular roles, and through those role assignments acquire the computer permissions to perform particular
-  computer-system functions. Since users are not assigned permissions directly, but only acquire them through their role (or roles),
-  management of individual user rights becomes a matter of simply assigning appropriate roles to the user's account;
-  this simplifies common operations, such as adding a user, or changing a user's department.
-  \- *[Source](https://en.wikipedia.org/wiki/Role-based_access_control)*
-
-Compare this with Ladon and you get:
-
-* **Who**: The role
-* **What**: The Operation or permission.
-
-Again, RBAC is a white list. RBAC does not know objects (*something*) neither does RBAC know contexts.
-
-## How could Ladon work in my environment?
-
-Ladon does not come with a HTTP handler. We believe that it is your job to decide
-if you want to use Protobuf, RESTful, HTTP, AMPQ, or some other protocol. It's up to you to write handlers!
-
-The following examples will give you a better understanding of what you can do with Ladon.
-
-### Access request without context
-
-A valid access request and policy requires at least the affected subject, action and effect:
-
-```
-> curl \
-      -X POST \
-      -H "Content-Type: application/json" \
-      -d@- \
-      "https://ladon.myorg.com/policies" <<EOF
-      {
-          "description": "One policy to rule them all.",
-          "subjects": ["users:peter", "users:ken", "groups:admins"],
-          "actions" : ["delete"],
-          "resources": [
-            "<.*>"
-          ],
-          "effect": "allow"
-      }
-  EOF
-```
-
-```
-> curl \
-      -X POST \
-      -H "Content-Type: application/json" \
-      -d@- \
-      "https://ladon.myorg.com/warden" <<EOF
-      {
-          "subject": "users:peter",
-          "action" : "delete"
-      }
-  EOF
-
+```json
 {
-    "allowed": true
+  "description": "One policy to rule them all.",
+  "subjects": ["users:<[peter|ken]>", "users:maria", "groups:admins"],
+  "actions" : ["delete", "<[create|update]>"],
+  "effect": "allow",
+  "resources": [
+    "resources:articles:<.*>",
+    "resources:printer"
+  ],
+  "conditions": {
+    "remoteIP": {
+        "type": "CIDRCondition",
+        "options": {
+            "cidr": "192.168.0.1/16"
+        }
+    }
+  }
 }
 ```
 
-**Note:** Because *resources* matches everything (`.*`), it is not required to pass a resource name to the warden.
+and can answer access requests that look like:
 
-### Access request with resource and context
+```json
+{
+  "subject": "users:peter",
+  "action" : "delete",
+  "resource": "resource:articles:ladon-introduction",
+  "context": {
+    "remoteIP": "192.168.0.5"
+  }
+}
+```
 
-The next example uses resources and (context) conditions to further refine access control requests.
+However, Ladon does not come with a HTTP or server implementation. It does not restrict JSON either. We believe that it is your job to decide
+if you want to use Protobuf, RESTful, HTTP, AMPQ, or some other protocol. It's up to you to write server!
+
+The following example should give you an idea what a RESTful flow *could* look like. Initially we create a policy by
+POSTing it to an artificial HTTP endpoint:
 
 ```
 > curl \
       -X POST \
       -H "Content-Type: application/json" \
       -d@- \
-      "https://ladon.myorg.com/policies" <<EOF
-      {
+      "https://my-ladon-implementation.localhost/policies" <<EOF
+        {
           "description": "One policy to rule them all.",
-          "subjects": ["users:peter", "users:ken", "groups:admins"],
-          "actions" : ["delete"],
+          "subjects": ["users:<[peter|ken]>", "users:maria", "groups:admins"],
+          "actions" : ["delete", "<[create|update]>"],
           "effect": "allow",
           "resources": [
-            "resource:articles<.*>"
+            "resources:articles:<.*>",
+            "resources:printer"
           ],
           "conditions": {
             "remoteIP": {
@@ -178,24 +135,26 @@ The next example uses resources and (context) conditions to further refine acces
                 }
             }
           }
-      }
+        }
   EOF
 ```
+
+Then we test if "peter" (ip: "192.168.0.5") is allowed to "delete" the "ladon-introduction" article:
 
 ```
 > curl \
       -X POST \
       -H "Content-Type: application/json" \
       -d@- \
-      "https://ladon.myorg.com/warden" <<EOF
-      {
+      "https://my-ladon-implementation.localhost/ladon" <<EOF
+        {
           "subject": "users:peter",
           "action" : "delete",
           "resource": "resource:articles:ladon-introduction",
           "context": {
             "remoteIP": "192.168.0.5"
           }
-      }
+        }
   EOF
 
 {
@@ -495,5 +454,5 @@ Ladon does not use reflection for matching conditions to their appropriate struc
 
 **Create mocks**
 ```sh
-mockgen -package internal -destination internal/manager.go github.com/ory-am/ladon Manager
+mockgen -package ladon_test -destination manager_mock_test.go github.com/ory-am/ladon Manager
 ```
