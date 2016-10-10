@@ -16,5 +16,5 @@ func (c *StringEqualCondition) Fulfills(value interface{}, _ *Request) bool {
 
 // GetName returns the condition's name.
 func (c *StringEqualCondition) GetName() string {
-	return "StringMatchCondition"
+	return "StringEqualCondition"
 }
