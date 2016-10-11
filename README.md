@@ -448,7 +448,7 @@ func main() {
 	}
 
     warden := ladon.Ladon{
-        Manager: ladon.NewSQLManager(db),
+        Manager: ladon.NewSQLManager(db, nil),
     }
 
     // ...
