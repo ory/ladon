@@ -5,35 +5,33 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
-A policy based authorization library written in [Go](https://golang.org). Ships with PostgreSQL and RethinkDB storage and utilizes ory-am/dockertest V2 for tests. Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information on how to setup testing environment.
 
-Be aware that ladon is only a library. If you are looking for runnable server, check out **[Hydra](https://github.com/ory-am/hydra)**.
+Ladon is a library written in [Go](https://golang.org) for access control policies, similar to [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control)
+or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list). 
+In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control)
+you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
+and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
+
+Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL) and RethinkDB (community supported).
+
+**[Hydra](https://github.com/ory-am/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
 - [Installation](#installation)
-- [What is this and how does it work?](#what-is-this-and-how-does-it-work)
-  - [Ladon vs ACL](#ladon-vs-acl)
-  - [Ladon vs RBAC](#ladon-vs-rbac)
-- [How could Ladon work in my environment?](#how-could-ladon-work-in-my-environment)
-  - [Access request without context](#access-request-without-context)
-  - [Access request with resource and context](#access-request-with-resource-and-context)
+- [Concepts](#concepts)
 - [Usage](#usage)
   - [Policies](#policies)
-  - [Policy management](#policy-management)
-    - [In memory](#in-memory)
-    - [Using a backend](#using-a-backend)
-      - [PostgreSQL](#postgresql)
-  - [Warden](#warden)
-  - [Conditions](#conditions)
-  - [Examples](#examples)
-    - [Subject mismatch](#subject-mismatch)
-    - [Owner mismatch](#owner-mismatch)
-    - [IP address mismatch](#ip-address-mismatch)
-    - [Working example](#working-example)
-    - [Full code for working example](#full-code-for-working-example)
+    - [Conditions](#conditions)
+      - [CIDR Condition](#cidr-condition)
+      - [String Equal Condition](#string-equal-condition)
+      - [Subject Condition](#subject-condition)
+      - [Adding Custom Conditions](#adding-custom-conditions)
+    - [Persistence](#persistence)
+  - [Access Control (Warden)](#access-control-warden)
+- [Examples](#examples)
 - [Good to know](#good-to-know)
 - [Useful commands](#useful-commands)
 
@@ -48,126 +46,81 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 go get github.com/ory-am/ladon
 ```
 
-We recommend to use [Glide](https://github.com/Masterminds/glide) or [Godep](https://github.com/tools/godep), because
-there might be breaking changes in the future.
+We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
+versioning](http://semver.org/) and versions beginning with zero (`0.1.2`) might introduce backwards compatibility
+breaks with [each minor version](http://semver.org/#how-should-i-deal-with-revisions-in-the-0yz-initial-development-phase).
 
-## What is this and how does it work?
+## Concepts
 
-Ladon is an access control library. You might also call it a policy administration and policy decision point. Ladon
-answers the question:
+Ladon is an access control library that answers the question:
 
-> **Who** is **able** to do **what** on **something** with some **context**
+> **Who** is **able** to do **what** on **something** given some **context**
 
 * **Who** An arbitrary unique subject name, for example "ken" or "printer-service.mydomain.com".
-* **Able**: The effect which is always "allow" or "deny".
+* **Able**: The effect which can be either "allow" or "deny".
 * **What**: An arbitrary action name, for example "delete", "create" or "scoped:action:something".
-* **Something**: An arbitrary unique resource name, for example "something", "resources:articles:1234" or some uniform
+* **Something**: An arbitrary unique resource name, for example "something", "resources.articles.1234" or some uniform
     resource name like "urn:isbn:3827370191".
-* **Context**: The current context which may environment information like the IP Address,
-    request date, the resource owner name, the department ken is working in and anything you like.
+* **Context**: The current context containing information about the environment such as the IP Address,
+    request date, the resource owner name, the department ken is working in or any other information you want to pass along.
+    (optional)
 
-### Ladon vs ACL
+To decide what the answer is, Ladon uses policy documents which can be represented as JSON
 
-> An access control list (ACL), with respect to a computer file system, is a list of permissions attached to an object.
-  An ACL specifies which users or system processes are granted access to objects, as well as what operations are allowed on given objects.
-  Each entry in a typical ACL specifies a subject and an operation. For instance, if a file object has an ACL that contains
-  (Alice: read,write; Bob: read), this would give Alice permission to read and write the file and Bob to only read it.
-  \- *[Source](https://en.wikipedia.org/wiki/Access_control_list)*
-
-Compare this with Ladon and you get:
-
-* **Who**: The ACL subject (Alice, Bob).
-* **What**: The Operation or permission.
-* **Something**: The object.
-
-ACL however is a white list (Alice is granted permission read on object foo). Ladon however can be used to blacklist as well:
-Alice is disallowed permission read on object foo.
-
-Without tweaking, ACL does not support departments, ip addresses, request dates and other environmental information. Ladon does.
-
-### Ladon vs RBAC
-
-> In computer systems security, role-based access control (RBAC) is an approach to restricting system access to authorized users.
-  RBAC is sometimes referred to as role-based security. Within an organization, roles are created for various job functions.
-  The permissions to perform certain operations are assigned to specific roles. Members or staff (or other system users)
-  are assigned particular roles, and through those role assignments acquire the computer permissions to perform particular
-  computer-system functions. Since users are not assigned permissions directly, but only acquire them through their role (or roles),
-  management of individual user rights becomes a matter of simply assigning appropriate roles to the user's account;
-  this simplifies common operations, such as adding a user, or changing a user's department.
-  \- *[Source](https://en.wikipedia.org/wiki/Role-based_access_control)*
-
-Compare this with Ladon and you get:
-
-* **Who**: The role
-* **What**: The Operation or permission.
-
-Again, RBAC is a white list. RBAC does not know objects (*something*) neither does RBAC know contexts.
-
-## How could Ladon work in my environment?
-
-Ladon does not come with a HTTP handler. We believe that it is your job to decide
-if you want to use Protobuf, RESTful, HTTP, AMPQ, or some other protocol. It's up to you to write handlers!
-
-The following examples will give you a better understanding of what you can do with Ladon.
-
-### Access request without context
-
-A valid access request and policy requires at least the affected subject, action and effect:
-
-```
-> curl \
-      -X POST \
-      -H "Content-Type: application/json" \
-      -d@- \
-      "https://ladon.myorg.com/policies" <<EOF
-      {
-          "description": "One policy to rule them all.",
-          "subjects": ["users:peter", "users:ken", "groups:admins"],
-          "actions" : ["delete"],
-          "resources": [
-            "<.*>"
-          ],
-          "effect": "allow"
-      }
-  EOF
-```
-
-```
-> curl \
-      -X POST \
-      -H "Content-Type: application/json" \
-      -d@- \
-      "https://ladon.myorg.com/warden" <<EOF
-      {
-          "subject": "users:peter",
-          "action" : "delete"
-      }
-  EOF
-
+```json
 {
-    "allowed": true
+  "description": "One policy to rule them all.",
+  "subjects": ["users:<[peter|ken]>", "users:maria", "groups:admins"],
+  "actions" : ["delete", "<[create|update]>"],
+  "effect": "allow",
+  "resources": [
+    "resources:articles:<.*>",
+    "resources:printer"
+  ],
+  "conditions": {
+    "remoteIP": {
+        "type": "CIDRCondition",
+        "options": {
+            "cidr": "192.168.0.1/16"
+        }
+    }
+  }
 }
 ```
 
-**Note:** Because *resources* matches everything (`.*`), it is not required to pass a resource name to the warden.
+and can answer access requests that look like:
 
-### Access request with resource and context
+```json
+{
+  "subject": "users:peter",
+  "action" : "delete",
+  "resource": "resource:articles:ladon-introduction",
+  "context": {
+    "remoteIP": "192.168.0.5"
+  }
+}
+```
 
-The next example uses resources and (context) conditions to further refine access control requests.
+However, Ladon does not come with a HTTP or server implementation. It does not restrict JSON either. We believe that it is your job to decide
+if you want to use Protobuf, RESTful, HTTP, AMPQ, or some other protocol. It's up to you to write server!
+
+The following example should give you an idea what a RESTful flow *could* look like. Initially we create a policy by
+POSTing it to an artificial HTTP endpoint:
 
 ```
 > curl \
       -X POST \
       -H "Content-Type: application/json" \
       -d@- \
-      "https://ladon.myorg.com/policies" <<EOF
-      {
+      "https://my-ladon-implementation.localhost/policies" <<EOF
+        {
           "description": "One policy to rule them all.",
-          "subjects": ["users:peter", "users:ken", "groups:admins"],
-          "actions" : ["delete"],
+          "subjects": ["users:<[peter|ken]>", "users:maria", "groups:admins"],
+          "actions" : ["delete", "<[create|update]>"],
           "effect": "allow",
           "resources": [
-            "resource:articles<.*>"
+            "resources:articles:<.*>",
+            "resources:printer"
           ],
           "conditions": {
             "remoteIP": {
@@ -177,24 +130,26 @@ The next example uses resources and (context) conditions to further refine acces
                 }
             }
           }
-      }
+        }
   EOF
 ```
+
+Then we test if "peter" (ip: "192.168.0.5") is allowed to "delete" the "ladon-introduction" article:
 
 ```
 > curl \
       -X POST \
       -H "Content-Type: application/json" \
       -d@- \
-      "https://ladon.myorg.com/warden" <<EOF
-      {
+      "https://my-ladon-implementation.localhost/warden" <<EOF
+        {
           "subject": "users:peter",
           "action" : "delete",
           "resource": "resource:articles:ladon-introduction",
           "context": {
             "remoteIP": "192.168.0.5"
           }
-      }
+        }
   EOF
 
 {
@@ -204,10 +159,13 @@ The next example uses resources and (context) conditions to further refine acces
 
 ## Usage
 
+We already discussed two essential parts of Ladon: policies and access control requests. Let's take a closer look at those two.
+
 ### Policies
 
-Policies are an essential part of Ladon. Policies are documents which define who is allowed to perform an action on a resource.
-Policies must implement the `ladon.Policy` interface. A standard implementation of this interface is `ladon.DefaultPolicy`:
+Policies are the basis for access control decisions. Think of them as a set of rules. In this library, policies
+are abstracted as the `ladon.Policy` interface, and Ladon comes with a standard implementation of this interface
+which is `ladon.DefaultPolicy`. Creating such a policy could look like:
 
 ```go
 import "github.com/ory-am/ladon"
@@ -247,19 +205,214 @@ var pol = &ladon.DefaultPolicy{
 		},
 	},
 }
-
 ```
 
-### Policy management
+#### Conditions
 
-Ladon comes with `ladon.Manager`, a policy management interface which is implemented using RethinkDB and PostgreSQL.
-Storing policies.
+Conditions are functions returning true or false given a context. Because conditions implement logic, they must
+be programmed. Adding conditions to a policy consist of two parts, a key name and an implementation of `ladon.Condition`:
 
-**A word on Condition creators**
-Unmarshalling lists with multiple types is not trivial in Go. Ladon comes with creators (factories) for the different conditions.
-The manager receives a list of allowed condition creators who assist him in finding and creating the right condition objects.
+```go
+// StringMatchCondition is an exemplary condition.
+type StringMatchCondition struct {
+	Equals string `json:"equals"`
+}
 
-#### In memory
+// Fulfills returns true if the given value is a string and is the
+// same as in StringEqualCondition.Equals
+func (c *StringMatchCondition) Fulfills(value interface{}, _ *ladon.Request) bool {
+	s, ok := value.(string)
+
+	return ok && s == c.Equals
+}
+
+// GetName returns the condition's name.
+func (c *StringMatchCondition) GetName() string {
+	return "StringMatchCondition"
+}
+
+var pol = &ladon.DefaultPolicy{
+    // ...
+    Conditions: ladon.Conditions{
+        "some-arbitrary-key": &StringMatchCondition{
+            Equals: "the-value-should-be-this"
+        }
+    },
+}
+```
+
+The default implementation of `Policy` supports JSON un-/marshalling. In JSON, this policy would look like:
+
+```json
+{
+  "conditions": {
+    "some-arbitrary-key": {
+        "type": "StringMatchCondition",
+        "options": {
+            "equals": "the-value-should-be-this"
+        }
+    }
+  }
+}
+```
+
+As you can see, `type` is the value that `StringMatchCondition.GetName()` is returning and `options` is used to
+set the value of `StringMatchCondition.Equals`.
+
+This condition is fulfilled by (we will cover the warden in the next section)
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+        "some-arbitrary-key": "the-value-should-be-this",
+    },
+}
+```
+
+but not by
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+        "some-arbitrary-key": "some other value",
+    },
+}
+```
+
+and neither by:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+        "same value but other key": "the-value-should-be-this",
+    },
+}
+```
+
+Ladon ships with a couple of default conditions:
+
+##### [CIDR Condition](condition_cidr.go)
+
+The CIDR condition matches CIDR IP Ranges. Using this condition would look like this in JSON:
+
+```json
+{
+    "conditions": {
+        "remoteIP": {
+            "type": "CIDRCondition",
+            "options": {
+                "cidr": "192.168.0.1/16"
+            }
+        }
+    }
+}
+```
+
+and in Go:
+
+```go
+var pol = &ladon.DefaultPolicy{
+    Conditions: ladon.Conditions{
+        "remoteIPAddress": &ladon.CIDRCondition{
+            CIDR: "192.168.0.1/16",
+        },
+    },
+}
+```
+
+In this case, we expect that the context of an access request contains a field `"remoteIpAddress"` matching
+the CIDR `"192.168.0.1/16"`, for example `"192.168.0.5"`.
+
+
+##### [String Equal Condition](condition_string_equal.go)
+
+Checks if the value passed in the access request's context is identical with the string that was given initially
+
+```go
+var pol = &ladon.DefaultPolicy{
+    Conditions: ladon.Conditions{
+        "some-arbitrary-key": &ladon.StringMatchCondition{
+            Equals: "the-value-should-be-this"
+        }
+    },
+}
+```
+
+and would match in the following case:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+         "some-arbitrary-key": "the-value-should-be-this",
+    },
+}
+```
+
+##### [Subject Condition](condition_subject_equal.go)
+
+Checks if the access request's subject is identical with the string that was given initially
+
+```go
+var pol = &ladon.DefaultPolicy{
+    Conditions: ladon.Conditions{
+        "some-arbitrary-key": &ladon.EqualsSubjectCondition{}
+    },
+}
+```
+
+and would match
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Subject: "peter",
+    Context: &ladon.Context{
+         "some-arbitrary-key": "peter",
+    },
+}
+```
+
+but not:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Subject: "peter",
+    Context: &ladon.Context{
+         "some-arbitrary-key": "max",
+    },
+}
+```
+
+##### Adding Custom Conditions
+
+You can add custom conditions by appending it to `ladon.ConditionFactories`:
+
+```go
+import "github.com/ory-am/ladon"
+
+func main() {
+    // ...
+
+    ladon.ConditionFactories[new(CustomCondition).GetName()] = func() Condition {
+        return new(CustomCondition)
+    }
+
+    // ...
+}
+```
+
+#### Persistence
+
+Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
+this purpose with default implementations for In-Memory, RethinkDB and SQL (PostgreSQL, MySQL). Let's take a look how to 
+instantiate those.
+
+**In-Memory**
 
 ```go
 import (
@@ -277,36 +430,32 @@ func main() {
 }
 ```
 
-#### Using a backend
-
-You will notice that all persistent implementations require an additional argument when setting up. This argument
-is called `allowedConditionCreators` and must contain a list of allowed condition creators (or "factories"). Because it is
-not trivial to unmarshal lists of various types (required by `ladon.Conditions`), we wrote some helpers to do that for you.
-
-You can always pass `ladon.DefaultConditionCreators` which contains a list of all available condition creators.
-
-##### PostgreSQL
+**SQL**
 
 ```go
 import "github.com/ory-am/ladon"
 import "database/sql"
-import _ "github.com/lib/pq"
+import _ "github.com/go-sql-driver/mysql"
 
 func main() {
-    db, err = sql.Open("postgres", "postgres://foo:bar@localhost/ladon")
+    db, err = sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
+    // Or, if using postgres:
+    //  import _ "github.com/lib/pq"
+    //  
+    //  db, err = sql.Open("postgres", "postgres://foo:bar@localhost/ladon")
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
     warden := ladon.Ladon{
-        Manager: ladon.NewPostgresManager(db),
+        Manager: ladon.NewSQLManager(db),
     }
 
     // ...
 }
 ```
 
-### Warden
+### Access Control (Warden)
 
 Now that we have defined our policies, we can use the warden to check if a request is valid.
 `ladon.Ladon`, which is the default implementation for the `ladon.Warden` interface defines `ladon.Ladon.IsAllowed()` which
@@ -322,157 +471,31 @@ func main() {
         Subject: "peter",
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
-    }); err != nil {
-        log.Fatal("Access denied")
-    }
-
-    // ...
-}
-```
-
-### Conditions
-
-There are a couple of conditions available:
-
-* [CIDR Condition](condition_cidr.go): Matches CIDR IP Ranges.
-* [String Equal Condition](condition_string_equal.go): Matches two strings.
-* [Subject Condition](condition_subject_equal.go): Matches when the condition field is equal to the subject field.
-
-You can add custom conditions by using `ladon.ConditionFactories` (for more information see condition.go):
-
-```go
-import "github.com/ory-am/ladon"
-
-func main() {
-    // ...
-
-    ladon.ConditionFactories[new(CustomCondition).GetName()] = func() Condition {
-        return new(CustomCondition)
-    }
-
-    // ...
-}
-```
-
-### Examples
-
-Let's assume that we are using the policy from above for the following requests.
-
-#### Subject mismatch
-
-This request will fail, because the subject "attacker" does not match `[]string{"max", "peter", "<zac|ken>"}` and since
-no other policy is given, the request will be denied.
-
-```go
-import "github.com/ory-am/ladon"
-
-func main() {
-    // ...
-
-    if err := warden.IsAllowed(&ladon.Request{
-        Subject: "attacker",
-        Action: "delete",
-        Resource: "myrn:some.domain.com:resource:123",
-    }); err != nil { // this will be true
-        log.Fatal("Access denied")
-    }
-
-    // ...
-}
-```
-
-#### Owner mismatch
-
-Although the subject "ken" matches `[]string{"max", "peter", "<zac|ken>"}` the request will fail because
-ken is not the owner of `myrn:some.domain.com:resource:123` (peter is).
-
-```go
-import "github.com/ory-am/ladon"
-
-func main() {
-    // ...
-
-    if err := warden.IsAllowed(&ladon.Request{
-        Subject: "ken",
-        Action: "delete",
-        Resource: "myrn:some.domain.com:resource:123",
-        Context: &ladon.Context{
-            "resourceOwner": "peter",
-        },
-    }); err != nil {
-        log.Print("Access denied")
-    }
-
-    // ...
-}
-```
-
-#### IP address mismatch
-
-Although the subject "peter" matches `[]string{"max", "peter", "<zac|ken>"}` the request will fail because
-the "IPMatchesCondition" is not full filled.
-
-```go
-import "github.com/ory-am/ladon"
-
-func main() {
-    // ...
-
-    if err := warden.IsAllowed(&ladon.Request{
-        Subject: "peter",
-        Action: "delete",
-        Resource: "myrn:some.domain.com:resource:123",
-        Context: &ladon.Context{
-            "resourceOwner": "peter",
-        },
-    }); err != nil {
-        log.Print("Access denied")
-    }
-
-    // ...
-}
-```
-
-#### Working example
-
-This request will be allowed because all requirements are met.
-
-```go
-import "github.com/ory-am/ladon"
-
-func main() {
-    // ...
-
-    if err := warden.IsAllowed(&ladon.Request{
-        Subject: "peter",
-        Action: "delete",
-        Resource: "myrn:some.domain.com:resource:123",
         Context: ladon.Context{
-            "resourceOwner": "peter",
-            "remoteIPAddress": "127.0.0.1",
+            "ip": "127.0.0.1",
         },
     }); err != nil {
-        log.Print("Access denied")
+        log.Fatal("Access denied")
     }
 
     // ...
 }
 ```
 
-#### Full code for working example
+## Examples
 
-To view the example's full code, click [here](ladon_test.go). To run it, call `go test -run=TestLadon .`
+Check out [ladon_test.go](ladon_test.go) which includes a couple of policies and tests cases. You can run the code with `go test -run=TestLadon -v .`
 
 ## Good to know
 
 * All checks are *case sensitive* because subject values could be case sensitive IDs.
 * If `ladon.Ladon` is not able to match a policy with the request, it will default to denying the request and return an error.
 
-Ladon does not use reflection for matching conditions to their appropriate structs due to security reasons.
+Ladon does not use reflection for matching conditions to their appropriate structs due to security considerations.
 
 ## Useful commands
 
 **Create mocks**
 ```sh
-mockgen -package internal -destination internal/manager.go github.com/ory-am/ladon Manager
+mockgen -package ladon_test -destination manager_mock_test.go github.com/ory-am/ladon Manager
 ```

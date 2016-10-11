@@ -3,7 +3,7 @@ package ladon
 import (
 	"regexp"
 
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 	"github.com/ory-am/common/compiler"
 )
 
@@ -16,7 +16,7 @@ type Ladon struct {
 func (g *Ladon) IsAllowed(r *Request) (err error) {
 	policies, err := g.Manager.FindPoliciesForSubject(r.Subject)
 	if err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 
 	return g.doPoliciesAllow(r, policies)
@@ -29,7 +29,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	for _, p := range policies {
 		// Does the action match with one of the policies?
 		if pm, err := Match(p, p.GetActions(), r.Action); err != nil {
-			return errors.New(err)
+			return errors.Wrap(err, "")
 		} else if !pm {
 			// no, continue to next policy
 			continue
@@ -45,7 +45,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Does the resource match with one of the policies?
 		if rm, err := Match(p, p.GetResources(), r.Resource); err != nil {
-			return errors.New(err)
+			return errors.Wrap(err, "")
 		} else if !rm {
 			// no, continue to next policy
 			continue
@@ -59,13 +59,13 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
 		if !p.AllowAccess() {
-			return errors.New(ErrForbidden)
+			return errors.Wrap(ErrForbidden, "")
 		}
 		allowed = true
 	}
 
 	if !allowed {
-		return errors.New(ErrForbidden)
+		return errors.Wrap(ErrForbidden, "")
 	}
 
 	return nil
@@ -78,7 +78,7 @@ func Match(p Policy, haystack []string, needle string) (bool, error) {
 	for _, h := range haystack {
 		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())
 		if err != nil {
-			return false, err
+			return false, errors.Wrap(err, "")
 		}
 
 		if reg.MatchString(needle) {

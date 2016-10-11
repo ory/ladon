@@ -3,16 +3,15 @@ package ladon_test
 import (
 	"testing"
 
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 	"github.com/golang/mock/gomock"
 	. "github.com/ory-am/ladon"
-	"github.com/ory-am/ladon/internal"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWardenIsGranted(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	m := internal.NewMockManager(ctrl)
+	m := newMockManager(ctrl)
 	defer ctrl.Finish()
 
 	w := &Ladon{

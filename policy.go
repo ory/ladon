@@ -3,7 +3,7 @@ package ladon
 import (
 	"encoding/json"
 
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 )
 
 // Policies is an array of policies.
@@ -68,7 +68,7 @@ func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &pol); err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 
 	*p = *&DefaultPolicy{

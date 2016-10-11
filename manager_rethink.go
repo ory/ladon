@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/go-errors/errors"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	r "gopkg.in/dancannon/gorethink.v2"
 )
@@ -39,7 +39,7 @@ func rdbToPolicy(s *rdbSchema) (*DefaultPolicy, error) {
 	}
 
 	if err := ret.Conditions.UnmarshalJSON(s.Conditions); err != nil {
-		return nil, errors.New(err)
+		return nil, errors.Wrap(err, "")
 	}
 
 	return ret, nil
@@ -76,7 +76,7 @@ func (m *RethinkManager) ColdStart() error {
 	m.Policies = map[string]Policy{}
 	policies, err := m.Table.Run(m.Session)
 	if err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 
 	m.Lock()
@@ -145,7 +145,7 @@ func (m *RethinkManager) fetch() error {
 	m.Policies = map[string]Policy{}
 	policies, err := m.Table.Run(m.Session)
 	if err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 
 	var policy DefaultPolicy
@@ -164,14 +164,14 @@ func (m *RethinkManager) publishCreate(policy Policy) error {
 		return err
 	}
 	if _, err := m.Table.Insert(p).RunWrite(m.Session); err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 	return nil
 }
 
 func (m *RethinkManager) publishDelete(id string) error {
 	if _, err := m.Table.Get(id).Delete().RunWrite(m.Session); err != nil {
-		return errors.New(err)
+		return errors.Wrap(err, "")
 	}
 	return nil
 }
@@ -182,7 +182,7 @@ func (m *RethinkManager) Watch(ctx context.Context) {
 	go retry(time.Second*15, time.Minute, func() error {
 		policies, err := m.Table.Changes().Run(m.Session)
 		if err != nil {
-			return errors.New(err)
+			return errors.Wrap(err, "")
 		}
 
 		defer policies.Close()
@@ -214,7 +214,7 @@ func (m *RethinkManager) Watch(ctx context.Context) {
 		}
 
 		if policies.Err() != nil {
-			logrus.Error(errors.New(policies.Err()))
+			logrus.Error(errors.Wrap(policies.Err(), ""))
 		}
 		return nil
 	})

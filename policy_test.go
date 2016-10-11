@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/go-errors/errors"
 	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,9 +67,6 @@ func RequireError(t *testing.T, expectError bool, err error, args ...interface{}
 	if err != nil && !expectError {
 		t.Logf("Unexpected error: %s\n", err.Error())
 		t.Logf("Arguments: %v\n", args)
-		if e, ok := err.(*errors.Error); ok {
-			t.Logf("Stack:\n%s\n", e.ErrorStack())
-		}
 		t.Logf("\n\n")
 	}
 	require.Equal(t, expectError, err != nil)

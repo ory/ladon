@@ -1,7 +1,6 @@
-package ladon
+package ladon_test
 
 import (
-	"database/sql"
 	"log"
 	"os"
 	"testing"
@@ -11,9 +10,14 @@ import (
 	"github.com/ory-am/dockertest"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	//"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	r "gopkg.in/dancannon/gorethink.v2"
+	. "github.com/ory-am/ladon"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/require"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -95,16 +99,19 @@ var managers = map[string]Manager{}
 var containers = []dockertest.ContainerID{}
 
 func TestMain(m *testing.M) {
+	defer func() {
+		for _, c := range containers {
+			c.KillRemove()
+		}
+	}()
+
 	connectPG()
 	connectRDB()
 	connectMEM()
+	connectPG()
+	connectMySQL()
 
 	retCode := m.Run()
-
-	for _, c := range containers {
-		c.KillRemove()
-	}
-
 	os.Exit(retCode)
 }
 
@@ -113,11 +120,12 @@ func connectMEM() {
 }
 
 func connectPG() {
-	var db *sql.DB
+	var db *sqlx.DB
 	c, err := dockertest.ConnectToPostgreSQL(15, time.Second, func(url string) bool {
 		var err error
-		db, err = sql.Open("postgres", url)
+		db, err = sqlx.Open("postgres", url)
 		if err != nil {
+			log.Printf("Got error in postgres connector: %s", err)
 			return false
 		}
 		return db.Ping() == nil
@@ -128,13 +136,39 @@ func connectPG() {
 	}
 
 	containers = append(containers, c)
-	s := NewPostgresManager(db)
+	s := NewSQLManager(db, nil)
 
 	if err = s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not ping database: %v", err)
+		log.Fatalf("Could not create postgres schema: %v", err)
 	}
 
 	managers["postgres"] = s
+}
+
+func connectMySQL() {
+	var db *sqlx.DB
+	c, err := dockertest.ConnectToMySQL(15, time.Second, func(url string) bool {
+		var err error
+		db, err = sqlx.Open("mysql", url)
+		if err != nil {
+			log.Printf("Got error in mysql connector: %s", err)
+			return false
+		}
+		return db.Ping() == nil
+	})
+
+	if err != nil {
+		log.Fatalf("Could not connect to database: %s", err)
+	}
+
+	containers = append(containers, c)
+	s := NewSQLManager(db, nil)
+
+	if err = s.CreateSchemas(); err != nil {
+		log.Fatalf("Could not create mysql schema: %v", err)
+	}
+
+	managers["mysql"] = s
 }
 
 var rethinkManager *RethinkManager
@@ -205,6 +239,7 @@ func TestCreateGetDelete(t *testing.T) {
 		for _, c := range managerPolicies {
 			err := s.Create(c)
 			assert.Nil(t, err, "%s: %s", k, err)
+			time.Sleep(time.Millisecond * 100)
 
 			get, err := s.Get(c.GetID())
 			assert.Nil(t, err, "%s: %s", k, err)
@@ -229,6 +264,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 		policies, err := s.FindPoliciesForSubject("user")
 		assert.Nil(t, err)
 		assert.Equal(t, 4, len(policies), k)
+		t.Logf("%v", policies)
 
 		policies, err = s.FindPoliciesForSubject("peter")
 		assert.Nil(t, err)
@@ -236,6 +272,11 @@ func TestFindPoliciesForSubject(t *testing.T) {
 
 		// Test case-sensitive matching
 		policies, err = s.FindPoliciesForSubject("User")
+		assert.Nil(t, err)
+		assert.Equal(t, 1, len(policies), k)
+
+		// Test case-sensitive matching
+		policies, err = s.FindPoliciesForSubject("taKwq")
 		assert.Nil(t, err)
 		assert.Equal(t, 1, len(policies), k)
 
