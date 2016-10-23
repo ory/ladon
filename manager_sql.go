@@ -65,7 +65,7 @@ func (s *SQLManager) CreateSchemas() error {
 
 // Create inserts a new policy
 func (s *SQLManager) Create(policy Policy) (err error) {
-	conditions := []byte("[]")
+	conditions := []byte("{}")
 	if policy.GetConditions() != nil {
 		cs := policy.GetConditions()
 		conditions, err = json.Marshal(&cs)
