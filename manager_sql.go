@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 	"github.com/ory-am/common/compiler"
@@ -58,8 +57,7 @@ func (s *SQLManager) CreateSchemas() error {
 	}
 	for _, query := range schema {
 		if _, err := s.db.Exec(query); err != nil {
-			log.Printf("Error creating schema %s", query)
-			return err
+			return errors.Wrapf(err, "Error creating schema %s", query)
 		}
 	}
 	return nil
@@ -72,14 +70,14 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		cs := policy.GetConditions()
 		conditions, err = json.Marshal(&cs)
 		if err != nil {
-			return err
+			return errors.Wrap(err,"")
 		}
 	}
 
 	if tx, err := s.db.Begin(); err != nil {
-		return err
+		return errors.Wrap(err,"")
 	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
-		return err
+		return errors.Wrap(err,"")
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
 		return err
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
@@ -88,9 +86,9 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		return err
 	} else if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return err
+			return errors.Wrap(err,"")
 		}
-		return err
+		return errors.Wrap(err,"")
 	}
 
 	return nil
@@ -134,7 +132,7 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 // Delete removes a policy.
 func (s *SQLManager) Delete(id string) error {
 	_, err := s.db.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
-	return err
+	return errors.Wrap(err,"")
 }
 
 // FindPoliciesForSubject returns Policies (an array of policy) for a given subject
@@ -142,7 +140,7 @@ func (s *SQLManager) FindPoliciesForSubject(subject string) (policies Policies, 
 	find := func(query string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(query, args...)
 		if err == sql.ErrNoRows {
-			return nil, pkg.ErrNotFound
+			return nil, errors.Wrap(pkg.ErrNotFound, "")
 		} else if err != nil {
 			return nil, errors.Wrap(err, "")
 		}
@@ -188,7 +186,7 @@ func getLinkedSQL(db *sqlx.DB, table, policy string) ([]string, error) {
 	urns := []string{}
 	rows, err := db.Query(db.Rebind(fmt.Sprintf("SELECT template FROM %s WHERE policy=?", table)), policy)
 	if err == sql.ErrNoRows {
-		return nil, pkg.ErrNotFound
+		return nil, errors.Wrap(pkg.ErrNotFound, "")
 	} else if err != nil {
 		return nil, errors.Wrap(err, "")
 	}
@@ -212,9 +210,9 @@ func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p Policy, templates []
 		query := db.Rebind(fmt.Sprintf("INSERT INTO %s (policy, template, compiled) VALUES (?, ?, ?)", table))
 		if _, err = tx.Exec(query, p.GetID(), template, reg.String()); err != nil {
 			if rb := tx.Rollback(); rb != nil {
-				return rb
+				return errors.Wrap(rb,"")
 			}
-			return err
+			return errors.Wrap(err,"")
 		}
 	}
 	return nil

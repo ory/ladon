@@ -65,7 +65,7 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 				}
 
 				if err := json.Unmarshal(jc.Options, dc); err != nil {
-					return err
+					return errors.Wrap(err, "")
 				}
 
 				cs[k] = dc

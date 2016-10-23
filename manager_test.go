@@ -95,8 +95,8 @@ var managerPolicies = []*DefaultPolicy{
 }
 
 var managers = map[string]Manager{}
-
 var containers = []dockertest.ContainerID{}
+var rethinkManager *RethinkManager
 
 func TestMain(m *testing.M) {
 	defer func() {
@@ -171,8 +171,6 @@ func connectMySQL() {
 	managers["mysql"] = s
 }
 
-var rethinkManager *RethinkManager
-
 func connectRDB() {
 	var err error
 	var session *r.Session
@@ -229,6 +227,7 @@ func TestGetErrors(t *testing.T) {
 	for k, s := range managers {
 		_, err := s.Get(uuid.New())
 		assert.EqualError(t, err, pkg.ErrNotFound.Error(), k)
+
 		_, err = s.Get("asdf")
 		assert.NotNil(t, err)
 	}
@@ -244,7 +243,7 @@ func TestCreateGetDelete(t *testing.T) {
 			get, err := s.Get(c.GetID())
 			assert.Nil(t, err, "%s: %s", k, err)
 			pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Actions")
-			assert.Equal(t, len(c.Conditions), len(get.GetConditions()), "%s", k)
+			assert.EqualValues(t, c.Conditions, get.GetConditions(), "%s", k)
 		}
 
 		for _, c := range managerPolicies {
@@ -264,7 +263,6 @@ func TestFindPoliciesForSubject(t *testing.T) {
 		policies, err := s.FindPoliciesForSubject("user")
 		assert.Nil(t, err)
 		assert.Equal(t, 4, len(policies), k)
-		t.Logf("%v", policies)
 
 		policies, err = s.FindPoliciesForSubject("peter")
 		assert.Nil(t, err)
