@@ -16,7 +16,7 @@ var sqlSchema = []string{
 		id           varchar(255) NOT NULL PRIMARY KEY,
 		description  text NOT NULL,
 		effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
-		conditions 	 json NOT NULL
+		conditions 	 text NOT NULL
 	)`,
 	`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
     	compiled text NOT NULL,
