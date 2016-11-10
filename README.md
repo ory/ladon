@@ -56,7 +56,7 @@ Ladon is an access control library that answers the question:
 
 > **Who** is **able** to do **what** on **something** given some **context**
 
-* **Who** An arbitrary unique subject name, for example "ken" or "printer-service.mydomain.com".
+* **Who**: An arbitrary unique subject name, for example "ken" or "printer-service.mydomain.com".
 * **Able**: The effect which can be either "allow" or "deny".
 * **What**: An arbitrary action name, for example "delete", "create" or "scoped:action:something".
 * **Something**: An arbitrary unique resource name, for example "something", "resources.articles.1234" or some uniform
