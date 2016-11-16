@@ -11,13 +11,14 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/require"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	. "github.com/ory-am/ladon"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	r "gopkg.in/dancannon/gorethink.v2"
-	. "github.com/ory-am/ladon"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
-	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/require"
+	"gopkg.in/redis.v5"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -110,6 +111,7 @@ func TestMain(m *testing.M) {
 	connectMEM()
 	connectPG()
 	connectMySQL()
+	connectRedis()
 
 	retCode := m.Run()
 	os.Exit(retCode)
@@ -202,6 +204,24 @@ func connectRDB() {
 
 	containers = append(containers, c)
 	managers["rethink"] = rethinkManager
+}
+
+func connectRedis() {
+	var db *redis.Client
+	c, err := dockertest.ConnectToRedis(15, time.Second, func(url string) bool {
+		db = redis.NewClient(&redis.Options{
+			Addr: url,
+		})
+
+		return db.Ping().Err() == nil
+	})
+
+	if err != nil {
+		log.Fatalf("Could not connect to database: %s", err)
+	}
+
+	containers = append(containers, c)
+	managers["redis"] = NewRedisManager(db, "")
 }
 
 func TestColdStart(t *testing.T) {

@@ -12,7 +12,7 @@ In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBA
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 
-Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL) and RethinkDB (community supported).
+Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL), Redis and RethinkDB (community supported).
 
 **[Hydra](https://github.com/ory-am/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
 
@@ -409,7 +409,7 @@ func main() {
 #### Persistence
 
 Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
-this purpose with default implementations for In-Memory, RethinkDB and SQL (PostgreSQL, MySQL). Let's take a look how to 
+this purpose with default implementations for In-Memory, RethinkDB, SQL (PostgreSQL, MySQL) and Redis. Let's take a look how to
 instantiate those.
 
 **In-Memory**
@@ -452,6 +452,31 @@ func main() {
     }
 
     // ...
+}
+```
+
+**Redis**
+
+```go
+import (
+	"github.com/ory-am/ladon"
+	"gopkg.in/redis.v5"
+)
+
+func main () {
+	db = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+	})
+
+	if err := db.Ping().Err(); err != nil {
+		log.Fatalf("Could not connect to database: %s". err)
+	}
+
+	warden := ladon.Ladon{
+		Manager: ladon.NewRedisManager(db, "redis_key_prefix:")
+	}
+
+	// ...
 }
 ```
 
