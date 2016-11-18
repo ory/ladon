@@ -23,7 +23,10 @@ func NewRedisManager(db *redis.Client, keyPrefix string) *RedisManager {
 
 const redisPolicies = "ladon:policies"
 
-var redisNotFound = errors.New("Not found")
+var (
+	redisPolicyExists = errors.New("Policy exists")
+	redisNotFound     = errors.New("Not found")
+)
 
 func (m *RedisManager) redisPoliciesKey() string {
 	return m.keyPrefix + redisPolicies
@@ -33,14 +36,14 @@ func (m *RedisManager) redisPoliciesKey() string {
 func (m *RedisManager) Create(policy Policy) error {
 	payload, err := json.Marshal(policy)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "policy marshal failed")
 	}
 
 	wasKeySet, err := m.db.HSetNX(m.redisPoliciesKey(), policy.GetID(), string(payload)).Result()
 	if !wasKeySet {
-		return errors.New("Policy exists")
+		return errors.Wrap(redisPolicyExists, "")
 	} else if err != nil {
-		return err
+		return errors.Wrap(err, "policy creation failed")
 	}
 
 	return nil
@@ -60,7 +63,11 @@ func (m *RedisManager) Get(id string) (Policy, error) {
 
 // Delete removes a policy.
 func (m *RedisManager) Delete(id string) error {
-	return m.db.HDel(m.redisPoliciesKey(), id).Err()
+	if err := m.db.HDel(m.redisPoliciesKey(), id).Err(); err != nil {
+		return errors.Wrap(err, "policy deletion failed")
+	}
+
+	return nil
 }
 
 // FindPoliciesForSubject finds all policies associated with the subject.
@@ -80,7 +87,7 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 		}
 
 		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "policy subject match failed")
 		} else if !ok {
 			continue
 		}
@@ -97,7 +104,7 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 func redisUnmarshalPolicy(policy []byte) (Policy, error) {
 	var p *DefaultPolicy
 	if err := json.Unmarshal(policy, &p); err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, errors.Wrap(err, "policy unmarshal failed")
 	}
 
 	return p, nil
