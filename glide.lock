@@ -1,5 +1,5 @@
-hash: 474331f43c1ace049653f5b5af58bc6086335d56a3509bacc35993a0e43e5cee
-updated: 2016-10-09T20:46:48.2882202+02:00
+hash: 9fdfcee3db23cac887b197876ab2cff4c9c92d0e69481234d5678d9dd87fcc89
+updated: 2016-11-16T14:24:12.84034367Z
 imports:
 - name: github.com/cenk/backoff
   version: 8edc80b07f38c27352fb186d971c628a6c32552b
@@ -56,6 +56,8 @@ imports:
   version: 8d1157a435470616f975ff9bb013bea8d0962067
   subpackages:
   - unix
+- name: gopkg.in/bsm/ratelimit.v1
+  version: db14e161995a5177acef654cb0dd785e8ee8bc22
 - name: gopkg.in/dancannon/gorethink.v2
   version: 27d3045458910e2fc56025a0b52caaaa96414a26
   subpackages:
@@ -64,6 +66,14 @@ imports:
   - types
 - name: gopkg.in/fatih/pool.v2
   version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
+- name: gopkg.in/redis.v5
+  version: b6bfe529a846fbb9a58c832ce71c61b6fde12c15
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 testImports:
 - name: github.com/go-sql-driver/mysql
   version: 0b58b37b664c21f3010e836f1b931e1d0b0b0685
