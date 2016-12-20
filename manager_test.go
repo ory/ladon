@@ -1,4 +1,4 @@
-package ladon_test
+package ladon
 
 import (
 	"log"
@@ -7,18 +7,15 @@ import (
 	"time"
 
 	"github.com/ory-am/common/pkg"
-	"github.com/ory-am/dockertest"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	//"github.com/stretchr/testify/require"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	. "github.com/ory-am/ladon"
+
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	r "gopkg.in/dancannon/gorethink.v2"
-	"gopkg.in/redis.v5"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -96,16 +93,9 @@ var managerPolicies = []*DefaultPolicy{
 }
 
 var managers = map[string]Manager{}
-var containers = []dockertest.ContainerID{}
 var rethinkManager *RethinkManager
 
 func TestMain(m *testing.M) {
-	defer func() {
-		for _, c := range containers {
-			c.KillRemove()
-		}
-	}()
-
 	connectPG()
 	connectRDB()
 	connectMEM()
@@ -113,8 +103,9 @@ func TestMain(m *testing.M) {
 	connectMySQL()
 	connectRedis()
 
-	retCode := m.Run()
-	os.Exit(retCode)
+	s := m.Run()
+	killAll()
+	os.Exit(s)
 }
 
 func connectMEM() {
@@ -122,25 +113,9 @@ func connectMEM() {
 }
 
 func connectPG() {
-	var db *sqlx.DB
-	c, err := dockertest.ConnectToPostgreSQL(15, time.Second, func(url string) bool {
-		var err error
-		db, err = sqlx.Open("postgres", url)
-		if err != nil {
-			log.Printf("Got error in postgres connector: %s", err)
-			return false
-		}
-		return db.Ping() == nil
-	})
-
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
-	}
-
-	containers = append(containers, c)
+	var db = connectToPostgres()
 	s := NewSQLManager(db, nil)
-
-	if err = s.CreateSchemas(); err != nil {
+	if err := s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not create postgres schema: %v", err)
 	}
 
@@ -148,25 +123,9 @@ func connectPG() {
 }
 
 func connectMySQL() {
-	var db *sqlx.DB
-	c, err := dockertest.ConnectToMySQL(15, time.Second, func(url string) bool {
-		var err error
-		db, err = sqlx.Open("mysql", url)
-		if err != nil {
-			log.Printf("Got error in mysql connector: %s", err)
-			return false
-		}
-		return db.Ping() == nil
-	})
-
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
-	}
-
-	containers = append(containers, c)
+	var db = connectToMySQL()
 	s := NewSQLManager(db, nil)
-
-	if err = s.CreateSchemas(); err != nil {
+	if err := s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not create mysql schema: %v", err)
 	}
 
@@ -174,53 +133,20 @@ func connectMySQL() {
 }
 
 func connectRDB() {
-	var err error
-	var session *r.Session
-
-	c, err := dockertest.ConnectToRethinkDB(20, time.Second, func(url string) bool {
-		if session, err = r.Connect(r.ConnectOpts{Address: url, Database: "hydra"}); err != nil {
-			return false
-		} else if _, err = r.DBCreate("hydra").RunWrite(session); err != nil {
-			log.Printf("Database exists: %s", err)
-			return false
-		} else if _, err = r.TableCreate("hydra_policies").RunWrite(session); err != nil {
-			log.Printf("Could not create table: %s", err)
-			return false
-		}
-
-		rethinkManager = &RethinkManager{
-			Session:  session,
-			Table:    r.Table("hydra_policies"),
-			Policies: make(map[string]Policy),
-		}
-
-		rethinkManager.Watch(context.Background())
-		time.Sleep(time.Second)
-		return true
-	})
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
+	var session = connectToRethinkDB("ladon", "policies")
+	rethinkManager = &RethinkManager{
+		Session:  session,
+		Table:    r.Table("policies"),
+		Policies: make(map[string]Policy),
 	}
 
-	containers = append(containers, c)
+	rethinkManager.Watch(context.Background())
+	time.Sleep(time.Second)
 	managers["rethink"] = rethinkManager
 }
 
 func connectRedis() {
-	var db *redis.Client
-	c, err := dockertest.ConnectToRedis(15, time.Second, func(url string) bool {
-		db = redis.NewClient(&redis.Options{
-			Addr: url,
-		})
-
-		return db.Ping().Err() == nil
-	})
-
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
-	}
-
-	containers = append(containers, c)
+	var db = connectToRedis()
 	managers["redis"] = NewRedisManager(db, "")
 }
 

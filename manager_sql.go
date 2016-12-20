@@ -9,30 +9,40 @@ import (
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
 	"github.com/jmoiron/sqlx"
+	"github.com/rubenv/sql-migrate"
 )
 
-var sqlSchema = []string{
-	`CREATE TABLE IF NOT EXISTS ladon_policy (
-		id           varchar(255) NOT NULL PRIMARY KEY,
-		description  text NOT NULL,
-		effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
-		conditions 	 text NOT NULL
-	)`,
-	`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
-    	compiled text NOT NULL,
-    	template varchar(1023) NOT NULL,
-    	policy   varchar(255) NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE
-	)`,
-	`CREATE TABLE IF NOT EXISTS ladon_policy_permission (
-    	compiled text NOT NULL,
-    	template varchar(1023) NOT NULL,
-    	policy   varchar(255) NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE
-	)`,
-	`CREATE TABLE IF NOT EXISTS ladon_policy_resource (
-    	compiled text NOT NULL,
-    	template varchar(1023) NOT NULL,
-    	policy   varchar(255) NOT NULL REFERENCES ladon_policy (id) ON DELETE CASCADE
-	)`,
+var migrations = &migrate.MemoryMigrationSource{
+	Migrations: []*migrate.Migration{
+		&migrate.Migration{
+			Id:   "1",
+			Up:   []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
+	id           varchar(255) NOT NULL PRIMARY KEY,
+	description  text NOT NULL,
+	effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
+	conditions 	 text NOT NULL
+)`,
+				`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
+	compiled text NOT NULL,
+	template varchar(1023) NOT NULL,
+	policy   varchar(255) NOT NULL,
+	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
+)`,
+				`CREATE TABLE IF NOT EXISTS ladon_policy_permission (
+	compiled text NOT NULL,
+	template varchar(1023) NOT NULL,
+	policy   varchar(255) NOT NULL,
+	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
+)`,
+				`CREATE TABLE IF NOT EXISTS ladon_policy_resource (
+	compiled text NOT NULL,
+	template varchar(1023) NOT NULL,
+	policy   varchar(255) NOT NULL,
+	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
+)`},
+			Down: []string{"DROP TABLE ladon_policy"},
+		},
+	},
 }
 
 // SQLManager is a postgres implementation for Manager to store policies persistently.
@@ -51,14 +61,9 @@ func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
 
 // CreateSchemas creates ladon_policy tables
 func (s *SQLManager) CreateSchemas() error {
-	schema := s.schema
-	if schema == nil {
-		schema = sqlSchema
-	}
-	for _, query := range schema {
-		if _, err := s.db.Exec(query); err != nil {
-			return errors.Wrapf(err, "Error creating schema %s", query)
-		}
+	n, err := migrate.Exec(s.db.DB, s.db.DriverName(), migrations, migrate.Up)
+	if err != nil {
+		return errors.Wrapf(err, "Could not migrate sql schema, applied %d migrations", n)
 	}
 	return nil
 }
@@ -70,14 +75,14 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		cs := policy.GetConditions()
 		conditions, err = json.Marshal(&cs)
 		if err != nil {
-			return errors.Wrap(err,"")
+			return errors.Wrap(err, "")
 		}
 	}
 
 	if tx, err := s.db.Begin(); err != nil {
-		return errors.Wrap(err,"")
+		return errors.Wrap(err, "")
 	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
-		return errors.Wrap(err,"")
+		return errors.Wrap(err, "")
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
 		return err
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
@@ -86,9 +91,9 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		return err
 	} else if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return errors.Wrap(err,"")
+			return errors.Wrap(err, "")
 		}
-		return errors.Wrap(err,"")
+		return errors.Wrap(err, "")
 	}
 
 	return nil
@@ -132,7 +137,7 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 // Delete removes a policy.
 func (s *SQLManager) Delete(id string) error {
 	_, err := s.db.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
-	return errors.Wrap(err,"")
+	return errors.Wrap(err, "")
 }
 
 // FindPoliciesForSubject returns Policies (an array of policy) for a given subject
@@ -210,9 +215,9 @@ func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p Policy, templates []
 		query := db.Rebind(fmt.Sprintf("INSERT INTO %s (policy, template, compiled) VALUES (?, ?, ?)", table))
 		if _, err = tx.Exec(query, p.GetID(), template, reg.String()); err != nil {
 			if rb := tx.Rollback(); rb != nil {
-				return errors.Wrap(rb,"")
+				return errors.Wrap(rb, "")
 			}
-			return errors.Wrap(err,"")
+			return errors.Wrap(err, "")
 		}
 	}
 	return nil
