@@ -40,7 +40,12 @@ var migrations = &migrate.MemoryMigrationSource{
 	policy   varchar(255) NOT NULL,
 	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
 )`},
-			Down: []string{"DROP TABLE ladon_policy"},
+			Down: []string{
+				"DROP TABLE ladon_policy",
+				"DROP TABLE ladon_policy_subject",
+				"DROP TABLE ladon_policy_permission",
+				"DROP TABLE ladon_policy_resource",
+			},
 		},
 	},
 }
