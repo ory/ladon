@@ -29,7 +29,7 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 	for k, c := range cs {
 		raw, err := json.Marshal(c)
 		if err != nil {
-			return []byte{}, errors.Wrap(err, "")
+			return []byte{}, errors.WithStack(err)
 		}
 
 		out[k] = &jsonCondition{
@@ -51,7 +51,7 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 	var dc Condition
 
 	if err := json.Unmarshal(data, &jcs); err != nil {
-		return errors.Wrap(err, "")
+		return errors.WithStack(err)
 	}
 
 	for k, jc := range jcs {
@@ -65,7 +65,7 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 				}
 
 				if err := json.Unmarshal(jc.Options, dc); err != nil {
-					return errors.Wrap(err, "")
+					return errors.WithStack(err)
 				}
 
 				cs[k] = dc

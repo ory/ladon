@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/ory-am/common/pkg"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
-	//"github.com/stretchr/testify/require"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
 
+	"github.com/ory-am/common/integration"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	r "gopkg.in/dancannon/gorethink.v2"
@@ -104,7 +104,7 @@ func TestMain(m *testing.M) {
 	connectRedis()
 
 	s := m.Run()
-	killAll()
+	integration.KillAll()
 	os.Exit(s)
 }
 
@@ -113,7 +113,7 @@ func connectMEM() {
 }
 
 func connectPG() {
-	var db = connectToPostgres()
+	var db = integration.ConnectToPostgres("ladon")
 	s := NewSQLManager(db, nil)
 	if err := s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not create postgres schema: %v", err)
@@ -123,7 +123,7 @@ func connectPG() {
 }
 
 func connectMySQL() {
-	var db = connectToMySQL()
+	var db = integration.ConnectToMySQL()
 	s := NewSQLManager(db, nil)
 	if err := s.CreateSchemas(); err != nil {
 		log.Fatalf("Could not create mysql schema: %v", err)
@@ -133,7 +133,7 @@ func connectMySQL() {
 }
 
 func connectRDB() {
-	var session = connectToRethinkDB("ladon", "policies")
+	var session = integration.ConnectToRethinkDB("ladon", "policies")
 	rethinkManager = &RethinkManager{
 		Session:  session,
 		Table:    r.Table("policies"),
@@ -146,7 +146,7 @@ func connectRDB() {
 }
 
 func connectRedis() {
-	var db = connectToRedis()
+	var db = integration.ConnectToRedis()
 	managers["redis"] = NewRedisManager(db, "")
 }
 
