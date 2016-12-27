@@ -68,7 +68,7 @@ func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &pol); err != nil {
-		return errors.Wrap(err, "")
+		return errors.WithStack(err)
 	}
 
 	*p = *&DefaultPolicy{

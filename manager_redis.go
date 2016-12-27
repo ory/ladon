@@ -41,7 +41,7 @@ func (m *RedisManager) Create(policy Policy) error {
 
 	wasKeySet, err := m.db.HSetNX(m.redisPoliciesKey(), policy.GetID(), string(payload)).Result()
 	if !wasKeySet {
-		return errors.Wrap(redisPolicyExists, "")
+		return errors.WithStack(redisPolicyExists)
 	} else if err != nil {
 		return errors.Wrap(err, "policy creation failed")
 	}
@@ -55,7 +55,7 @@ func (m *RedisManager) Get(id string) (Policy, error) {
 	if err == redis.Nil {
 		return nil, redisNotFound
 	} else if err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, errors.WithStack(err)
 	}
 
 	return redisUnmarshalPolicy(resp)
@@ -95,7 +95,7 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 		ps = append(ps, p)
 	}
 	if err := iter.Err(); err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, errors.WithStack(err)
 	}
 
 	return ps, nil

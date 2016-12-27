@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/jmoiron/sqlx"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
 )
 
 var migrations = &migrate.MemoryMigrationSource{
 	Migrations: []*migrate.Migration{
 		&migrate.Migration{
-			Id:   "1",
-			Up:   []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
+			Id: "1",
+			Up: []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
 	id           varchar(255) NOT NULL PRIMARY KEY,
 	description  text NOT NULL,
 	effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
@@ -59,7 +59,7 @@ type SQLManager struct {
 // NewSQLManager initializes a new SQLManager for given db instance.
 func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
 	return &SQLManager{
-		db: db,
+		db:     db,
 		schema: schema,
 	}
 }
@@ -80,14 +80,14 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		cs := policy.GetConditions()
 		conditions, err = json.Marshal(&cs)
 		if err != nil {
-			return errors.Wrap(err, "")
+			return errors.WithStack(err)
 		}
 	}
 
 	if tx, err := s.db.Begin(); err != nil {
-		return errors.Wrap(err, "")
+		return errors.WithStack(err)
 	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
-		return errors.Wrap(err, "")
+		return errors.WithStack(err)
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
 		return err
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
@@ -96,9 +96,9 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		return err
 	} else if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return errors.Wrap(err, "")
+			return errors.WithStack(err)
 		}
-		return errors.Wrap(err, "")
+		return errors.WithStack(err)
 	}
 
 	return nil
@@ -112,12 +112,12 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 	if err := s.db.QueryRow(s.db.Rebind("SELECT id, description, effect, conditions FROM ladon_policy WHERE id=?"), id).Scan(&p.ID, &p.Description, &p.Effect, &conditions); err == sql.ErrNoRows {
 		return nil, pkg.ErrNotFound
 	} else if err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, errors.WithStack(err)
 	}
 
 	p.Conditions = Conditions{}
 	if err := json.Unmarshal(conditions, &p.Conditions); err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, errors.WithStack(err)
 	}
 
 	subjects, err := getLinkedSQL(s.db, "ladon_policy_subject", id)
@@ -142,7 +142,7 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 // Delete removes a policy.
 func (s *SQLManager) Delete(id string) error {
 	_, err := s.db.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
-	return errors.Wrap(err, "")
+	return errors.WithStack(err)
 }
 
 // FindPoliciesForSubject returns Policies (an array of policy) for a given subject
@@ -152,13 +152,13 @@ func (s *SQLManager) FindPoliciesForSubject(subject string) (policies Policies, 
 		if err == sql.ErrNoRows {
 			return nil, errors.Wrap(pkg.ErrNotFound, "")
 		} else if err != nil {
-			return nil, errors.Wrap(err, "")
+			return nil, errors.WithStack(err)
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var urn string
 			if err = rows.Scan(&urn); err != nil {
-				return nil, errors.Wrap(err, "")
+				return nil, errors.WithStack(err)
 			}
 			ids = append(ids, urn)
 		}
@@ -198,14 +198,14 @@ func getLinkedSQL(db *sqlx.DB, table, policy string) ([]string, error) {
 	if err == sql.ErrNoRows {
 		return nil, errors.Wrap(pkg.ErrNotFound, "")
 	} else if err != nil {
-		return nil, errors.Wrap(err, "")
+		return nil, errors.WithStack(err)
 	}
 
 	defer rows.Close()
 	for rows.Next() {
 		var urn string
 		if err = rows.Scan(&urn); err != nil {
-			return []string{}, errors.Wrap(err, "")
+			return []string{}, errors.WithStack(err)
 		}
 		urns = append(urns, urn)
 	}
@@ -220,9 +220,9 @@ func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p Policy, templates []
 		query := db.Rebind(fmt.Sprintf("INSERT INTO %s (policy, template, compiled) VALUES (?, ?, ?)", table))
 		if _, err = tx.Exec(query, p.GetID(), template, reg.String()); err != nil {
 			if rb := tx.Rollback(); rb != nil {
-				return errors.Wrap(rb, "")
+				return errors.WithStack(rb)
 			}
-			return errors.Wrap(err, "")
+			return errors.WithStack(err)
 		}
 	}
 	return nil
