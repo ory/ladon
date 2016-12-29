@@ -1,12 +1,12 @@
-hash: 9fdfcee3db23cac887b197876ab2cff4c9c92d0e69481234d5678d9dd87fcc89
-updated: 2016-12-20T22:42:06.5499176+01:00
+hash: e8381095c5fd0114763e4cde66563c168d52c8ad956d34d16b2739675a127e58
+updated: 2016-12-29T22:08:05.2844039+01:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
   - winterm
 - name: github.com/cenk/backoff
-  version: 32cd0c5b3aef12c76ed64aaf678f6c79736be7dc
+  version: b02f2bbce11d7ea6b97f282ef1771b0fe2f65ef3
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -46,15 +46,11 @@ imports:
 - name: github.com/docker/go-units
   version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
 - name: github.com/fsouza/go-dockerclient
-  version: 4611598e6e6615762544f0805acd59dfede5c9a2
+  version: 4a934a8fd3ec3d4f84d9dcd8b47e7b277918c366
 - name: github.com/go-errors/errors
-  version: a41850380601eeb43f4350f7d17c6bbd8944aaf8
+  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
 - name: github.com/go-sql-driver/mysql
   version: a0583e0143b1624142adab07e0e97fe106d99561
-- name: github.com/golang/mock
-  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
-  subpackages:
-  - gomock
 - name: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
@@ -64,26 +60,27 @@ imports:
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/jmoiron/sqlx
-  version: f9b4c7a65e3ad108b5052f4c72fa96e2c2cb5955
+  version: cac998c4f0959c19c638c523e374fa8e4e0bcfe3
   subpackages:
   - reflectx
 - name: github.com/lib/pq
-  version: d8eeeb8bae8896dd8e1b7e514ab0d396c4f12a1b
+  version: 5bf161122cd640c2a5a2c1d7fa49ea9befff31dd
   subpackages:
   - oid
 - name: github.com/Microsoft/go-winio
   version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
 - name: github.com/oleiade/reflections
-  version: ec27669d960a245738b87ffa688dac28fa288c33
+  version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: github.com/opencontainers/runc
-  version: 4271a8b5aec07d69f128df5474dea064d4694832
+  version: f376b8033d2caae5207de9be1ee4d4a695886af1
   subpackages:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/ory-am/common
-  version: 8d96b678f9a0e5d6717f53df04e0b78bd66a2ed0
+  version: eaf2f2a2e18295ffc4e89d07a9556903d22b4e79
   subpackages:
   - compiler
+  - integration
   - pkg
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
@@ -92,44 +89,46 @@ imports:
   subpackages:
   - difflib
 - name: github.com/rubenv/sql-migrate
-  version: 6f4757563362064790a6687a6b60f182062c8634
+  version: a3ed23a40ebd39f82bf2a36768ed7d595f2bdc1e
   subpackages:
   - sqlparse
 - name: github.com/Sirupsen/logrus
-  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - require
 - name: golang.org/x/crypto
-  version: ede567c8e044a5913dad1d1af3696d9da953104c
+  version: f6b343c37ca80bfa8ea539da67a0b621f84fab1d
   subpackages:
   - pbkdf2
 - name: golang.org/x/net
-  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
+  version: 45e771701b814666a7eb299e6c7a57d0b1799e91
   subpackages:
   - context
   - context/ctxhttp
 - name: golang.org/x/sys
-  version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - unix
   - windows
 - name: gopkg.in/dancannon/gorethink.v2
-  version: 27d3045458910e2fc56025a0b52caaaa96414a26
+  version: 417badecf1ab14d0d6e38ad82397da2a59e2f6ca
+- name: gopkg.in/fatih/pool.v2
+  version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
+- name: gopkg.in/gorethink/gorethink.v2
+  version: 016a1d3b4d15951ab2e39bd3596718ba94d298ba
   subpackages:
   - encoding
   - ql2
   - types
-- name: gopkg.in/fatih/pool.v2
-  version: 20a0a429c5f93de45c90f5f09ea297c25e0929b3
 - name: gopkg.in/gorp.v1
   version: c87af80f3cc5036b55b83d77171e156791085e2e
 - name: gopkg.in/ory-am/dockertest.v3
   version: e4828e807797a7641fcd457716870dfc2f9e82ff
 - name: gopkg.in/redis.v5
-  version: 5e76db680467ebce5495cc2159a9289a6851d773
+  version: b7bae3a78050e2e7ec2130a05cde296a9ff2e9c0
   subpackages:
   - internal
   - internal/consistenthash
@@ -137,5 +136,9 @@ imports:
   - internal/pool
   - internal/proto
 testImports:
+- name: github.com/golang/mock
+  version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
+  subpackages:
+  - gomock
 - name: github.com/pborman/uuid
   version: a97ce2ca70fa5a848076093f05e639a89ca34d06
