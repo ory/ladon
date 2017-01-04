@@ -213,28 +213,28 @@ Conditions are functions returning true or false given a context. Because condit
 be programmed. Adding conditions to a policy consist of two parts, a key name and an implementation of `ladon.Condition`:
 
 ```go
-// StringMatchCondition is an exemplary condition.
-type StringMatchCondition struct {
+// StringEqualCondition is an exemplary condition.
+type StringEqualCondition struct {
 	Equals string `json:"equals"`
 }
 
 // Fulfills returns true if the given value is a string and is the
 // same as in StringEqualCondition.Equals
-func (c *StringMatchCondition) Fulfills(value interface{}, _ *ladon.Request) bool {
+func (c *StringEqualCondition) Fulfills(value interface{}, _ *ladon.Request) bool {
 	s, ok := value.(string)
 
 	return ok && s == c.Equals
 }
 
 // GetName returns the condition's name.
-func (c *StringMatchCondition) GetName() string {
-	return "StringMatchCondition"
+func (c *StringEqualCondition) GetName() string {
+	return "StringEqualCondition"
 }
 
 var pol = &ladon.DefaultPolicy{
     // ...
     Conditions: ladon.Conditions{
-        "some-arbitrary-key": &StringMatchCondition{
+        "some-arbitrary-key": &StringEqualCondition{
             Equals: "the-value-should-be-this"
         }
     },
@@ -247,7 +247,7 @@ The default implementation of `Policy` supports JSON un-/marshalling. In JSON, t
 {
   "conditions": {
     "some-arbitrary-key": {
-        "type": "StringMatchCondition",
+        "type": "StringEqualCondition",
         "options": {
             "equals": "the-value-should-be-this"
         }
@@ -256,8 +256,8 @@ The default implementation of `Policy` supports JSON un-/marshalling. In JSON, t
 }
 ```
 
-As you can see, `type` is the value that `StringMatchCondition.GetName()` is returning and `options` is used to
-set the value of `StringMatchCondition.Equals`.
+As you can see, `type` is the value that `StringEqualCondition.GetName()` is returning and `options` is used to
+set the value of `StringEqualCondition.Equals`.
 
 This condition is fulfilled by (we will cover the warden in the next section)
 
@@ -334,7 +334,7 @@ Checks if the value passed in the access request's context is identical with the
 ```go
 var pol = &ladon.DefaultPolicy{
     Conditions: ladon.Conditions{
-        "some-arbitrary-key": &ladon.StringMatchCondition{
+        "some-arbitrary-key": &ladon.StringEqualCondition{
             Equals: "the-value-should-be-this"
         }
     },
