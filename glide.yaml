@@ -14,7 +14,7 @@ import:
 - package: golang.org/x/net
   subpackages:
   - context
-- package: gopkg.in/dancannon/gorethink.v2
+- package: gopkg.in/gorethink/gorethink.v3
   version: ~3.0.0
 - package: gopkg.in/redis.v5
   version: ~5.1.6

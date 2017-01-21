@@ -1,5 +1,5 @@
-hash: e8381095c5fd0114763e4cde66563c168d52c8ad956d34d16b2739675a127e58
-updated: 2016-12-29T22:08:05.2844039+01:00
+hash: b3fe9d81fdf268e452a2d6f96753b370edb4934b64b4d5927de3b6d905bed22b
+updated: 2017-01-23T22:14:40.851037829+11:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -12,7 +12,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/docker
-  version: 88862e707affccf9c46347361689b2ffef39dc5c
+  version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
   subpackages:
   - api/types
   - api/types/blkiodev
@@ -123,12 +123,14 @@ imports:
   - encoding
   - ql2
   - types
+- name: gopkg.in/gorethink/gorethink.v3
+  version: 417badecf1ab14d0d6e38ad82397da2a59e2f6ca
 - name: gopkg.in/gorp.v1
   version: c87af80f3cc5036b55b83d77171e156791085e2e
 - name: gopkg.in/ory-am/dockertest.v3
   version: e4828e807797a7641fcd457716870dfc2f9e82ff
 - name: gopkg.in/redis.v5
-  version: b7bae3a78050e2e7ec2130a05cde296a9ff2e9c0
+  version: 8fcba2ea878201b70c5a63dd416141d4ddbc601a
   subpackages:
   - internal
   - internal/consistenthash
