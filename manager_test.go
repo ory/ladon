@@ -15,7 +15,6 @@ import (
 	"github.com/ory-am/common/integration"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
-	r "gopkg.in/dancannon/gorethink.v2"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -134,11 +133,7 @@ func connectMySQL() {
 
 func connectRDB() {
 	var session = integration.ConnectToRethinkDB("ladon", "policies")
-	rethinkManager = &RethinkManager{
-		Session:  session,
-		Table:    r.Table("policies"),
-		Policies: make(map[string]Policy),
-	}
+	rethinkManager = NewRethinkManager(session, "")
 
 	rethinkManager.Watch(context.Background())
 	time.Sleep(time.Second)

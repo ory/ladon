@@ -62,6 +62,22 @@ func rdbFromPolicy(p Policy) (*rdbSchema, error) {
 	}, err
 }
 
+// NewRethinkManager initializes a new RethinkManager for given session, table name defaults
+// to "policies".
+func NewRethinkManager(session *r.Session, table string) *RethinkManager {
+	if table == "" {
+		table = "policies"
+	}
+
+	policies := make(map[string]Policy)
+
+	return &RethinkManager{
+		Session:  session,
+		Table:    r.Table(table),
+		Policies: policies,
+	}
+}
+
 // RethinkManager is a rethinkdb implementation of Manager to store policies persistently.
 type RethinkManager struct {
 	Session *r.Session
