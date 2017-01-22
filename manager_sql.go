@@ -87,6 +87,9 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 	if tx, err := s.db.Begin(); err != nil {
 		return errors.WithStack(err)
 	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
 		return errors.WithStack(err)
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
 		return err
