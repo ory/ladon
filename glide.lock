@@ -76,7 +76,7 @@ imports:
   subpackages:
   - libcontainer/system
   - libcontainer/user
-- name: github.com/ory-am/common
+- name: github.com/ory/common
   version: eaf2f2a2e18295ffc4e89d07a9556903d22b4e79
   subpackages:
   - compiler
@@ -125,7 +125,7 @@ imports:
   - types
 - name: gopkg.in/gorp.v1
   version: c87af80f3cc5036b55b83d77171e156791085e2e
-- name: gopkg.in/ory-am/dockertest.v3
+- name: gopkg.in/ory/dockertest.v3
   version: e4828e807797a7641fcd457716870dfc2f9e82ff
 - name: gopkg.in/redis.v5
   version: b7bae3a78050e2e7ec2130a05cde296a9ff2e9c0

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory-am/common/compiler"
-	"github.com/ory-am/common/pkg"
+	"github.com/ory/common/compiler"
+	"github.com/ory/common/pkg"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
 )

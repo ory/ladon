@@ -8,11 +8,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/ory-am/common/pkg"
+	"github.com/ory/common/pkg"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ory-am/common/integration"
+	"github.com/ory/common/integration"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
