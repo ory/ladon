@@ -93,7 +93,7 @@ var ConditionFactories = map[string]func() Condition{
 	new(EqualsSubjectCondition).GetName(): func() Condition {
 		return new(EqualsSubjectCondition)
 	},
-	new(ContextKeyValuesEqualCondition).GetName(): func() Condition {
-		return new(ContextKeyValuesEqualCondition)
+	new(StringPairsEqualCondition).GetName(): func() Condition {
+		return new(StringPairsEqualCondition)
 	},
 }
