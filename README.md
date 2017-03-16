@@ -28,6 +28,7 @@ Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreS
       - [CIDR Condition](#cidr-condition)
       - [String Equal Condition](#string-equal-condition)
       - [Subject Condition](#subject-condition)
+      - [String Pairs Equal Condition](#string-pairs-equal-condition)
       - [Adding Custom Conditions](#adding-custom-conditions)
     - [Persistence](#persistence)
   - [Access Control (Warden)](#access-control-warden)
@@ -384,6 +385,46 @@ var err = warden.IsAllowed(&ladon.Request{
     Subject: "peter",
     Context: &ladon.Context{
          "some-arbitrary-key": "max",
+    },
+}
+```
+
+##### [String Pairs Equal Condition](condition_string_pairs_equal.go)
+
+Checks if the value passed in the access request's context contains two-element arrays
+and that both elements in each pair are equal.
+
+```go
+var pol = &ladon.DefaultPolicy{
+    Conditions: ladon.Conditions{
+        "some-arbitrary-key": &ladon.StringPairsEqualCondition{}
+    },
+}
+```
+
+and would match
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+         "some-arbitrary-key": [
+             ["some-arbitrary-pair-value", "some-arbitrary-pair-value"],
+             ["some-other-arbitrary-pair-value", "some-other-arbitrary-pair-value"],
+         ]
+    },
+}
+```
+
+but not:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+         "some-arbitrary-key": [
+             ["some-arbitrary-pair-value", "some-other-arbitrary-pair-value"],
+         ]
     },
 }
 ```
