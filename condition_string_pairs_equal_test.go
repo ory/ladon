@@ -12,15 +12,14 @@ func TestStringPairsEqualMatch(t *testing.T) {
 		pass bool
 	}{
 		{pairs: "junk", pass: false},
-		{pairs: [][]interface{}{{}}, pass: false},
-		{pairs: [][]interface{}{{"1"}}, pass: false},
-		{pairs: [][]interface{}{{"1", "1", "2"}}, pass: false},
-		{pairs: [][]interface{}{{"1", "2"}}, pass: false},
-		{pairs: [][]interface{}{{"1", "1"},{"2", "3"}}, pass: false},
-		{pairs: []interface{}{}, pass: false},
-		{pairs: [][]interface{}{}, pass: true},
-		{pairs: [][]interface{}{{"1", "1"}}, pass: true},
-		{pairs: [][]interface{}{{"1", "1"},{"2", "2"}}, pass: true},
+		{pairs: []interface{}{[]interface{}{}}, pass: false},
+		{pairs: []interface{}{[]interface{}{"1"}}, pass: false},
+		{pairs: []interface{}{[]interface{}{"1", "1", "2"}}, pass: false},
+		{pairs: []interface{}{[]interface{}{"1", "2"}}, pass: false},
+		{pairs: []interface{}{[]interface{}{"1", "1"},[]interface{}{"2", "3"}}, pass: false},
+		{pairs: []interface{}{}, pass: true},
+		{pairs: []interface{}{[]interface{}{"1", "1"}}, pass: true},
+		{pairs: []interface{}{[]interface{}{"1", "1"},[]interface{}{"2", "2"}}, pass: true},
 	} {
 		condition := &StringPairsEqualCondition{}
 
