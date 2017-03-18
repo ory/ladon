@@ -12,7 +12,7 @@ type MemoryManager struct {
 	sync.RWMutex
 }
 
-// NewMemoryManager constructs and initalizes new MemoryManager with no policies
+// NewMemoryManager constructs and initializes new MemoryManager with no policies
 func NewMemoryManager() *MemoryManager {
 	return &MemoryManager{
 		Policies: map[string]Policy{},
