@@ -3,7 +3,7 @@ package ladon
 import (
 	"regexp"
 
-	"github.com/ory-am/common/compiler"
+	"github.com/ory/common/compiler"
 	"github.com/pkg/errors"
 )
 

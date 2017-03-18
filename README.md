@@ -1,8 +1,8 @@
 # ![Ladon](logo.png)
 
-[![Build Status](https://travis-ci.org/ory-am/ladon.svg?branch=master)](https://travis-ci.org/ory-am/ladon)
-[![Coverage Status](https://coveralls.io/repos/ory-am/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory-am/ladon?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
+[![Build Status](https://travis-ci.org/ory/ladon.svg?branch=master)](https://travis-ci.org/ory/ladon)
+[![Coverage Status](https://coveralls.io/repos/ory/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory/ladon?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ory/ladon)](https://goreportcard.com/report/github.com/ory/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
@@ -14,7 +14,7 @@ and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws
 
 Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL), Redis and RethinkDB (community supported).
 
-**[Hydra](https://github.com/ory-am/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
+**[Hydra](https://github.com/ory/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -38,13 +38,13 @@ Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreS
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Ladon utilizes ory-am/dockertest for tests.
-Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information of how to setup testing environment.
+Ladon utilizes ory/dockertest for tests.
+Please refer to [ory/dockertest](https://github.com/ory/dockertest) for more information of how to setup testing environment.
 
 ## Installation
 
 ```
-go get github.com/ory-am/ladon
+go get github.com/ory/ladon
 ```
 
 We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
@@ -169,7 +169,7 @@ are abstracted as the `ladon.Policy` interface, and Ladon comes with a standard 
 which is `ladon.DefaultPolicy`. Creating such a policy could look like:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 var pol = &ladon.DefaultPolicy{
 	// A required unique identifier. Used primarily for database retrieval.
@@ -434,7 +434,7 @@ var err = warden.IsAllowed(&ladon.Request{
 You can add custom conditions by appending it to `ladon.ConditionFactories`:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -457,7 +457,7 @@ instantiate those.
 
 ```go
 import (
-	"github.com/ory-am/ladon"
+	"github.com/ory/ladon"
 )
 
 
@@ -474,7 +474,7 @@ func main() {
 **SQL**
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -500,7 +500,7 @@ func main() {
 
 ```go
 import (
-	"github.com/ory-am/ladon"
+	"github.com/ory/ladon"
 	"gopkg.in/redis.v5"
 )
 
@@ -528,7 +528,7 @@ Now that we have defined our policies, we can use the warden to check if a reque
 will return `nil` if the access request can be granted and an error otherwise.
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -563,5 +563,5 @@ Ladon does not use reflection for matching conditions to their appropriate struc
 
 **Create mocks**
 ```sh
-mockgen -package ladon_test -destination manager_mock_test.go github.com/ory-am/ladon Manager
+mockgen -package ladon_test -destination manager_mock_test.go github.com/ory/ladon Manager
 ```

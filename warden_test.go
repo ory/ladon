@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/golang/mock/gomock"
-	. "github.com/ory-am/ladon"
+	. "github.com/ory/ladon"
 	"github.com/stretchr/testify/assert"
 )
 
