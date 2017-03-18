@@ -20,7 +20,16 @@ and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws
 
 Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL), Redis and RethinkDB (community supported).
 
-**[Hydra](https://github.com/ory-am/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
+---
+
+ORY builds solutions for better internet security and accessibility. We have a couple more projects you might enjoy:
+
+* **[Hydra](https://github.com/ory/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
+* **[ORY Editor](https://github.com/ory/editor)**, an extensible, modern WYSI editor for the web written in React.
+* **[Fosite](https://github.com/ory/fosite)**, an extensible security first OAuth 2.0 and OpenID Connect SDK for Go. 
+* **[Dockertest](https://github.com/ory/dockertest)**: Test your Go code against ephemeral elastic search, postgres, nqs, mysql, mongodb, ... docker images on all OS using dockertest!
+
+---
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
