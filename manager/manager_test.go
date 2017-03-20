@@ -21,6 +21,8 @@ import (
 	"github.com/ory/ladon/policy"
 )
 
+//go:generate mockgen -package manager_test -destination manager_mock_test.go github.com/ory/ladon/manager Manager
+
 var managerPolicies = []*policy.DefaultPolicy{
 	{
 		ID:          uuid.New(),

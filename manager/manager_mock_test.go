@@ -9,27 +9,27 @@ import (
 )
 
 // Mock of Manager interface
-type mockManager struct {
+type MockManager struct {
 	ctrl     *gomock.Controller
 	recorder *_MockManagerRecorder
 }
 
 // Recorder for MockManager (not exported)
 type _MockManagerRecorder struct {
-	mock *mockManager
+	mock *MockManager
 }
 
-func newMockManager(ctrl *gomock.Controller) *mockManager {
-	mock := &mockManager{ctrl: ctrl}
+func NewMockManager(ctrl *gomock.Controller) *MockManager {
+	mock := &MockManager{ctrl: ctrl}
 	mock.recorder = &_MockManagerRecorder{mock}
 	return mock
 }
 
-func (_m *mockManager) EXPECT() *_MockManagerRecorder {
+func (_m *MockManager) EXPECT() *_MockManagerRecorder {
 	return _m.recorder
 }
 
-func (_m *mockManager) Create(_param0 policy.Policy) error {
+func (_m *MockManager) Create(_param0 policy.Policy) error {
 	ret := _m.ctrl.Call(_m, "Create", _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -39,7 +39,7 @@ func (_mr *_MockManagerRecorder) Create(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Create", arg0)
 }
 
-func (_m *mockManager) Delete(_param0 string) error {
+func (_m *MockManager) Delete(_param0 string) error {
 	ret := _m.ctrl.Call(_m, "Delete", _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -49,7 +49,7 @@ func (_mr *_MockManagerRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *mockManager) FindPoliciesForSubject(_param0 string) (policy.Policies, error) {
+func (_m *MockManager) FindPoliciesForSubject(_param0 string) (policy.Policies, error) {
 	ret := _m.ctrl.Call(_m, "FindPoliciesForSubject", _param0)
 	ret0, _ := ret[0].(policy.Policies)
 	ret1, _ := ret[1].(error)
@@ -60,7 +60,7 @@ func (_mr *_MockManagerRecorder) FindPoliciesForSubject(arg0 interface{}) *gomoc
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FindPoliciesForSubject", arg0)
 }
 
-func (_m *mockManager) Get(_param0 string) (policy.Policy, error) {
+func (_m *MockManager) Get(_param0 string) (policy.Policy, error) {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
 	ret0, _ := ret[0].(policy.Policy)
 	ret1, _ := ret[1].(error)
