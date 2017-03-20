@@ -1,8 +1,8 @@
 # ![Ladon](logo.png)
 
 [![Build Status](https://travis-ci.org/ory/ladon.svg?branch=master)](https://travis-ci.org/ory/ladon)
-[![Coverage Status](https://coveralls.io/repos/ory-am/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory-am/ladon?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
+[![Coverage Status](https://coveralls.io/repos/ory/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory/ladon?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ory/ladon)](https://goreportcard.com/report/github.com/ory/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
@@ -14,7 +14,7 @@ and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws
 
 Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL), Redis and RethinkDB (community supported).
 
-**[Hydra](https://github.com/ory-am/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
+**[Hydra](https://github.com/ory/hydra)**, an OAuth2 and OpenID Connect implementation uses Ladon for access control.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -38,13 +38,13 @@ Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreS
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Ladon utilizes ory-am/dockertest for tests.
-Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for more information of how to setup testing environment.
+Ladon utilizes ory/dockertest for tests.
+Please refer to [ory/dockertest](https://github.com/ory/dockertest) for more information of how to setup testing environment.
 
 ## Installation
 
 ```
-go get github.com/ory-am/ladon
+go get github.com/ory/ladon
 ```
 
 We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
@@ -165,76 +165,80 @@ We already discussed two essential parts of Ladon: policies and access control r
 ### Policies
 
 Policies are the basis for access control decisions. Think of them as a set of rules. In this library, policies
-are abstracted as the `ladon.Policy` interface, and Ladon comes with a standard implementation of this interface
-which is `ladon.DefaultPolicy`. Creating such a policy could look like:
+are abstracted as the `policy.Policy` interface, and Ladon comes with a standard implementation of this interface
+which is `policy.DefaultPolicy`. Creating such a policy could look like:
 
 ```go
-import "github.com/ory-am/ladon"
+import (
+    "github.com/ory/ladon"
+    "github.com/ory/ladon/access"
+    "github.com/ory/ladon/policy"
+)
 
-var pol = &ladon.DefaultPolicy{
-	// A required unique identifier. Used primarily for database retrieval.
-	ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
+var pol = &policy.DefaultPolicy{
+    // A required unique identifier. Used primarily for database retrieval.
+    ID: "68819e5a-738b-41ec-b03c-b58a1b19d043",
 
-	// A optional human readable description.
-	Description: "something humanly readable",
+    // A optional human readable description.
+    Description: "something humanly readable",
 
-	// A subject can be an user or a service. It is the "who" in "who is allowed to do what on something".
-	// As you can see here, you can use regular expressions inside < >.
-	Subjects: []string{"max", "peter", "<zac|ken>"},
+    // A subject can be an user or a service. It is the "who" in "who is allowed to do what on something".
+    // As you can see here, you can use regular expressions inside < >.
+    Subjects: []string{"max", "peter", "<zac|ken>"},
 
-	// Which resources this policy affects.
-	// Again, you can put regular expressions in inside < >.
-	Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+    // Which resources this policy affects.
+    // Again, you can put regular expressions in inside < >.
+    Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
 
-	// Which actions this policy affects. Supports RegExp
-	// Again, you can put regular expressions in inside < >.
-	Actions: []string{"<create|delete>", "get"},
+    // Which actions this policy affects. Supports RegExp
+    // Again, you can put regular expressions in inside < >.
+    Actions: []string{"<create|delete>", "get"},
 
-	// Should access be allowed or denied?
-	// Note: If multiple policies match an access request, ladon.DenyAccess will always override ladon.AllowAccess
-	// and thus deny access.
-	Effect: ladon.AllowAccess,
+    // Should access be allowed or denied?
+    // Note: If multiple policies match an access request, access.Deny will always override access.Allow
+    // and thus deny access.
+    Effect: access.Allow,
 
-	// Under which conditions this policy is "active".
-	Conditions: ladon.Conditions{
-		// In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
-		"resourceOwner": &ladon.EqualsSubjectCondition{},
+    // Under which conditions this policy is "active".
+    Conditions: access.Conditions{
+        // In this example, the policy is only "active" when the requested subject is the owner of the resource as well.
+        "resourceOwner": &access.EqualsSubjectCondition{},
 
-		// Additionally, the policy will only match if the requests remote ip address matches address range 127.0.0.1/32
-		"remoteIPAddress": &ladon.CIDRCondition{
-			CIDR: "127.0.0.1/32",
-		},
-	},
+        // Additionally, the policy will only match if the requests remote ip address matches address range 127.0.0.1/32
+        "remoteIPAddress": &access.CIDRCondition{
+            CIDR: "127.0.0.1/32",
+        },
+    },
 }
 ```
 
 #### Conditions
 
 Conditions are functions returning true or false given a context. Because conditions implement logic, they must
-be programmed. Adding conditions to a policy consist of two parts, a key name and an implementation of `ladon.Condition`:
+be programmed. Adding conditions to a policy consist of two parts, a key name and an implementation of `access.Condition`:
 
 ```go
 // StringEqualCondition is an exemplary condition.
 type StringEqualCondition struct {
-	Equals string `json:"equals"`
+    Equals string `json:"equals"`
 }
 
 // Fulfills returns true if the given value is a string and is the
 // same as in StringEqualCondition.Equals
-func (c *StringEqualCondition) Fulfills(value interface{}, _ *ladon.Request) bool {
-	s, ok := value.(string)
+func (c *StringEqualCondition) Fulfills(value interface{}, _ *access.Request) bool {
+    s, ok := value.(string)
 
-	return ok && s == c.Equals
+    return ok && s == c.Equals
 }
 
 // GetName returns the condition's name.
 func (c *StringEqualCondition) GetName() string {
-	return "StringEqualCondition"
+    return "StringEqualCondition"
 }
 
-var pol = &ladon.DefaultPolicy{
+var pol = &policy.DefaultPolicy{
     // ...
-    Conditions: ladon.Conditions{
+    Conditions: access.Conditions{
         "some-arbitrary-key": &StringEqualCondition{
             Equals: "the-value-should-be-this"
         }
@@ -263,9 +267,9 @@ set the value of `StringEqualCondition.Equals`.
 This condition is fulfilled by (we will cover the warden in the next section)
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
-    Context: &ladon.Context{
+    Context: &access.Context{
         "some-arbitrary-key": "the-value-should-be-this",
     },
 }
@@ -274,9 +278,9 @@ var err = warden.IsAllowed(&ladon.Request{
 but not by
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
-    Context: &ladon.Context{
+    Context: &access.Context{
         "some-arbitrary-key": "some other value",
     },
 }
@@ -285,9 +289,9 @@ var err = warden.IsAllowed(&ladon.Request{
 and neither by:
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
-    Context: &ladon.Context{
+    Context: &access.Context{
         "same value but other key": "the-value-should-be-this",
     },
 }
@@ -315,9 +319,9 @@ The CIDR condition matches CIDR IP Ranges. Using this condition would look like 
 and in Go:
 
 ```go
-var pol = &ladon.DefaultPolicy{
-    Conditions: ladon.Conditions{
-        "remoteIPAddress": &ladon.CIDRCondition{
+var pol = &policy.DefaultPolicy{
+    Conditions: access.Conditions{
+        "remoteIPAddress": &access.CIDRCondition{
             CIDR: "192.168.0.1/16",
         },
     },
@@ -333,9 +337,9 @@ the CIDR `"192.168.0.1/16"`, for example `"192.168.0.5"`.
 Checks if the value passed in the access request's context is identical with the string that was given initially
 
 ```go
-var pol = &ladon.DefaultPolicy{
-    Conditions: ladon.Conditions{
-        "some-arbitrary-key": &ladon.StringEqualCondition{
+var pol = &policy.DefaultPolicy{
+    Conditions: access.Conditions{
+        "some-arbitrary-key": &access.StringEqualCondition{
             Equals: "the-value-should-be-this"
         }
     },
@@ -345,9 +349,9 @@ var pol = &ladon.DefaultPolicy{
 and would match in the following case:
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
-    Context: &ladon.Context{
+    Context: &access.Context{
          "some-arbitrary-key": "the-value-should-be-this",
     },
 }
@@ -358,9 +362,9 @@ var err = warden.IsAllowed(&ladon.Request{
 Checks if the access request's subject is identical with the string that was given initially
 
 ```go
-var pol = &ladon.DefaultPolicy{
-    Conditions: ladon.Conditions{
-        "some-arbitrary-key": &ladon.EqualsSubjectCondition{}
+var pol = &policy.DefaultPolicy{
+    Conditions: access.Conditions{
+        "some-arbitrary-key": &access.EqualsSubjectCondition{}
     },
 }
 ```
@@ -368,10 +372,10 @@ var pol = &ladon.DefaultPolicy{
 and would match
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
     Subject: "peter",
-    Context: &ladon.Context{
+    Context: &access.Context{
          "some-arbitrary-key": "peter",
     },
 }
@@ -380,10 +384,10 @@ var err = warden.IsAllowed(&ladon.Request{
 but not:
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
     Subject: "peter",
-    Context: &ladon.Context{
+    Context: &access.Context{
          "some-arbitrary-key": "max",
     },
 }
@@ -395,9 +399,9 @@ Checks if the value passed in the access request's context contains two-element 
 and that both elements in each pair are equal.
 
 ```go
-var pol = &ladon.DefaultPolicy{
-    Conditions: ladon.Conditions{
-        "some-arbitrary-key": &ladon.StringPairsEqualCondition{}
+var pol = &policy.DefaultPolicy{
+    Conditions: access.Conditions{
+        "some-arbitrary-key": &access.StringPairsEqualCondition{}
     },
 }
 ```
@@ -405,9 +409,9 @@ var pol = &ladon.DefaultPolicy{
 and would match
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
-    Context: &ladon.Context{
+    Context: &access.Context{
          "some-arbitrary-key": [
              ["some-arbitrary-pair-value", "some-arbitrary-pair-value"],
              ["some-other-arbitrary-pair-value", "some-other-arbitrary-pair-value"],
@@ -419,9 +423,9 @@ var err = warden.IsAllowed(&ladon.Request{
 but not:
 
 ```go
-var err = warden.IsAllowed(&ladon.Request{
+var err = warden.IsAllowed(&access.Request{
     // ...
-    Context: &ladon.Context{
+    Context: &access.Context{
          "some-arbitrary-key": [
              ["some-arbitrary-pair-value", "some-other-arbitrary-pair-value"],
          ]
@@ -431,15 +435,15 @@ var err = warden.IsAllowed(&ladon.Request{
 
 ##### Adding Custom Conditions
 
-You can add custom conditions by appending it to `ladon.ConditionFactories`:
+You can add custom conditions by appending it to `access.ConditionFactories`:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon/access"
 
 func main() {
     // ...
 
-    ladon.ConditionFactories[new(CustomCondition).GetName()] = func() Condition {
+    access.ConditionFactories[new(CustomCondition).GetName()] = func() Condition {
         return new(CustomCondition)
     }
 
@@ -449,7 +453,7 @@ func main() {
 
 #### Persistence
 
-Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
+Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `manager.Manager` for
 this purpose with default implementations for In-Memory, RethinkDB, SQL (PostgreSQL, MySQL) and Redis. Let's take a look how to
 instantiate those.
 
@@ -457,15 +461,16 @@ instantiate those.
 
 ```go
 import (
-	"github.com/ory-am/ladon"
+    "github.com/ory/ladon"
+    "github.com/ory/ladon/manager/memory"
 )
 
 
 func main() {
-	warden := &ladon.Ladon{
-		Manager: ladon.NewMemoryManager(),
-	}
-	err := warden.Manager.Create(pol)
+    warden := &ladon.Ladon{
+        Manager: memory.NewManager(),
+    }
+    err := warden.Manager.Create(pol)
 
     // ...
 }
@@ -474,23 +479,31 @@ func main() {
 **SQL**
 
 ```go
-import "github.com/ory-am/ladon"
-import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
+import (
+    _ "github.com/go-sql-driver/mysql"
+
+    "github.com/ory/ladon"
+    "github.com/ory/ladon/manager"
+    "github.com/ory/ladon/manager/sql"
+)
 
 func main() {
-    db, err = sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
+    mgr, err := sql.NewManager(
+        manager.Driver("mysql"),
+        manager.ConnectionString("user:pass@tcp(127.0.0.1:3306)"),
+    )
     // Or, if using postgres:
     //  import _ "github.com/lib/pq"
     //  
-    //  db, err = sql.Open("postgres", "postgres://foo:bar@localhost/ladon")
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
-	}
-
-    warden := ladon.Ladon{
-        Manager: ladon.NewSQLManager(db, nil),
+    // mgr, err := sql.NewManager(
+    //     manager.Driver("postgres"),
+    //     manager.ConnectionString("postgres://foo:bar@localhost/ladon"),
+    // )
+    if err != nil {
+        log.Fatalf("Could not connect to database: %s", err)
     }
+
+    warden := ladon.Ladon{Manager: mgr}
 
     // ...
 }
@@ -500,35 +513,40 @@ func main() {
 
 ```go
 import (
-	"github.com/ory-am/ladon"
-	"gopkg.in/redis.v5"
+    "github.com/ory/ladon"
+    "github.com/ory/ladon/manager"
+    "github.com/ory/ladon/manager/redis"
 )
 
 func main () {
-	db = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-	})
+    db = redis.NewClient(&redis.Options{
+        Addr:     "localhost:6379",
+    })
 
-	if err := db.Ping().Err(); err != nil {
-		log.Fatalf("Could not connect to database: %s". err)
-	}
+    if err := db.Ping().Err(); err != nil {
+        log.Fatalf("Could not connect to database: %s". err)
+    }
 
-	warden := ladon.Ladon{
-		Manager: ladon.NewRedisManager(db, "redis_key_prefix:")
-	}
+    warden := ladon.Ladon{
+        Manager: redis.NewManager(
+            manager.Address("localhost:6379"),
+            manager.TablePrefix("redis_key_prefix")
+        )
+    }
 
-	// ...
+    // ...
 }
 ```
 
 ### Access Control (Warden)
 
-Now that we have defined our policies, we can use the warden to check if a request is valid.
-`ladon.Ladon`, which is the default implementation for the `ladon.Warden` interface defines `ladon.Ladon.IsAllowed()` which
-will return `nil` if the access request can be granted and an error otherwise.
+Now that we have defined our policies, we can use the warden to check if a
+request is valid.  `ladon.Ladon`, which is the default implementation for the
+`access.Warden` interface defines `ladon.Ladon.IsAllowed()` which will return
+`nil` if the access request can be granted and an error otherwise.
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -563,5 +581,5 @@ Ladon does not use reflection for matching conditions to their appropriate struc
 
 **Create mocks**
 ```sh
-mockgen -package ladon_test -destination manager_mock_test.go github.com/ory-am/ladon Manager
+mockgen -package ladon_test -destination manager_mock_test.go github.com/ory/ladon Manager
 ```
