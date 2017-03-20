@@ -1,12 +1,15 @@
-package ladon_test
+package policy_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/ory/ladon"
+	. "github.com/ory/ladon/access"
+	. "github.com/ory/ladon/policy"
 )
 
 var policyConditions = Conditions{

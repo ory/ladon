@@ -1,19 +1,20 @@
 package ladon
 
 import (
-	"regexp"
-
-	"github.com/ory-am/common/compiler"
 	"github.com/pkg/errors"
+
+	"github.com/ory/ladon/access"
+	"github.com/ory/ladon/manager"
+	"github.com/ory/ladon/policy"
 )
 
 // Ladon is an implementation of Warden.
 type Ladon struct {
-	Manager Manager
+	Manager manager.Manager
 }
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
-func (g *Ladon) IsAllowed(r *Request) (err error) {
+func (g *Ladon) IsAllowed(r *access.Request) (err error) {
 	policies, err := g.Manager.FindPoliciesForSubject(r.Subject)
 	if err != nil {
 		return err
@@ -22,13 +23,13 @@ func (g *Ladon) IsAllowed(r *Request) (err error) {
 	return g.doPoliciesAllow(r, policies)
 }
 
-func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
+func (g *Ladon) doPoliciesAllow(r *access.Request, policies []policy.Policy) (err error) {
 	var allowed = false
 
 	// Iterate through all policies
 	for _, p := range policies {
 		// Does the action match with one of the policies?
-		if pm, err := Match(p, p.GetActions(), r.Action); err != nil {
+		if pm, err := policy.Match(p, p.GetActions(), r.Action); err != nil {
 			return errors.WithStack(err)
 		} else if !pm {
 			// no, continue to next policy
@@ -36,7 +37,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 		}
 
 		// Does the subject match with one of the policies?
-		if sm, err := Match(p, p.GetSubjects(), r.Subject); err != nil {
+		if sm, err := policy.Match(p, p.GetSubjects(), r.Subject); err != nil {
 			return err
 		} else if !sm {
 			// no, continue to next policy
@@ -44,7 +45,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 		}
 
 		// Does the resource match with one of the policies?
-		if rm, err := Match(p, p.GetResources(), r.Resource); err != nil {
+		if rm, err := policy.Match(p, p.GetResources(), r.Resource); err != nil {
 			return errors.WithStack(err)
 		} else if !rm {
 			// no, continue to next policy
@@ -71,24 +72,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	return nil
 }
 
-// Match matches a needle with an array of regular expressions and returns true if a match was found.
-func Match(p Policy, haystack []string, needle string) (bool, error) {
-	var reg *regexp.Regexp
-	var err error
-	for _, h := range haystack {
-		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())
-		if err != nil {
-			return false, errors.WithStack(err)
-		}
-
-		if reg.MatchString(needle) {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (g *Ladon) passesConditions(p Policy, r *Request) bool {
+func (g *Ladon) passesConditions(p policy.Policy, r *access.Request) bool {
 	for key, condition := range p.GetConditions() {
 		if pass := condition.Fulfills(r.Context[key], r); !pass {
 			return false

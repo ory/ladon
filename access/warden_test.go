@@ -1,12 +1,14 @@
-package ladon_test
+package access_test
 
 import (
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/golang/mock/gomock"
-	. "github.com/ory-am/ladon"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/ory/ladon"
+	. "github.com/ory/ladon/access"
 )
 
 func TestWardenIsGranted(t *testing.T) {

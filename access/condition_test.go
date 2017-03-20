@@ -1,4 +1,4 @@
-package ladon
+package access_test
 
 import (
 	"encoding/json"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/ory/ladon/access"
 )
 
 func TestConditionsAppend(t *testing.T) {

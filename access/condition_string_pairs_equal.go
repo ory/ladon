@@ -1,4 +1,4 @@
-package ladon
+package access
 
 // StringPairsEqualCondition is a condition which is fulfilled if the given
 // array of pairs contains two-element string arrays where both elements

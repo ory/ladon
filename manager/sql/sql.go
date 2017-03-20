@@ -1,4 +1,4 @@
-package ladon
+package sql
 
 import (
 	"database/sql"
@@ -6,11 +6,19 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory-am/common/compiler"
-	"github.com/ory-am/common/pkg"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
+
+	"github.com/ory/common/compiler"
+	"github.com/ory/common/pkg"
+	"github.com/ory/ladon/access"
+	"github.com/ory/ladon/manager"
+	"github.com/ory/ladon/policy"
 )
+
+func init() {
+	manager.DefaultManagers["sql"] = NewManager
+}
 
 var migrations = &migrate.MemoryMigrationSource{
 	Migrations: []*migrate.Migration{
@@ -50,23 +58,48 @@ var migrations = &migrate.MemoryMigrationSource{
 	},
 }
 
-// SQLManager is a postgres implementation for Manager to store policies persistently.
+// SQLManager is an implementation for Manager to store policies persistently.
 type SQLManager struct {
-	db     *sqlx.DB
-	schema []string
+	db *sqlx.DB
 }
 
-// NewSQLManager initializes a new SQLManager for given db instance.
-func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
-	return &SQLManager{
-		db:     db,
-		schema: schema,
+// NewManager initializes a new SQLManager for given db instance.
+func NewManager(opts ...manager.Option) (manager.Manager, error) {
+	var o manager.Options
+	for _, opt := range opts {
+		opt(&o)
 	}
+
+	db, err := getSession(o)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if err := createSchemas(db); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &SQLManager{db: db}, nil
 }
 
-// CreateSchemas creates ladon_policy tables
-func (s *SQLManager) CreateSchemas() error {
-	n, err := migrate.Exec(s.db.DB, s.db.DriverName(), migrations, migrate.Up)
+func getSession(o manager.Options) (*sqlx.DB, error) {
+	if conn, ok := o.GetConnection(); ok {
+		switch t := conn.(type) {
+		case *sqlx.DB:
+			return t, nil
+		default:
+			err := fmt.Sprintf("Expected Connection option of type %T, got %T",
+				&sqlx.DB{}, t)
+			return nil, errors.New(err)
+		}
+	}
+
+	// TODO: start new DB connection
+	return nil, nil
+}
+
+// createSchemas creates ladon_policy tables
+func createSchemas(db *sqlx.DB) error {
+	n, err := migrate.Exec(db.DB, db.DriverName(), migrations, migrate.Up)
 	if err != nil {
 		return errors.Wrapf(err, "Could not migrate sql schema, applied %d migrations", n)
 	}
@@ -74,10 +107,10 @@ func (s *SQLManager) CreateSchemas() error {
 }
 
 // Create inserts a new policy
-func (s *SQLManager) Create(policy Policy) (err error) {
+func (s *SQLManager) Create(pol policy.Policy) (err error) {
 	conditions := []byte("{}")
-	if policy.GetConditions() != nil {
-		cs := policy.GetConditions()
+	if pol.GetConditions() != nil {
+		cs := pol.GetConditions()
 		conditions, err = json.Marshal(&cs)
 		if err != nil {
 			return errors.WithStack(err)
@@ -86,16 +119,16 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 
 	if tx, err := s.db.Begin(); err != nil {
 		return errors.WithStack(err)
-	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), pol.GetID(), pol.GetDescription(), pol.GetEffect(), conditions); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return errors.WithStack(err)
 		}
 		return errors.WithStack(err)
-	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
+	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", pol, pol.GetSubjects()); err != nil {
 		return err
-	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
+	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", pol, pol.GetActions()); err != nil {
 		return err
-	} else if err = createLinkSQL(s.db, tx, "ladon_policy_resource", policy, policy.GetResources()); err != nil {
+	} else if err = createLinkSQL(s.db, tx, "ladon_policy_resource", pol, pol.GetResources()); err != nil {
 		return err
 	} else if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
@@ -108,8 +141,8 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 }
 
 // Get retrieves a policy.
-func (s *SQLManager) Get(id string) (Policy, error) {
-	var p DefaultPolicy
+func (s *SQLManager) Get(id string) (policy.Policy, error) {
+	var p policy.DefaultPolicy
 	var conditions []byte
 
 	if err := s.db.QueryRow(s.db.Rebind("SELECT id, description, effect, conditions FROM ladon_policy WHERE id=?"), id).Scan(&p.ID, &p.Description, &p.Effect, &conditions); err == sql.ErrNoRows {
@@ -118,7 +151,7 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	p.Conditions = Conditions{}
+	p.Conditions = access.Conditions{}
 	if err := json.Unmarshal(conditions, &p.Conditions); err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -149,7 +182,7 @@ func (s *SQLManager) Delete(id string) error {
 }
 
 // FindPoliciesForSubject returns Policies (an array of policy) for a given subject
-func (s *SQLManager) FindPoliciesForSubject(subject string) (policies Policies, err error) {
+func (s *SQLManager) FindPoliciesForSubject(subject string) (policies policy.Policies, err error) {
 	find := func(query string, args ...interface{}) (ids []string, err error) {
 		rows, err := s.db.Query(query, args...)
 		if err == sql.ErrNoRows {
@@ -215,7 +248,7 @@ func getLinkedSQL(db *sqlx.DB, table, policy string) ([]string, error) {
 	return urns, nil
 }
 
-func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p Policy, templates []string) error {
+func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p policy.Policy, templates []string) error {
 	for _, template := range templates {
 		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())
 

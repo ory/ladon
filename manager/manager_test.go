@@ -1,4 +1,4 @@
-package ladon
+package manager_test
 
 import (
 	"log"
@@ -8,107 +8,99 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/ory-am/common/pkg"
+
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/ory-am/common/integration"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
+
+	"github.com/ory/common/integration"
+	"github.com/ory/common/pkg"
+	"github.com/ory/ladon/access"
+	"github.com/ory/ladon/manager"
+	"github.com/ory/ladon/policy"
 )
 
-var managerPolicies = []*DefaultPolicy{
+var managerPolicies = []*policy.DefaultPolicy{
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"user", "anonymous"},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"create", "update"},
-		Conditions:  Conditions{},
+		Conditions:  access.Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions:  Conditions{},
+		Conditions:  access.Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<peter|max>"},
-		Effect:      DenyAccess,
+		Effect:      access.Deny,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"view"},
-		Conditions: Conditions{
-			"owner": &EqualsSubjectCondition{},
+		Conditions: access.Conditions{
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<user|max|anonymous>", "peter"},
-		Effect:      DenyAccess,
+		Effect:      access.Deny,
 		Resources:   []string{".*"},
 		Actions:     []string{"disable"},
-		Conditions: Conditions{
-			"ip": &CIDRCondition{
+		Conditions: access.Conditions{
+			"ip": &access.CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &EqualsSubjectCondition{},
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<.*>"},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: Conditions{
-			"ip": &CIDRCondition{
+		Conditions: access.Conditions{
+			"ip": &access.CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &EqualsSubjectCondition{},
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<us[er]+>"},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: Conditions{
-			"ip": &CIDRCondition{
+		Conditions: access.Conditions{
+			"ip": &access.CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &EqualsSubjectCondition{},
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 }
 
-var managers = map[string]Manager{}
-var rethinkManager *RethinkManager
-
 func TestMain(m *testing.M) {
-	connectPG()
-	connectRDB()
-	connectMEM()
-	connectPG()
-	connectMySQL()
-	connectRedis()
-
+	for kind, newManager := range manager.DefaultManagers {
+	}
 	s := m.Run()
 	integration.KillAll()
 	os.Exit(s)
-}
-
-func connectMEM() {
-	managers["memory"] = NewMemoryManager()
 }
 
 func connectPG() {
