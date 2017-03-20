@@ -1,8 +1,9 @@
-package ladon
+package redis
 
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/redis.v5"
@@ -29,13 +30,27 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 		if db, ok := conn.(*redis.Client); ok {
 			return &RedisManager{
 				db:        db,
-				keyPrefix: o.PolicyTable,
+				keyPrefix: o.TablePrefix,
 			}, nil
 		}
 	}
 
-	// TODO: Create new redis client connection
-	return nil, nil
+	// Apply defaults to options
+	addr := o.GetConnection
+	if addr == "" {
+		addr = "localhost:6379"
+	}
+	prefix := o.TablePrefix
+	if len(prefix) > 0 && strings.HasSuffix(prefix, ":") {
+		prefix = prefix[:len(prefix)-1]
+	}
+
+	// Create new redis client connection
+	db := redis.NewClient(&redis.Options{Address: addr})
+	if err := db.Ping().Err(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &RedisManager{db: db, keyPrefix: prefix}, nil
 }
 
 func init() {
@@ -50,6 +65,9 @@ var (
 )
 
 func (m *RedisManager) redisPoliciesKey() string {
+	if m.keyPrefix == "" {
+		return redisPolicies
+	}
 	return fmt.Sprintf("%s:%s", m.keyPrefix, redisPolicies)
 }
 

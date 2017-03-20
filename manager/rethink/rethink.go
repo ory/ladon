@@ -34,8 +34,8 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 	for _, opt := range opts {
 		opt(&o)
 	}
-	table := o.PolicyTable
-	if o.PolicyTable == "" {
+	table := o.TablePrefix
+	if o.TablePrefix == "" {
 		table = "policies"
 	}
 

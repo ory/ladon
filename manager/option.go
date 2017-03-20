@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"crypto/tls"
+	"log"
 
 	"github.com/ory/ladon/policy"
 )
@@ -15,8 +16,9 @@ const (
 
 type Options struct {
 	Connection  string
+	Driver      string
 	Database    string
-	PolicyTable string
+	TablePrefix string
 	TLSConfig   *tls.Config
 	Policies    policy.Policies
 	Metadata    context.Context
@@ -29,9 +31,29 @@ func (o *Options) GetConnection() (conn interface{}, ok bool) {
 
 type Option func(*Options)
 
+func Address(addr string) Option {
+	return func(opts *Options) {
+		if opts.Connection != "" {
+			log.Printf("warning: overwriting previous %s option '%s' with '%s'",
+				"Address", addr, opts.Connection)
+		}
+		opts.Connection = addr
+	}
+}
+
 func ConnectionString(conn string) Option {
 	return func(opts *Options) {
+		if opts.Connection != "" {
+			log.Printf("warning: overwriting previous %s option '%s' with '%s'",
+				"ConnectionString", conn, opts.Connection)
+		}
 		opts.Connection = conn
+	}
+}
+
+func Driver(driver string) Option {
+	return func(opts *Options) {
+		opts.Driver = driver
 	}
 }
 
@@ -41,9 +63,9 @@ func Database(db string) Option {
 	}
 }
 
-func PolicyTable(table string) Option {
+func TablePrefix(table string) Option {
 	return func(opts *Options) {
-		opts.PolicyTable = table
+		opts.TablePrefix = table
 	}
 }
 
