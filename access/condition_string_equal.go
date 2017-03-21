@@ -1,4 +1,4 @@
-package ladon
+package access
 
 // StringEqualCondition is a condition which is fulfilled if the given
 // string value is the same as specified in StringEqualCondition

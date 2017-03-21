@@ -1,9 +1,11 @@
-package ladon
+package access_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/ory/ladon/access"
 )
 
 func TestCIDRMatch(t *testing.T) {

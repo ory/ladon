@@ -1,17 +1,20 @@
-package ladon_test
+package access_test
 
 import (
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/golang/mock/gomock"
-	. "github.com/ory-am/ladon"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/ory/ladon"
+	. "github.com/ory/ladon/access"
+	. "github.com/ory/ladon/policy"
 )
 
 func TestWardenIsGranted(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	m := newMockManager(ctrl)
+	m := NewMockManager(ctrl)
 	defer ctrl.Finish()
 
 	w := &Ladon{
@@ -51,7 +54,7 @@ func TestWardenIsGranted(t *testing.T) {
 				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"<zac|peter>"},
-						Effect:    AllowAccess,
+						Effect:    Allow,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"view"},
 					},
@@ -70,7 +73,7 @@ func TestWardenIsGranted(t *testing.T) {
 				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"<zac|peter>"},
-						Effect:    AllowAccess,
+						Effect:    Allow,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"view"},
 					},
@@ -89,7 +92,7 @@ func TestWardenIsGranted(t *testing.T) {
 				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
-						Effect:    AllowAccess,
+						Effect:    Allow,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"view"},
 					},
@@ -108,7 +111,7 @@ func TestWardenIsGranted(t *testing.T) {
 				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
-						Effect:    AllowAccess,
+						Effect:    Allow,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"<foo|bar>"},
 					},
@@ -127,7 +130,7 @@ func TestWardenIsGranted(t *testing.T) {
 				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
-						Effect:    AllowAccess,
+						Effect:    Allow,
 						Resources: []string{"articles:<[0-9]+>"},
 						Actions:   []string{"<foo|bar>"},
 					},

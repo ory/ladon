@@ -1,7 +1,7 @@
-package ladon
+package access
 
 // AllowAccess should be used as effect for policies that allow access.
-const AllowAccess = "allow"
+const Allow = "allow"
 
 // DenyAccess should be used as effect for policies that deny access.
-const DenyAccess = "deny"
+const Deny = "deny"

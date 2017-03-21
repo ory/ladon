@@ -1,24 +1,30 @@
-package ladon
+package ladon_test
 
 import (
+	"context"
 	"testing"
+
+	"fmt"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"fmt"
-)
 
+	. "github.com/ory/ladon"
+	. "github.com/ory/ladon/access"
+	"github.com/ory/ladon/manager/memory"
+	. "github.com/ory/ladon/policy"
+)
 
 // A bunch of exemplary policies
 var pols = []Policy{
 	&DefaultPolicy{
-		ID:          "1",
+		ID: "1",
 		Description: `This policy allows max, peter, zac and ken to create, delete and get the listed resources,
 			but only if the client ip matches and the request states that they are the owner of those resources as well.`,
-		Subjects:    []string{"max", "peter", "<zac|ken>"},
-		Resources:   []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
-		Actions:     []string{"<create|delete>", "get"},
-		Effect:      AllowAccess,
+		Subjects:  []string{"max", "peter", "<zac|ken>"},
+		Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+		Actions:   []string{"<create|delete>", "get"},
+		Effect:    Allow,
 		Conditions: Conditions{
 			"owner": &EqualsSubjectCondition{},
 			"clientIP": &CIDRCondition{
@@ -27,20 +33,20 @@ var pols = []Policy{
 		},
 	},
 	&DefaultPolicy{
-		ID:        "2",
+		ID:          "2",
 		Description: "This policy allows max to update any resource",
-		Subjects:  []string{"max"},
-		Actions:   []string{"update"},
-		Resources: []string{"<.*>"},
-		Effect:    AllowAccess,
+		Subjects:    []string{"max"},
+		Actions:     []string{"update"},
+		Resources:   []string{"<.*>"},
+		Effect:      Allow,
 	},
 	&DefaultPolicy{
-		ID:        "3",
+		ID:          "3",
 		Description: "This policy denies max to broadcast any of the resources",
-		Subjects:  []string{"max"},
-		Actions:   []string{"broadcast"},
-		Resources: []string{"<.*>"},
-		Effect:    DenyAccess,
+		Subjects:    []string{"max"},
+		Actions:     []string{"broadcast"},
+		Resources:   []string{"<.*>"},
+		Effect:      Deny,
 	},
 }
 
@@ -128,7 +134,8 @@ var cases = []struct {
 
 func TestLadon(t *testing.T) {
 	// Instantiate ladon with the default in-memory store.
-	warden := &Ladon{Manager: NewMemoryManager()}
+	mgr, _ := memory.NewManager(context.Background())
+	warden := &Ladon{Manager: mgr}
 
 	// Add the policies defined above to the memory manager.
 	for _, pol := range pols {
@@ -148,6 +155,7 @@ func TestLadon(t *testing.T) {
 
 func TestLadonEmpty(t *testing.T) {
 	// If no policy was given, the warden must return an error!
-	warden := &Ladon{Manager: NewMemoryManager()}
+	mgr, _ := memory.NewManager(context.Background())
+	warden := &Ladon{Manager: mgr}
 	assert.NotNil(t, warden.IsAllowed(&Request{}))
 }

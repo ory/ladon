@@ -1,6 +1,7 @@
-package ladon
+package manager_test
 
 import (
+	"context"
 	"log"
 	"os"
 	"testing"
@@ -8,164 +9,135 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/ory-am/common/pkg"
+	_ "github.com/ory/ladon/manager/memory"
+	_ "github.com/ory/ladon/manager/redis"
+	_ "github.com/ory/ladon/manager/rethink"
+	_ "github.com/ory/ladon/manager/sql"
+
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/ory-am/common/integration"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
+
+	"github.com/ory/common/pkg"
+	"github.com/ory/ladon/access"
+	"github.com/ory/ladon/manager"
+	"github.com/ory/ladon/policy"
 )
 
-var managerPolicies = []*DefaultPolicy{
+var managerPolicies = []*policy.DefaultPolicy{
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"user", "anonymous"},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"create", "update"},
-		Conditions:  Conditions{},
+		Conditions:  access.Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions:  Conditions{},
+		Conditions:  access.Conditions{},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<peter|max>"},
-		Effect:      DenyAccess,
+		Effect:      access.Deny,
 		Resources:   []string{"article", "user"},
 		Actions:     []string{"view"},
-		Conditions: Conditions{
-			"owner": &EqualsSubjectCondition{},
+		Conditions: access.Conditions{
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<user|max|anonymous>", "peter"},
-		Effect:      DenyAccess,
+		Effect:      access.Deny,
 		Resources:   []string{".*"},
 		Actions:     []string{"disable"},
-		Conditions: Conditions{
-			"ip": &CIDRCondition{
+		Conditions: access.Conditions{
+			"ip": &access.CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &EqualsSubjectCondition{},
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<.*>"},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: Conditions{
-			"ip": &CIDRCondition{
+		Conditions: access.Conditions{
+			"ip": &access.CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &EqualsSubjectCondition{},
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 	{
 		ID:          uuid.New(),
 		Description: "description",
 		Subjects:    []string{"<us[er]+>"},
-		Effect:      AllowAccess,
+		Effect:      access.Allow,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
-		Conditions: Conditions{
-			"ip": &CIDRCondition{
+		Conditions: access.Conditions{
+			"ip": &access.CIDRCondition{
 				CIDR: "1234",
 			},
-			"owner": &EqualsSubjectCondition{},
+			"owner": &access.EqualsSubjectCondition{},
 		},
 	},
 }
 
-var managers = map[string]Manager{}
-var rethinkManager *RethinkManager
+var managers = make(map[string]manager.Manager)
 
 func TestMain(m *testing.M) {
-	connectPG()
-	connectRDB()
-	connectMEM()
-	connectPG()
-	connectMySQL()
-	connectRedis()
+	defer func() {
+		if r := recover(); r != nil {
+			KillAll()
+			os.Exit(1)
+		}
+	}()
+	log.Print("Starting MySQL...")
+	mysql := ConnectToMySQL()
+	log.Print("Starting Postgres...")
+	postgres := ConnectToPostgres("ladon")
+	log.Print("Starting RethinkDB...")
+	rethink := ConnectToRethinkDB("ladon", "policies")
+	log.Print("Starting Redis...")
+	redis := ConnectToRedis()
 
+	err := make([]error, 4)
+	ctx, cancel := context.WithCancel(context.Background())
+	managers["mysql"], err[0] = manager.New("sql", ctx, manager.Connection(mysql))
+	managers["postgres"], err[1] = manager.New("sql", ctx, manager.Connection(postgres))
+	managers["rethink"], err[2] = manager.New("rethink", ctx, manager.Connection(rethink))
+	managers["redis"], err[3] = manager.New("redis", ctx, manager.Connection(redis))
+	for _, e := range err {
+		if e != nil {
+			log.Panic(e)
+		}
+	}
+
+	// Run tests
 	s := m.Run()
-	integration.KillAll()
+	cancel()
+	KillAll()
 	os.Exit(s)
-}
-
-func connectMEM() {
-	managers["memory"] = NewMemoryManager()
-}
-
-func connectPG() {
-	var db = integration.ConnectToPostgres("ladon")
-	s := NewSQLManager(db, nil)
-	if err := s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not create postgres schema: %v", err)
-	}
-
-	managers["postgres"] = s
-}
-
-func connectMySQL() {
-	var db = integration.ConnectToMySQL()
-	s := NewSQLManager(db, nil)
-	if err := s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not create mysql schema: %v", err)
-	}
-
-	managers["mysql"] = s
-}
-
-func connectRDB() {
-	var session = integration.ConnectToRethinkDB("ladon", "policies")
-	rethinkManager = NewRethinkManager(session, "")
-
-	rethinkManager.Watch(context.Background())
-	time.Sleep(time.Second)
-	managers["rethink"] = rethinkManager
-}
-
-func connectRedis() {
-	var db = integration.ConnectToRedis()
-	managers["redis"] = NewRedisManager(db, "")
-}
-
-func TestColdStart(t *testing.T) {
-	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "foo", Description: "description foo"}))
-	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "bar", Description: "description bar"}))
-
-	time.Sleep(time.Second / 2)
-	rethinkManager.Policies = make(map[string]Policy)
-	assert.Nil(t, rethinkManager.ColdStart())
-
-	c1, err := rethinkManager.Get("foo")
-	assert.Nil(t, err)
-	c2, err := rethinkManager.Get("bar")
-	assert.Nil(t, err)
-
-	assert.NotEqual(t, c1, c2)
-	assert.Equal(t, "description foo", c1.GetDescription())
-	assert.Equal(t, "description bar", c2.GetDescription())
-	rethinkManager.Policies = make(map[string]Policy)
 }
 
 func TestGetErrors(t *testing.T) {
 	for k, s := range managers {
+		log.Printf("Testing errors for %s", k)
 		_, err := s.Get(uuid.New())
 		assert.EqualError(t, err, pkg.ErrNotFound.Error(), k)
 

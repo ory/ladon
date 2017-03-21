@@ -1,9 +1,11 @@
-package ladon
+package policy
 
 import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
+
+	"github.com/ory/ladon/access"
 )
 
 // Policies is an array of policies.
@@ -33,7 +35,7 @@ type Policy interface {
 	GetActions() []string
 
 	// GetConditions returns the policies conditions.
-	GetConditions() Conditions
+	GetConditions() access.Conditions
 
 	// GetStartDelimiter returns the delimiter which identifies the beginning of a regular expression.
 	GetStartDelimiter() byte
@@ -44,27 +46,27 @@ type Policy interface {
 
 // DefaultPolicy is the default implementation of the policy interface.
 type DefaultPolicy struct {
-	ID          string     `json:"id" gorethink:"id"`
-	Description string     `json:"description" gorethink:"description"`
-	Subjects    []string   `json:"subjects" gorethink:"subjects"`
-	Effect      string     `json:"effect" gorethink:"effect"`
-	Resources   []string   `json:"resources" gorethink:"resources"`
-	Actions     []string   `json:"actions" gorethink:"actions"`
-	Conditions  Conditions `json:"conditions" gorethink:"conditions"`
+	ID          string            `json:"id" gorethink:"id"`
+	Description string            `json:"description" gorethink:"description"`
+	Subjects    []string          `json:"subjects" gorethink:"subjects"`
+	Effect      string            `json:"effect" gorethink:"effect"`
+	Resources   []string          `json:"resources" gorethink:"resources"`
+	Actions     []string          `json:"actions" gorethink:"actions"`
+	Conditions  access.Conditions `json:"conditions" gorethink:"conditions"`
 }
 
 // UnmarshalJSON overwrite own policy with values of the given in policy in JSON format
 func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
 	var pol = struct {
-		ID          string     `json:"id" gorethink:"id"`
-		Description string     `json:"description" gorethink:"description"`
-		Subjects    []string   `json:"subjects" gorethink:"subjects"`
-		Effect      string     `json:"effect" gorethink:"effect"`
-		Resources   []string   `json:"resources" gorethink:"resources"`
-		Actions     []string   `json:"actions" gorethink:"actions"`
-		Conditions  Conditions `json:"conditions" gorethink:"conditions"`
+		ID          string            `json:"id" gorethink:"id"`
+		Description string            `json:"description" gorethink:"description"`
+		Subjects    []string          `json:"subjects" gorethink:"subjects"`
+		Effect      string            `json:"effect" gorethink:"effect"`
+		Resources   []string          `json:"resources" gorethink:"resources"`
+		Actions     []string          `json:"actions" gorethink:"actions"`
+		Conditions  access.Conditions `json:"conditions" gorethink:"conditions"`
 	}{
-		Conditions: Conditions{},
+		Conditions: access.Conditions{},
 	}
 
 	if err := json.Unmarshal(data, &pol); err != nil {
@@ -100,7 +102,7 @@ func (p *DefaultPolicy) GetSubjects() []string {
 
 // AllowAccess returns true if the policy effect is allow, otherwise false.
 func (p *DefaultPolicy) AllowAccess() bool {
-	return p.Effect == AllowAccess
+	return p.Effect == access.Allow
 }
 
 // GetEffect returns the policies effect which might be 'allow' or 'deny'.
@@ -119,7 +121,7 @@ func (p *DefaultPolicy) GetActions() []string {
 }
 
 // GetConditions returns the policies conditions.
-func (p *DefaultPolicy) GetConditions() Conditions {
+func (p *DefaultPolicy) GetConditions() access.Conditions {
 	return p.Conditions
 }
 
