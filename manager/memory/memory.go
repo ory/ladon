@@ -32,16 +32,19 @@ func BootstrapData(pols []policy.Policy) manager.Option {
 	}
 }
 
-func getPolicies(o *manager.Options) map[string]policy.Policy {
+func getPolicies(o *manager.Options) (policies map[string]policy.Policy) {
+	policies = make(map[string]policy.Policy)
+	if o.Metadata == nil {
+		return
+	}
 	policyList, ok := o.Metadata.Value(bootstrapKey).([]policy.Policy)
 	if !ok {
-		return nil
+		return
 	}
-	policies := make(map[string]policy.Policy, len(policyList))
 	for _, pol := range policyList {
 		policies[pol.GetID()] = pol
 	}
-	return policies
+	return
 }
 
 // NewManager constructs and initializes new MemoryManager with no policies
