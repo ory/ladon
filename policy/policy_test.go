@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	. "github.com/ory/ladon"
 	. "github.com/ory/ladon/access"
 	. "github.com/ory/ladon/policy"
 )
@@ -21,13 +20,13 @@ var policyCases = []*DefaultPolicy{
 		ID:          "1",
 		Description: "description",
 		Subjects:    []string{"user"},
-		Effect:      AllowAccess,
+		Effect:      Allow,
 		Resources:   []string{"articles:<[0-9]+>"},
 		Actions:     []string{"create", "update"},
 		Conditions:  policyConditions,
 	},
 	{
-		Effect:     DenyAccess,
+		Effect:     Deny,
 		Conditions: make(Conditions),
 	},
 }

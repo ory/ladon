@@ -1,7 +1,6 @@
 package manager_test
 
 import (
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 
 	"github.com/ory/common/integration"
 	"github.com/ory/common/pkg"
@@ -20,8 +18,6 @@ import (
 	"github.com/ory/ladon/manager"
 	"github.com/ory/ladon/policy"
 )
-
-//go:generate mockgen -package manager_test -destination manager_mock_test.go github.com/ory/ladon/manager Manager
 
 var managerPolicies = []*policy.DefaultPolicy{
 	{
@@ -97,65 +93,23 @@ var managerPolicies = []*policy.DefaultPolicy{
 	},
 }
 
+var managers = make(map[string]manager.Manager)
+
+func init() {
+	managers["postgres"], _ = manager.New("sql",
+		manager.Connection(integration.ConnectToPostgres("ladon")))
+	managers["mysql"], _ = manager.New("sql",
+		manager.Connection(integration.ConnectToMySQL()))
+	managers["rethink"], _ = manager.New("rethink",
+		manager.Connection(integration.ConnectToRethinkDB("ladon", "policies")))
+	managers["redis"], _ = manager.New("redis",
+		manager.Connection(integration.ConnectToRedis()))
+}
+
 func TestMain(m *testing.M) {
-	for kind, newManager := range manager.DefaultManagers {
-	}
 	s := m.Run()
 	integration.KillAll()
 	os.Exit(s)
-}
-
-func connectPG() {
-	var db = integration.ConnectToPostgres("ladon")
-	s := NewSQLManager(db, nil)
-	if err := s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not create postgres schema: %v", err)
-	}
-
-	managers["postgres"] = s
-}
-
-func connectMySQL() {
-	var db = integration.ConnectToMySQL()
-	s := NewSQLManager(db, nil)
-	if err := s.CreateSchemas(); err != nil {
-		log.Fatalf("Could not create mysql schema: %v", err)
-	}
-
-	managers["mysql"] = s
-}
-
-func connectRDB() {
-	var session = integration.ConnectToRethinkDB("ladon", "policies")
-	rethinkManager = NewRethinkManager(session, "")
-
-	rethinkManager.Watch(context.Background())
-	time.Sleep(time.Second)
-	managers["rethink"] = rethinkManager
-}
-
-func connectRedis() {
-	var db = integration.ConnectToRedis()
-	managers["redis"] = NewRedisManager(db, "")
-}
-
-func TestColdStart(t *testing.T) {
-	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "foo", Description: "description foo"}))
-	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "bar", Description: "description bar"}))
-
-	time.Sleep(time.Second / 2)
-	rethinkManager.Policies = make(map[string]Policy)
-	assert.Nil(t, rethinkManager.ColdStart())
-
-	c1, err := rethinkManager.Get("foo")
-	assert.Nil(t, err)
-	c2, err := rethinkManager.Get("bar")
-	assert.Nil(t, err)
-
-	assert.NotEqual(t, c1, c2)
-	assert.Equal(t, "description foo", c1.GetDescription())
-	assert.Equal(t, "description bar", c2.GetDescription())
-	rethinkManager.Policies = make(map[string]Policy)
 }
 
 func TestGetErrors(t *testing.T) {

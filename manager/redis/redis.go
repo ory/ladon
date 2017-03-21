@@ -36,7 +36,7 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 	}
 
 	// Apply defaults to options
-	addr := o.GetConnection
+	addr := o.Connection
 	if addr == "" {
 		addr = "localhost:6379"
 	}
@@ -46,7 +46,12 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 	}
 
 	// Create new redis client connection
-	db := redis.NewClient(&redis.Options{Address: addr})
+	db := redis.NewClient(&redis.Options{
+		Addr:        addr,
+		Password:    o.Password,
+		TLSConfig:   o.TLSConfig,
+		DialTimeout: o.Timeout,
+	})
 	if err := db.Ping().Err(); err != nil {
 		return nil, errors.WithStack(err)
 	}

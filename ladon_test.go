@@ -23,7 +23,7 @@ var pols = []Policy{
 		Subjects:  []string{"max", "peter", "<zac|ken>"},
 		Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
 		Actions:   []string{"<create|delete>", "get"},
-		Effect:    access.Allow,
+		Effect:    Allow,
 		Conditions: Conditions{
 			"owner": &EqualsSubjectCondition{},
 			"clientIP": &CIDRCondition{
@@ -37,7 +37,7 @@ var pols = []Policy{
 		Subjects:    []string{"max"},
 		Actions:     []string{"update"},
 		Resources:   []string{"<.*>"},
-		Effect:      access.Allow,
+		Effect:      Allow,
 	},
 	&DefaultPolicy{
 		ID:          "3",
@@ -45,7 +45,7 @@ var pols = []Policy{
 		Subjects:    []string{"max"},
 		Actions:     []string{"broadcast"},
 		Resources:   []string{"<.*>"},
-		Effect:      access.Deny,
+		Effect:      Deny,
 	},
 }
 
