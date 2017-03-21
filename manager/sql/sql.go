@@ -103,7 +103,6 @@ func getSession(ctx context.Context, o manager.Options) (*sqlx.DB, error) {
 	if o.Driver == "" {
 		return nil, errors.New("Driver required for sql database connection")
 	}
-	// TODO: compose connection string from options if whole string not given
 	if o.Connection == "" {
 		return nil, errors.New("Connection string required for sql database connection")
 	}
@@ -112,9 +111,8 @@ func getSession(ctx context.Context, o manager.Options) (*sqlx.DB, error) {
 		ctx, cancel = context.WithTimeout(ctx, o.Timeout)
 		defer cancel()
 	}
-	// TODO: this is currently only available to Go 1.8, make a backwards
-	// compatible implementation
-	return sqlx.ConnectContext(ctx, o.Driver, o.Connection)
+
+	return connectContext(ctx, o.Driver, o.Connection)
 }
 
 // createSchemas creates ladon_policy tables
