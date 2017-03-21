@@ -65,13 +65,13 @@ type SQLManager struct {
 }
 
 // NewManager initializes a new SQLManager for given db instance.
-func NewManager(_ context.Context, opts ...manager.Option) (manager.Manager, error) {
+func NewManager(ctx context.Context, opts ...manager.Option) (manager.Manager, error) {
 	var o manager.Options
 	for _, opt := range opts {
 		opt(&o)
 	}
 
-	db, err := getSession(o)
+	db, err := getSession(ctx, o)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -82,7 +82,7 @@ func NewManager(_ context.Context, opts ...manager.Option) (manager.Manager, err
 	return &SQLManager{db: db}, nil
 }
 
-func getSession(o manager.Options) (*sqlx.DB, error) {
+func getSession(ctx context.Context, o manager.Options) (*sqlx.DB, error) {
 	if conn, ok := o.GetConnection(); ok {
 		switch t := conn.(type) {
 		case *sqlx.DB:
@@ -107,12 +107,13 @@ func getSession(o manager.Options) (*sqlx.DB, error) {
 	if o.Connection == "" {
 		return nil, errors.New("Connection string required for sql database connection")
 	}
-	ctx := context.Background()
 	if o.Timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, o.Timeout)
 		defer cancel()
 	}
+	// TODO: this is currently only available to Go 1.8, make a backwards
+	// compatible implementation
 	return sqlx.ConnectContext(ctx, o.Driver, o.Connection)
 }
 
