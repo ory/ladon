@@ -48,7 +48,7 @@ func getPolicies(o *manager.Options) (policies map[string]policy.Policy) {
 }
 
 // NewManager constructs and initializes new MemoryManager with no policies
-func NewManager(opts ...manager.Option) (manager.Manager, error) {
+func NewManager(_ context.Context, opts ...manager.Option) (manager.Manager, error) {
 	var o manager.Options
 	for _, opt := range opts {
 		opt(&o)

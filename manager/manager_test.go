@@ -1,18 +1,23 @@
 package manager_test
 
 import (
+	"context"
+	"log"
 	"os"
 	"testing"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	_ "github.com/ory/ladon/manager/memory"
+	_ "github.com/ory/ladon/manager/redis"
+	_ "github.com/ory/ladon/manager/rethink"
+	_ "github.com/ory/ladon/manager/sql"
 
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ory/common/integration"
 	"github.com/ory/common/pkg"
 	"github.com/ory/ladon/access"
 	"github.com/ory/ladon/manager"
@@ -95,25 +100,44 @@ var managerPolicies = []*policy.DefaultPolicy{
 
 var managers = make(map[string]manager.Manager)
 
-func init() {
-	managers["postgres"], _ = manager.New("sql",
-		manager.Connection(integration.ConnectToPostgres("ladon")))
-	managers["mysql"], _ = manager.New("sql",
-		manager.Connection(integration.ConnectToMySQL()))
-	managers["rethink"], _ = manager.New("rethink",
-		manager.Connection(integration.ConnectToRethinkDB("ladon", "policies")))
-	managers["redis"], _ = manager.New("redis",
-		manager.Connection(integration.ConnectToRedis()))
-}
-
 func TestMain(m *testing.M) {
+	defer func() {
+		if r := recover(); r != nil {
+			KillAll()
+			os.Exit(1)
+		}
+	}()
+	log.Print("Starting MySQL...")
+	mysql := ConnectToMySQL()
+	log.Print("Starting Postgres...")
+	postgres := ConnectToPostgres("ladon")
+	log.Print("Starting RethinkDB...")
+	rethink := ConnectToRethinkDB("ladon", "policies")
+	log.Print("Starting Redis...")
+	redis := ConnectToRedis()
+
+	err := make([]error, 4)
+	ctx, cancel := context.WithCancel(context.Background())
+	managers["mysql"], err[0] = manager.New("sql", ctx, manager.Connection(mysql))
+	managers["postgres"], err[1] = manager.New("sql", ctx, manager.Connection(postgres))
+	managers["rethink"], err[2] = manager.New("rethink", ctx, manager.Connection(rethink))
+	managers["redis"], err[3] = manager.New("redis", ctx, manager.Connection(redis))
+	for _, e := range err {
+		if e != nil {
+			log.Panic(e)
+		}
+	}
+
+	// Run tests
 	s := m.Run()
-	integration.KillAll()
+	cancel()
+	KillAll()
 	os.Exit(s)
 }
 
 func TestGetErrors(t *testing.T) {
 	for k, s := range managers {
+		log.Printf("Testing errors for %s", k)
 		_, err := s.Get(uuid.New())
 		assert.EqualError(t, err, pkg.ErrNotFound.Error(), k)
 

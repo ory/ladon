@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -12,6 +13,10 @@ import (
 	"github.com/ory/ladon/policy"
 )
 
+func init() {
+	manager.DefaultManagers["redis"] = NewManager
+}
+
 // RedisManager is a redis implementation of Manager to store policies persistently.
 type RedisManager struct {
 	db        *redis.Client
@@ -19,7 +24,7 @@ type RedisManager struct {
 }
 
 // NewManager initializes a new RedisManager with no policies
-func NewManager(opts ...manager.Option) (manager.Manager, error) {
+func NewManager(_ context.Context, opts ...manager.Option) (manager.Manager, error) {
 	var o manager.Options
 	for _, opt := range opts {
 		opt(&o)
@@ -56,10 +61,6 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 		return nil, errors.WithStack(err)
 	}
 	return &RedisManager{db: db, keyPrefix: prefix}, nil
-}
-
-func init() {
-	manager.DefaultManagers["redis"] = NewManager
 }
 
 const redisPolicies = "ladon:policies"

@@ -1,6 +1,7 @@
 package ladon_test
 
 import (
+	"context"
 	"testing"
 
 	"fmt"
@@ -133,7 +134,7 @@ var cases = []struct {
 
 func TestLadon(t *testing.T) {
 	// Instantiate ladon with the default in-memory store.
-	mgr, _ := memory.NewManager()
+	mgr, _ := memory.NewManager(context.Background())
 	warden := &Ladon{Manager: mgr}
 
 	// Add the policies defined above to the memory manager.
@@ -154,7 +155,7 @@ func TestLadon(t *testing.T) {
 
 func TestLadonEmpty(t *testing.T) {
 	// If no policy was given, the warden must return an error!
-	mgr, _ := memory.NewManager()
+	mgr, _ := memory.NewManager(context.Background())
 	warden := &Ladon{Manager: mgr}
 	assert.NotNil(t, warden.IsAllowed(&Request{}))
 }

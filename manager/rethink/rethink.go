@@ -1,14 +1,14 @@
 package rethink
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
-	r "gopkg.in/dancannon/gorethink.v2"
+	r "gopkg.in/gorethink/gorethink.v3"
 
 	"github.com/ory/ladon/log"
 	"github.com/ory/ladon/manager"
@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	manager.DefaultManagers["rethinkdb"] = NewManager
+	manager.DefaultManagers["rethink"] = NewManager
 }
 
 // RethinkManager is a rethinkdb implementation of Manager to store policies persistently.
@@ -29,7 +29,7 @@ type RethinkManager struct {
 
 // NewManager initializes a new RethinkManager for given session, table name defaults
 // to "policies".
-func NewManager(opts ...manager.Option) (manager.Manager, error) {
+func NewManager(ctx context.Context, opts ...manager.Option) (manager.Manager, error) {
 	var o manager.Options
 	for _, opt := range opts {
 		opt(&o)
@@ -44,10 +44,9 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if _, err := r.TableCreate(table).RunWrite(session); err != nil {
-		return nil, errors.WithStack(err)
-	}
+	r.TableCreate(table).RunWrite(session)
 
+	// Load initial data into memory
 	mgr := &RethinkManager{
 		session: session,
 		table:   r.Table(table),
@@ -55,6 +54,9 @@ func NewManager(opts ...manager.Option) (manager.Manager, error) {
 	if err := mgr.loadToMem(); err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	// Start watching for changes
+	mgr.Watch(ctx)
 
 	return mgr, nil
 }
@@ -68,7 +70,18 @@ func getSession(o manager.Options) (*r.Session, error) {
 				&r.Session{}, t)
 			return nil, errors.New(err)
 		case *r.Session:
-			return t, nil
+			session := t
+			// Change database if given option
+			if o.Database != "" {
+				r.DBCreate(o.Database).RunWrite(session)
+				session.Use(o.Database)
+			}
+			// Change database if default (test) is used
+			if t.Database() == "test" {
+				r.DBCreate("ladon").RunWrite(session)
+				session.Use("ladon")
+			}
+			return session, nil
 		}
 	}
 
@@ -89,13 +102,10 @@ func getSession(o manager.Options) (*r.Session, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	// Create DB if it does not exist
-	if _, err := r.DBCreate(db).RunWrite(session); err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	// Select database and return session
+	// Create DB if it does not exist and select it
+	r.DBCreate(db).RunWrite(session)
 	session.Use(db)
+
 	return session, nil
 }
 
