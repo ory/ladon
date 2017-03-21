@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -86,15 +87,33 @@ func getSession(o manager.Options) (*sqlx.DB, error) {
 		switch t := conn.(type) {
 		case *sqlx.DB:
 			return t, nil
+		case *sql.DB:
+			if o.Driver == "" {
+				return nil, errors.New("Driver name required when using *sql.DB connection")
+			}
+			return sqlx.NewDb(t, o.Driver), nil
 		default:
-			err := fmt.Sprintf("Expected Connection option of type %T, got %T",
-				&sqlx.DB{}, t)
+			err := fmt.Sprintf("Expected Connection argument of type %T or %T, got %T",
+				&sql.DB{}, &sqlx.DB{}, t)
 			return nil, errors.New(err)
 		}
 	}
 
-	// TODO: start new DB connection
-	return nil, nil
+	// Start new DB connection
+	if o.Driver == "" {
+		return nil, errors.New("Driver required for sql database connection")
+	}
+	// TODO: compose connection string from options if whole string not given
+	if o.Connection == "" {
+		return nil, errors.New("Connection string required for sql database connection")
+	}
+	ctx := context.Background()
+	if o.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, o.Timeout)
+		defer cancel()
+	}
+	return sqlx.ConnectContext(ctx, o.Driver, o.Connection)
 }
 
 // createSchemas creates ladon_policy tables
