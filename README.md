@@ -460,7 +460,7 @@ func main() {
 ```go
 import (
 	"github.com/ory-am/ladon"
-	"gopkg.in/redis.v5"
+	"github.com/go-redis/redis"
 )
 
 func main () {
