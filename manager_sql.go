@@ -14,7 +14,7 @@ import (
 
 var migrations = &migrate.MemoryMigrationSource{
 	Migrations: []*migrate.Migration{
-		&migrate.Migration{
+		{
 			Id: "1",
 			Up: []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
 	id           varchar(255) NOT NULL PRIMARY KEY,
