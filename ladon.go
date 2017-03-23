@@ -5,6 +5,8 @@ import (
 
 	"github.com/ory-am/common/compiler"
 	"github.com/pkg/errors"
+	"strings"
+	"sync"
 )
 
 // Ladon is an implementation of Warden.
@@ -71,16 +73,40 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	return nil
 }
 
+type RegexpCache struct {
+	sync.RWMutex
+	Cache map[string]*regexp.Regexp
+}
+
+var cache = &RegexpCache{
+	Cache: map[string]*regexp.Regexp{},
+}
+
 // Match matches a needle with an array of regular expressions and returns true if a match was found.
 func Match(p Policy, haystack []string, needle string) (bool, error) {
 	var reg *regexp.Regexp
 	var err error
 	for _, h := range haystack {
+		if strings.Count(h, string(p.GetStartDelimiter())) == 0 && h == needle {
+			if h == needle {
+				return true, nil
+			}
+			continue
+		}
+
+		if reg, ok := cache.Cache[h]; ok {
+			if reg.MatchString(needle) {
+				return true, nil
+			}
+			continue
+		}
+
 		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())
 		if err != nil {
 			return false, errors.WithStack(err)
 		}
 
+		cache.Cache[h] = reg
 		if reg.MatchString(needle) {
 			return true, nil
 		}
