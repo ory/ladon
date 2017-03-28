@@ -29,7 +29,6 @@ func (m *RegexpMatcher) get(pattern string) *regexp.Regexp {
 	if val, ok := m.Cache.Get(pattern); !ok {
 		return nil
 	} else if reg, ok := val.(*regexp.Regexp); !ok {
-		logrus.Debug("Not found: %s", pattern)
 		return nil
 	} else {
 		return reg
@@ -52,8 +51,8 @@ func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (boo
 			continue
 		}
 
-		reg = m.get(h)
-		if reg != nil {
+		if reg = m.get(h); reg != nil {
+			logrus.Debug("Matching right here: %s", h)
 			if reg.MatchString(needle) {
 				return true, nil
 			}

@@ -32,13 +32,6 @@ func (l *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 	// Iterate through all policies
 	for _, p := range policies {
-		// Are the policies conditions met?
-		// This is checked first because it usually has a small complexity.
-		if !l.passesConditions(p, r) {
-			// no, continue to next policy
-			continue
-		}
-
 		// Does the action match with one of the policies?
 		// This is the first check because usually actions are a superset of get|update|delete|set
 		// and thus match faster.
@@ -63,6 +56,13 @@ func (l *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 		if rm, err := l.matcher().Matches(p, p.GetResources(), r.Resource); err != nil {
 			return errors.WithStack(err)
 		} else if !rm {
+			// no, continue to next policy
+			continue
+		}
+
+		// Are the policies conditions met?
+		// This is checked first because it usually has a small complexity.
+		if !l.passesConditions(p, r) {
 			// no, continue to next policy
 			continue
 		}
