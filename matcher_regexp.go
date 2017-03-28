@@ -27,10 +27,13 @@ type RegexpMatcher struct {
 
 func (m *RegexpMatcher) get(pattern string) *regexp.Regexp {
 	if val, ok := m.Cache.Get(pattern); !ok {
+		//		logrus.Info("No match found %v", pattern)
 		return nil
 	} else if reg, ok := val.(*regexp.Regexp); !ok {
+		//		logrus.Info("Match found but no regexp: %v", val)
 		return nil
 	} else {
+		//		logrus.Info("Found it: %v", reg)
 		return reg
 	}
 }
@@ -44,15 +47,20 @@ func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (boo
 	var reg *regexp.Regexp
 	var err error
 	for _, h := range haystack {
-		if strings.Count(h, string(p.GetStartDelimiter())) == 0 && h == needle {
+
+		// This means that the current haystack item does not contain a regular expression
+		if strings.Count(h, string(p.GetStartDelimiter())) == 0 {
+			// If we have a simple string match, we've got a match!
 			if h == needle {
 				return true, nil
 			}
+
+			// Not string match, but also no regexp, continue with next haystack item
 			continue
 		}
 
 		if reg = m.get(h); reg != nil {
-			logrus.Debug("Matching right here: %s", h)
+			logrus.Info("Checking right here: %v+", reg)
 			if reg.MatchString(needle) {
 				return true, nil
 			}

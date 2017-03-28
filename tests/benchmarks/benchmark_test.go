@@ -8,9 +8,10 @@ import (
 )
 
 func benchmarkLadon(i int, b *testing.B) {
+	b.StopTimer()
 	var warden *ladon.Ladon
 
-	matcher := ladon.NewRegexpMatcher(16384)
+	matcher := ladon.NewRegexpMatcher(10000000)
 	warden = &ladon.Ladon{
 		Manager: &ladon.MemoryManager{
 			Policies: map[string]ladon.Policy{},
@@ -18,10 +19,12 @@ func benchmarkLadon(i int, b *testing.B) {
 		},
 		Matcher: matcher,
 	}
+
 	for _, pol := range generatePolicies(i) {
 		warden.Manager.Create(pol)
 	}
 
+	b.StartTimer()
 	for n := 0; n < b.N; n++ {
 		warden.IsAllowed(&ladon.Request{
 			Subject:  "foo",
