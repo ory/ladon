@@ -199,6 +199,11 @@ func (m *RethinkManager) publishDelete(id string) error {
 	return nil
 }
 
+// GetAll retrieves a all policy.
+func (m *RethinkManager) GetAll() (Policies, error) {
+	return nil, errors.New("not implemented")
+}
+
 // Watch is used to watch for changes on rethinkdb (which happens
 // asynchronous) and updates manager's policy accordingly.
 func (m *RethinkManager) Watch(ctx context.Context) {

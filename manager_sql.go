@@ -12,39 +12,76 @@ import (
 	"github.com/rubenv/sql-migrate"
 )
 
-var migrations = &migrate.MemoryMigrationSource{
-	Migrations: []*migrate.Migration{
-		{
-			Id: "1",
-			Up: []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
+var sqlDown = map[string][]string{
+	"1": []string{
+		"DROP TABLE ladon_policy",
+		"DROP TABLE ladon_policy_subject",
+		"DROP TABLE ladon_policy_permission",
+		"DROP TABLE ladon_policy_resource",
+	},
+}
+
+var sqlUp = map[string][]string{
+	"1": []string{`CREATE TABLE IF NOT EXISTS ladon_policy (
 	id           varchar(255) NOT NULL PRIMARY KEY,
 	description  text NOT NULL,
 	effect       text NOT NULL CHECK (effect='allow' OR effect='deny'),
 	conditions 	 text NOT NULL
 )`,
-				`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
-	compiled text NOT NULL,
-	template varchar(1023) NOT NULL,
-	policy   varchar(255) NOT NULL,
-	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
+		`CREATE TABLE IF NOT EXISTS ladon_policy_subject (
+compiled text NOT NULL,
+template varchar(1023) NOT NULL,
+policy   varchar(255) NOT NULL,
+FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
 )`,
-				`CREATE TABLE IF NOT EXISTS ladon_policy_permission (
-	compiled text NOT NULL,
-	template varchar(1023) NOT NULL,
-	policy   varchar(255) NOT NULL,
-	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
+		`CREATE TABLE IF NOT EXISTS ladon_policy_permission (
+compiled text NOT NULL,
+template varchar(1023) NOT NULL,
+policy   varchar(255) NOT NULL,
+FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
 )`,
-				`CREATE TABLE IF NOT EXISTS ladon_policy_resource (
-	compiled text NOT NULL,
-	template varchar(1023) NOT NULL,
-	policy   varchar(255) NOT NULL,
-	FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
+		`CREATE TABLE IF NOT EXISTS ladon_policy_resource (
+compiled text NOT NULL,
+template varchar(1023) NOT NULL,
+policy   varchar(255) NOT NULL,
+FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
 )`},
-			Down: []string{
-				"DROP TABLE ladon_policy",
-				"DROP TABLE ladon_policy_subject",
-				"DROP TABLE ladon_policy_permission",
-				"DROP TABLE ladon_policy_resource",
+}
+
+var migrations = map[string]*migrate.MemoryMigrationSource{
+	"postgres": &migrate.MemoryMigrationSource{
+		Migrations: []*migrate.Migration{
+			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
+			{
+				Id: "2",
+				Up: []string{
+					"CREATE INDEX ladon_policy_subject_compiled_idx ON ladon_policy_subject (compiled text_pattern_ops)",
+					"CREATE INDEX ladon_policy_permission_compiled_idx ON ladon_policy_permission (compiled text_pattern_ops)",
+					"CREATE INDEX ladon_policy_resource_compiled_idx ON ladon_policy_resource (compiled text_pattern_ops)",
+				},
+				Down: []string{
+					"DROP INDEX ladon_policy_subject_compiled_idx",
+					"DROP INDEX ladon_policy_permission_compiled_idx",
+					"DROP INDEX ladon_policy_resource_compiled_idx",
+				},
+			},
+		},
+	},
+	"mysql": &migrate.MemoryMigrationSource{
+		Migrations: []*migrate.Migration{
+			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
+			{
+				Id: "2",
+				Up: []string{
+					"CREATE FULLTEXT INDEX ladon_policy_subject_compiled_idx ON ladon_policy_subject (compiled)",
+					"CREATE FULLTEXT INDEX ladon_policy_permission_compiled_idx ON ladon_policy_permission (compiled)",
+					"CREATE FULLTEXT INDEX ladon_policy_resource_compiled_idx ON ladon_policy_resource (compiled)",
+				},
+				Down: []string{
+					"DROP INDEX ladon_policy_subject_compiled_idx",
+					"DROP INDEX ladon_policy_permission_compiled_idx",
+					"DROP INDEX ladon_policy_resource_compiled_idx",
+				},
 			},
 		},
 	},
@@ -66,7 +103,17 @@ func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
 
 // CreateSchemas creates ladon_policy tables
 func (s *SQLManager) CreateSchemas() error {
-	n, err := migrate.Exec(s.db.DB, s.db.DriverName(), migrations, migrate.Up)
+	var source *migrate.MemoryMigrationSource
+	switch s.db.DriverName() {
+	case "postgres", "pgx":
+		source = migrations["postgres"]
+	case "mysql":
+		source = migrations["mysql"]
+	default:
+		return errors.Errorf("Database driver %s is not supported", s.db.DriverName())
+	}
+
+	n, err := migrate.Exec(s.db.DB, s.db.DriverName(), source, migrate.Up)
 	if err != nil {
 		return errors.Wrapf(err, "Could not migrate sql schema, applied %d migrations", n)
 	}
@@ -105,6 +152,51 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 	}
 
 	return nil
+}
+
+// GetAll retrieves a all policy.
+func (s *SQLManager) GetAll() (Policies, error) {
+	rows, err := s.db.Query("SELECT id, description, effect, conditions FROM ladon_policy")
+	if err != nil {
+		return nil, err
+	}
+
+	policies := Policies{}
+	defer rows.Close()
+	for rows.Next() {
+		var p DefaultPolicy
+		var conditions []byte
+
+		if err = rows.Scan(&p.ID, &p.Description, &p.Effect, &conditions); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		p.Conditions = Conditions{}
+		if err := json.Unmarshal(conditions, &p.Conditions); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		subjects, err := getLinkedSQL(s.db, "ladon_policy_subject", p.ID)
+		if err != nil {
+			return nil, err
+		}
+		permissions, err := getLinkedSQL(s.db, "ladon_policy_permission", p.ID)
+		if err != nil {
+			return nil, err
+		}
+		resources, err := getLinkedSQL(s.db, "ladon_policy_resource", p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		p.Actions = permissions
+		p.Subjects = subjects
+		p.Resources = resources
+
+		policies = append(policies, &p)
+	}
+
+	return policies, nil
 }
 
 // Get retrieves a policy.
@@ -171,7 +263,7 @@ func (s *SQLManager) FindPoliciesForSubject(subject string) (policies Policies, 
 	var query string
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
-		query = "SELECT policy FROM ladon_policy_subject WHERE $1 ~ ('^' || compiled || '$')"
+		query = "SELECT policy FROM ladon_policy_subject WHERE $1 ~ ('^' || compiled || '$') GROUP BY policy"
 	case "mysql":
 		query = "SELECT policy FROM ladon_policy_subject WHERE ? REGEXP BINARY CONCAT('^', compiled, '$') GROUP BY policy"
 	}

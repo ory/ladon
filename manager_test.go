@@ -1,6 +1,7 @@
-package ladon
+package ladon_test
 
 import (
+	. "github.com/ory-am/ladon"
 	"log"
 	"os"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"github.com/ory-am/common/integration"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
+	r "gopkg.in/gorethink/gorethink.v3"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -133,7 +135,11 @@ func connectMySQL() {
 
 func connectRDB() {
 	var session = integration.ConnectToRethinkDB("ladon", "policies")
-	rethinkManager = NewRethinkManager(session, "")
+	rethinkManager = &RethinkManager{
+		Session:  session,
+		Table:    r.Table("policies"),
+		Policies: make(map[string]Policy),
+	}
 
 	rethinkManager.Watch(context.Background())
 	time.Sleep(time.Second)

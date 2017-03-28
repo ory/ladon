@@ -13,7 +13,7 @@
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
 Ladon is a library written in [Go](https://golang.org) for access control policies, similar to [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control)
-or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list). 
+or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list).
 In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control)
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
@@ -497,7 +497,7 @@ func main() {
     db, err = sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
     // Or, if using postgres:
     //  import _ "github.com/lib/pq"
-    //  
+    //
     //  db, err = sql.Open("postgres", "postgres://foo:bar@localhost/ladon")
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
@@ -562,6 +562,14 @@ func main() {
     // ...
 }
 ```
+
+## Limitations
+
+Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not fully
+leverage indizes when parsing regular expressions. Thus, there is a considerable overhead when using regular
+expressions.
+
+This holds true especially for regular expressions in the subject field of a policy, as th
 
 ## Examples
 
