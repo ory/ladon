@@ -4,6 +4,7 @@
 package ladon_test
 
 import (
+	"errors"
 	gomock "github.com/golang/mock/gomock"
 	ladon "github.com/ory-am/ladon"
 )
@@ -47,6 +48,10 @@ func (_m *mockManager) Delete(_param0 string) error {
 
 func (_mr *_MockManagerRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
+}
+
+func (_m *mockManager) GetAll() (ladon.Policies, error) {
+	return nil, errors.New("Not implemented")
 }
 
 func (_m *mockManager) FindPoliciesForSubject(_param0 string) (ladon.Policies, error) {

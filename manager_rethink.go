@@ -9,7 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	r "gopkg.in/dancannon/gorethink.v2"
+	r "gopkg.in/gorethink/gorethink.v3"
 )
 
 // stupid hack
@@ -181,6 +181,11 @@ func (m *RethinkManager) publishDelete(id string) error {
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+// GetAll retrieves a all policy.
+func (m *RethinkManager) GetAll() (Policies, error) {
+	return nil, errors.New("not implemented")
 }
 
 // Watch is used to watch for changes on rethinkdb (which happens

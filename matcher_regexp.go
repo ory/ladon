@@ -1,7 +1,7 @@
 package ladon
 
 import (
-	"github.com/Sirupsen/logrus"
+	//"github.com/Sirupsen/logrus"
 	"github.com/hashicorp/golang-lru"
 	"github.com/ory-am/common/compiler"
 	"github.com/pkg/errors"
@@ -23,17 +23,16 @@ func NewRegexpMatcher(size int) *RegexpMatcher {
 
 type RegexpMatcher struct {
 	*lru.Cache
+
+	C map[string]*regexp.Regexp
 }
 
 func (m *RegexpMatcher) get(pattern string) *regexp.Regexp {
 	if val, ok := m.Cache.Get(pattern); !ok {
-		//		logrus.Info("No match found %v", pattern)
 		return nil
 	} else if reg, ok := val.(*regexp.Regexp); !ok {
-		//		logrus.Info("Match found but no regexp: %v", val)
 		return nil
 	} else {
-		//		logrus.Info("Found it: %v", reg)
 		return reg
 	}
 }
@@ -60,10 +59,10 @@ func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (boo
 		}
 
 		if reg = m.get(h); reg != nil {
-			logrus.Info("Checking right here: %v+", reg)
 			if reg.MatchString(needle) {
 				return true, nil
 			}
+			continue
 		}
 
 		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())

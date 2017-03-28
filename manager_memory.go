@@ -44,6 +44,11 @@ func (m *MemoryManager) Get(id string) (Policy, error) {
 	return p, nil
 }
 
+// GetAll retrieves a all policy.
+func (m *MemoryManager) GetAll() (Policies, error) {
+	return nil, errors.New("Not implemented")
+}
+
 // Delete removes a policy.
 func (m *MemoryManager) Delete(id string) error {
 	m.Lock()

@@ -2,3 +2,4 @@
 *.iml
 vendor/
 sqlite-test.db
+tests/

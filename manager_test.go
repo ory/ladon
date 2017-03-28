@@ -1,6 +1,7 @@
-package ladon
+package ladon_test
 
 import (
+	. "github.com/ory-am/ladon"
 	"log"
 	"os"
 	"testing"
@@ -15,7 +16,7 @@ import (
 	"github.com/ory-am/common/integration"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
-	r "gopkg.in/dancannon/gorethink.v2"
+	r "gopkg.in/gorethink/gorethink.v3"
 )
 
 var managerPolicies = []*DefaultPolicy{

@@ -9,6 +9,9 @@ type Manager interface {
 	// Get retrieves a policy.
 	Get(id string) (Policy, error)
 
+	// GetAll retrieves a all policy.
+	GetAll() (Policies, error)
+
 	// Delete removes a policy.
 	Delete(id string) error
 

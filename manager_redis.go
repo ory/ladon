@@ -50,6 +50,11 @@ func (m *RedisManager) Create(policy Policy) error {
 	return nil
 }
 
+// GetAll retrieves a all policy.
+func (m *RedisManager) GetAll() (Policies, error) {
+	return nil, errors.New("not implemented")
+}
+
 // Get retrieves a policy.
 func (m *RedisManager) Get(id string) (Policy, error) {
 	resp, err := m.db.HGet(m.redisPoliciesKey(), id).Bytes()
