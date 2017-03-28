@@ -83,7 +83,7 @@ type RethinkManager struct {
 	Session *r.Session
 	Table   r.Term
 	sync.RWMutex
-
+	Matcher  matcher
 	Policies map[string]Policy
 }
 
@@ -140,6 +140,13 @@ func (m *RethinkManager) Delete(id string) error {
 	return nil
 }
 
+func (m *RethinkManager) matcher() matcher {
+	if m.Matcher == nil {
+		m.Matcher = DefaultMatcher
+	}
+	return m.Matcher
+}
+
 // FindPoliciesForSubject returns Policies (an array of policy) for a given subject.
 func (m *RethinkManager) FindPoliciesForSubject(subject string) (Policies, error) {
 	m.RLock()
@@ -147,7 +154,7 @@ func (m *RethinkManager) FindPoliciesForSubject(subject string) (Policies, error
 
 	ps := Policies{}
 	for _, p := range m.Policies {
-		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
+		if ok, err := m.matcher().Matches(p, p.GetSubjects(), subject); err != nil {
 			return Policies{}, err
 		} else if !ok {
 			continue

@@ -10,6 +10,7 @@ import (
 type MemoryManager struct {
 	Policies map[string]Policy
 	sync.RWMutex
+	Matcher matcher
 }
 
 // NewMemoryManager constructs and initializes new MemoryManager with no policies
@@ -51,13 +52,20 @@ func (m *MemoryManager) Delete(id string) error {
 	return nil
 }
 
+func (m *MemoryManager) matcher() matcher {
+	if m.Matcher == nil {
+		m.Matcher = DefaultMatcher
+	}
+	return m.Matcher
+}
+
 // FindPoliciesForSubject finds all policies associated with the subject.
 func (m *MemoryManager) FindPoliciesForSubject(subject string) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()
 	ps := Policies{}
 	for _, p := range m.Policies {
-		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
+		if ok, err := m.matcher().Matches(p, p.GetSubjects(), subject); err != nil {
 			return Policies{}, err
 		} else if !ok {
 			continue

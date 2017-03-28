@@ -1,36 +1,48 @@
 package ladon
 
 import (
-	"regexp"
-
-	"github.com/ory-am/common/compiler"
 	"github.com/pkg/errors"
-	"strings"
-	"sync"
 )
 
 // Ladon is an implementation of Warden.
 type Ladon struct {
 	Manager Manager
+	Matcher matcher
+}
+
+func (l *Ladon) matcher() matcher {
+	if l.Matcher == nil {
+		l.Matcher = DefaultMatcher
+	}
+	return l.Matcher
 }
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
-func (g *Ladon) IsAllowed(r *Request) (err error) {
-	policies, err := g.Manager.FindPoliciesForSubject(r.Subject)
+func (l *Ladon) IsAllowed(r *Request) (err error) {
+	policies, err := l.Manager.FindPoliciesForSubject(r.Subject)
 	if err != nil {
 		return err
 	}
 
-	return g.doPoliciesAllow(r, policies)
+	return l.doPoliciesAllow(r, policies)
 }
 
-func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
+func (l *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	var allowed = false
 
 	// Iterate through all policies
 	for _, p := range policies {
+		// Are the policies conditions met?
+		// This is checked first because it usually has a small complexity.
+		if !l.passesConditions(p, r) {
+			// no, continue to next policy
+			continue
+		}
+
 		// Does the action match with one of the policies?
-		if pm, err := Match(p, p.GetActions(), r.Action); err != nil {
+		// This is the first check because usually actions are a superset of get|update|delete|set
+		// and thus match faster.
+		if pm, err := l.matcher().Matches(p, p.GetActions(), r.Action); err != nil {
 			return errors.WithStack(err)
 		} else if !pm {
 			// no, continue to next policy
@@ -38,7 +50,9 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 		}
 
 		// Does the subject match with one of the policies?
-		if sm, err := Match(p, p.GetSubjects(), r.Subject); err != nil {
+		// There are usually less subjects than resources which is why this is checked
+		// before checking for resources.
+		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
 			return err
 		} else if !sm {
 			// no, continue to next policy
@@ -46,15 +60,9 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 		}
 
 		// Does the resource match with one of the policies?
-		if rm, err := Match(p, p.GetResources(), r.Resource); err != nil {
+		if rm, err := l.matcher().Matches(p, p.GetResources(), r.Resource); err != nil {
 			return errors.WithStack(err)
 		} else if !rm {
-			// no, continue to next policy
-			continue
-		}
-
-		// Are the policies conditions met?
-		if !g.passesConditions(p, r) {
 			// no, continue to next policy
 			continue
 		}
@@ -73,48 +81,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 	return nil
 }
 
-type RegexpCache struct {
-	sync.RWMutex
-	Cache map[string]*regexp.Regexp
-}
-
-var cache = &RegexpCache{
-	Cache: map[string]*regexp.Regexp{},
-}
-
-// Match matches a needle with an array of regular expressions and returns true if a match was found.
-func Match(p Policy, haystack []string, needle string) (bool, error) {
-	var reg *regexp.Regexp
-	var err error
-	for _, h := range haystack {
-		if strings.Count(h, string(p.GetStartDelimiter())) == 0 && h == needle {
-			if h == needle {
-				return true, nil
-			}
-			continue
-		}
-
-		if reg, ok := cache.Cache[h]; ok {
-			if reg.MatchString(needle) {
-				return true, nil
-			}
-			continue
-		}
-
-		reg, err = compiler.CompileRegex(h, p.GetStartDelimiter(), p.GetEndDelimiter())
-		if err != nil {
-			return false, errors.WithStack(err)
-		}
-
-		cache.Cache[h] = reg
-		if reg.MatchString(needle) {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (g *Ladon) passesConditions(p Policy, r *Request) bool {
+func (l *Ladon) passesConditions(p Policy, r *Request) bool {
 	for key, condition := range p.GetConditions() {
 		if pass := condition.Fulfills(r.Context[key], r); !pass {
 			return false
