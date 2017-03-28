@@ -11,6 +11,7 @@ import (
 type RedisManager struct {
 	db        *redis.Client
 	keyPrefix string
+	Matcher   matcher
 }
 
 // NewRedisManager initializes a new RedisManager with no policies
@@ -86,7 +87,7 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 			return nil, err
 		}
 
-		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
+		if ok, err := m.matcher().Matches(p, p.GetSubjects(), subject); err != nil {
 			return nil, errors.Wrap(err, "policy subject match failed")
 		} else if !ok {
 			continue
@@ -99,6 +100,13 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 	}
 
 	return ps, nil
+}
+
+func (m *RedisManager) matcher() matcher {
+	if m.Matcher == nil {
+		m.Matcher = DefaultMatcher
+	}
+	return m.Matcher
 }
 
 func redisUnmarshalPolicy(policy []byte) (Policy, error) {

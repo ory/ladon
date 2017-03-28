@@ -10,7 +10,14 @@ import (
 func benchmarkLadon(i int, b *testing.B) {
 	var warden *ladon.Ladon
 
-	warden = &ladon.Ladon{Manager: ladon.NewMemoryManager()}
+	matcher := ladon.NewRegexpMatcher(16384)
+	warden = &ladon.Ladon{
+		Manager: &ladon.MemoryManager{
+			Policies: map[string]ladon.Policy{},
+			Matcher:  matcher,
+		},
+		Matcher: matcher,
+	}
 	for _, pol := range generatePolicies(i) {
 		warden.Manager.Create(pol)
 	}
