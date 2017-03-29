@@ -19,7 +19,7 @@ func (l *Ladon) matcher() matcher {
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
 func (l *Ladon) IsAllowed(r *Request) (err error) {
-	policies, err := l.Manager.FindPoliciesForSubject(r.Subject)
+	policies, err := l.Manager.GetAll()
 	if err != nil {
 		return err
 	}
