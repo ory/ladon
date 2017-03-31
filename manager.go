@@ -9,12 +9,9 @@ type Manager interface {
 	// Get retrieves a policy.
 	Get(id string) (Policy, error)
 
-	// GetAll retrieves a all policy.
-	GetAll() (Policies, error)
-
 	// Delete removes a policy.
 	Delete(id string) error
 
-	// Finds all policies associated with the subject.
-	FindPoliciesForSubject(subject string) (Policies, error)
+	// Matches a request to policies. If no matching is supported by the manager, it should return all policies.
+	MatchRequest(r *Request) (Policies, error)
 }

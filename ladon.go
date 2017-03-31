@@ -19,11 +19,14 @@ func (l *Ladon) matcher() matcher {
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
 func (l *Ladon) IsAllowed(r *Request) (err error) {
-	policies, err := l.Manager.GetAll()
+	policies, err := l.Manager.MatchRequest(r)
 	if err != nil {
 		return err
 	}
 
+	// Although the manager is responsible of matching the policies, it might decide to just scan for
+	// subjects, it might return all policies, or it might have a different pattern matching than Golang.
+	// Thus, we need to make sure that we actually matched the right policies.
 	return l.doPoliciesAllow(r, policies)
 }
 

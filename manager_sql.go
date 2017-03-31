@@ -154,20 +154,61 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 	return nil
 }
 
-// GetAll retrieves a all policy.
-func (s *SQLManager) GetAll() (Policies, error) {
-	rows, err := s.db.Query("SELECT id, description, effect, conditions FROM ladon_policy")
+// Matches a request to policies.
+func (s *SQLManager) MatchRequest(r *Request) (Policies, error) {
+	var policies = []*DefaultPolicy{}
+
+	var query string = `SELECT
+	p.id, p.effect, p.conditions, p.description
+	lps.template, lpr.template, lpp.template
+FROM
+	ladon_policy as p
+JOIN
+	ladon_policy_subject as lps
+ON
+	lps.policy = p.id
+JOIN
+	ladon_policy_permission as lpp
+ON
+	lpp.policy = p.id
+JOIN
+	ladon_policy_resource as lpr
+ON
+	lpr.policy = p.id
+WHERE`
+	switch s.db.DriverName() {
+	case "postgres", "pgx":
+		query = query + `
+	? ~ ('^' || lps.compiled || '$')
+AND
+	? ~ ('^' || lpr.compiled || '$')
+AND
+	? ~ ('^' || lpp.compiled || '$')`
+	case "mysql":
+		query = `
+	"?" REGEXP BINARY CONCAT('^', lps.compiled, '$')
+AND
+	"?" REGEXP BINARY CONCAT('^', lpr.compiled, '$')
+AND
+	"?" REGEXP BINARY CONCAT('^', lpp.compiled, '$')`
+	default:
+		return nil, errors.Errorf("Database driver %s is not supported", s.db.DriverName())
+	}
+
+	rows, err := s.db.Query(s.db.Rebind(query), r.Subject, r.Action, r.Resource)
 	if err != nil {
 		return nil, err
 	}
 
-	policies := Policies{}
 	defer rows.Close()
+
 	for rows.Next() {
 		var p DefaultPolicy
 		var conditions []byte
+		var resource, subject, action string
+		var found bool
 
-		if err = rows.Scan(&p.ID, &p.Description, &p.Effect, &conditions); err != nil {
+		if err = rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err != nil {
 			return nil, errors.WithStack(err)
 		}
 
@@ -176,27 +217,28 @@ func (s *SQLManager) GetAll() (Policies, error) {
 			return nil, errors.WithStack(err)
 		}
 
-		subjects, err := getLinkedSQL(s.db, "ladon_policy_subject", p.ID)
-		if err != nil {
-			return nil, err
-		}
-		permissions, err := getLinkedSQL(s.db, "ladon_policy_permission", p.ID)
-		if err != nil {
-			return nil, err
-		}
-		resources, err := getLinkedSQL(s.db, "ladon_policy_resource", p.ID)
-		if err != nil {
-			return nil, err
+		for k, v := range policies {
+			if v.GetID() == p.ID {
+				policies[k].Actions = append(v.Actions, action)
+				policies[k].Subjects = append(v.Subjects, subject)
+				policies[k].Resources = append(v.Resources, resource)
+			}
 		}
 
-		p.Actions = permissions
-		p.Subjects = subjects
-		p.Resources = resources
-
-		policies = append(policies, &p)
+		if !found {
+			policies = append(policies, &p)
+		}
 	}
 
-	return policies, nil
+	result := make(Policies, len(policies))
+	for k, v := range policies {
+		v.Actions = uniq(v.Actions)
+		v.Resources = uniq(v.Resources)
+		v.Subjects = uniq(v.Subjects)
+		result[k] = v
+	}
+
+	return result, nil
 }
 
 // Get retrieves a policy.
@@ -321,4 +363,18 @@ func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p Policy, templates []
 		}
 	}
 	return nil
+}
+
+func uniq(input []string) []string {
+	u := make([]string, 0, len(input))
+	m := make(map[string]bool)
+
+	for _, val := range input {
+		if _, ok := m[val]; !ok {
+			m[val] = true
+			u = append(u, val)
+		}
+	}
+
+	return u
 }
