@@ -4,7 +4,6 @@
 package ladon_test
 
 import (
-	"errors"
 	gomock "github.com/golang/mock/gomock"
 	ladon "github.com/ory-am/ladon"
 )
@@ -50,21 +49,6 @@ func (_mr *_MockManagerRecorder) Delete(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
 }
 
-func (_m *mockManager) GetAll() (ladon.Policies, error) {
-	return nil, errors.New("Not implemented")
-}
-
-func (_m *mockManager) FindPoliciesForSubject(_param0 string) (ladon.Policies, error) {
-	ret := _m.ctrl.Call(_m, "FindPoliciesForSubject", _param0)
-	ret0, _ := ret[0].(ladon.Policies)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (_mr *_MockManagerRecorder) FindPoliciesForSubject(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "FindPoliciesForSubject", arg0)
-}
-
 func (_m *mockManager) Get(_param0 string) (ladon.Policy, error) {
 	ret := _m.ctrl.Call(_m, "Get", _param0)
 	ret0, _ := ret[0].(ladon.Policy)
@@ -74,4 +58,26 @@ func (_m *mockManager) Get(_param0 string) (ladon.Policy, error) {
 
 func (_mr *_MockManagerRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
+}
+
+func (_m *mockManager) GetAll() (ladon.Policies, error) {
+	ret := _m.ctrl.Call(_m, "GetAll")
+	ret0, _ := ret[0].(ladon.Policies)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockManagerRecorder) GetAll() *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetAll")
+}
+
+func (_m *mockManager) MatchRequest(_param0 *ladon.Request) (ladon.Policies, error) {
+	ret := _m.ctrl.Call(_m, "MatchRequest", _param0)
+	ret0, _ := ret[0].(ladon.Policies)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockManagerRecorder) MatchRequest(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "MatchRequest", arg0)
 }

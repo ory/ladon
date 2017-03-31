@@ -28,7 +28,7 @@ func TestWardenIsGranted(t *testing.T) {
 			description: "should fail because no policies are found for peter",
 			r:           &Request{Subject: "peter"},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{}, nil)
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{Subject: "peter"})).Return(Policies{}, nil)
 			},
 			expectErr: true,
 		},
@@ -36,7 +36,7 @@ func TestWardenIsGranted(t *testing.T) {
 			description: "should fail because lookup failure when accessing policies for peter",
 			r:           &Request{Subject: "peter"},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{}, errors.New("asdf"))
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{Subject: "peter"})).Return(Policies{}, errors.New("asdf"))
 			},
 			expectErr: true,
 		},
@@ -48,7 +48,11 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("peter").Return(Policies{
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{
+					Subject:  "peter",
+					Resource: "articles:1234",
+					Action:   "view",
+				})).Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"<zac|peter>"},
 						Effect:    AllowAccess,
@@ -67,7 +71,11 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{
+					Subject:  "ken",
+					Resource: "articles:1234",
+					Action:   "view",
+				})).Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"<zac|peter>"},
 						Effect:    AllowAccess,
@@ -86,7 +94,11 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{
+					Subject:  "ken",
+					Resource: "printers:321",
+					Action:   "view",
+				})).Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
 						Effect:    AllowAccess,
@@ -105,7 +117,11 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{
+					Subject:  "ken",
+					Resource: "articles:321",
+					Action:   "view",
+				})).Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
 						Effect:    AllowAccess,
@@ -124,7 +140,11 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "foo",
 			},
 			setup: func() {
-				m.EXPECT().FindPoliciesForSubject("ken").Return(Policies{
+				m.EXPECT().MatchRequest(gomock.Eq(&Request{
+					Subject:  "ken",
+					Resource: "articles:321",
+					Action:   "foo",
+				})).Return(Policies{
 					&DefaultPolicy{
 						Subjects:  []string{"ken", "peter"},
 						Effect:    AllowAccess,

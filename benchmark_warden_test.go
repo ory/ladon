@@ -10,8 +10,19 @@ import (
 )
 
 func benchmarkLadon(i int, b *testing.B, warden *ladon.Ladon) {
+	var concurrency = 30
+	var sem = make(chan bool, concurrency)
+
 	for _, pol := range generatePolicies(i) {
-		warden.Manager.Create(pol)
+		sem <- true
+		go func(pol ladon.Policy) {
+			defer func() { <-sem }()
+			warden.Manager.Create(pol)
+		}(pol)
+	}
+
+	for i := 0; i < cap(sem); i++ {
+		sem <- true
 	}
 
 	b.ResetTimer()
@@ -32,10 +43,7 @@ func BenchmarkLadon(b *testing.B) {
 		b.Run(fmt.Sprintf("store=memory/policies=%d", num), func(b *testing.B) {
 			matcher := ladon.NewRegexpMatcher(4096)
 			benchmarkLadon(num, b, &ladon.Ladon{
-				Manager: &ladon.MemoryManager{
-					Policies: map[string]ladon.Policy{},
-					Matcher:  matcher,
-				},
+				Manager: ladon.NewMemoryManager(),
 				Matcher: matcher,
 			})
 		})

@@ -131,19 +131,15 @@ func (m *RethinkManager) matcher() matcher {
 	return m.Matcher
 }
 
-// FindPoliciesForSubject returns Policies (an array of policy) for a given subject.
-func (m *RethinkManager) FindPoliciesForSubject(subject string) (Policies, error) {
+// Matches a request to policies.
+func (m *RethinkManager) MatchRequest(r *Request) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()
-
-	ps := Policies{}
+	ps := make(Policies, len(m.Policies))
+	var count int
 	for _, p := range m.Policies {
-		if ok, err := m.matcher().Matches(p, p.GetSubjects(), subject); err != nil {
-			return Policies{}, err
-		} else if !ok {
-			continue
-		}
-		ps = append(ps, p)
+		ps[count] = p
+		count++
 	}
 	return ps, nil
 }
@@ -181,11 +177,6 @@ func (m *RethinkManager) publishDelete(id string) error {
 		return errors.WithStack(err)
 	}
 	return nil
-}
-
-// GetAll retrieves a all policy.
-func (m *RethinkManager) GetAll() (Policies, error) {
-	return nil, errors.New("not implemented")
 }
 
 // Watch is used to watch for changes on rethinkdb (which happens
