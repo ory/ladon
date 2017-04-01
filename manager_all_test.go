@@ -15,7 +15,11 @@ import (
 
 	"github.com/ory-am/common/integration"
 	"golang.org/x/net/context"
-	r "gopkg.in/gorethink/gorethink.v3"
+	r "github.com/GoRethink/gorethink"
+	. "github.com/ory-am/ladon/manager/rethink"
+	. "github.com/ory-am/ladon/manager/redis"
+	. "github.com/ory-am/ladon/manager/sql"
+	. "github.com/ory-am/ladon/manager/memory"
 )
 
 var managerPolicies = []*DefaultPolicy{

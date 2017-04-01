@@ -1,4 +1,4 @@
-package ladon
+package rethink
 
 import (
 	"encoding/json"
@@ -9,7 +9,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
-	r "gopkg.in/gorethink/gorethink.v3"
+	r "github.com/GoRethink/gorethink"
+	. "github.com/ory-am/ladon"
 )
 
 // stupid hack
@@ -83,7 +84,6 @@ type RethinkManager struct {
 	Session *r.Session
 	Table   r.Term
 	sync.RWMutex
-	Matcher  matcher
 	Policies map[string]Policy
 }
 
@@ -138,13 +138,6 @@ func (m *RethinkManager) Delete(id string) error {
 	}
 
 	return nil
-}
-
-func (m *RethinkManager) matcher() matcher {
-	if m.Matcher == nil {
-		m.Matcher = DefaultMatcher
-	}
-	return m.Matcher
 }
 
 func (m *RethinkManager) FindRequestCandidates(r *Request) (Policies, error) {

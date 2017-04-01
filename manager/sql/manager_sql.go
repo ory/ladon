@@ -1,9 +1,10 @@
-package ladon
+package sql
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	. "github.com/ory-am/ladon"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ory-am/common/compiler"
@@ -162,53 +163,40 @@ func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
 	subject.template, resource.template, permission.template
 FROM
 	ladon_policy as p
-JOIN
+
+INNER JOIN
 	ladon_policy_subject as lps
 ON
 	lps.policy = p.id
-JOIN
-	ladon_policy_permission as lpp
-ON
-	lpp.policy = p.id
-JOIN
-	ladon_policy_resource as lpr
-ON
-	lpr.policy = p.id
-JOIN
+
+INNER JOIN
 	ladon_policy_subject as subject
 ON
 	subject.policy = p.id
-JOIN
+INNER JOIN
 	ladon_policy_resource as resource
 ON
 	resource.policy = p.id
-JOIN
+INNER JOIN
 	ladon_policy_permission as permission
 ON
 	permission.policy = p.id
+
 WHERE`
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
 		query = query + `
-	$1 ~ ('^' || lps.compiled || '$')
-AND
-	$2 ~ ('^' || lpr.compiled || '$')
-AND
-	$3 ~ ('^' || lpp.compiled || '$')`
+	$1 ~ ('^' || lps.compiled || '$')`
 		break
 	case "mysql":
 		query = query + `
-	? REGEXP BINARY CONCAT('^', lps.compiled, '$')
-AND
-	? REGEXP BINARY CONCAT('^', lpr.compiled, '$')
-AND
-	? REGEXP BINARY CONCAT('^', lpp.compiled, '$')`
+	? REGEXP BINARY CONCAT('^', lps.compiled, '$')`
 		break
 	default:
 		return nil, errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 	}
 
-	rows, err := s.db.Query(query, r.Subject, r.Resource, r.Action)
+	rows, err := s.db.Query(query, r.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -293,53 +281,6 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 func (s *SQLManager) Delete(id string) error {
 	_, err := s.db.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
 	return errors.WithStack(err)
-}
-
-// FindPoliciesForSubject returns Policies (an array of policy) for a given subject
-func (s *SQLManager) FindPoliciesForSubject(subject string) (policies Policies, err error) {
-	find := func(query string, args ...interface{}) (ids []string, err error) {
-		rows, err := s.db.Query(query, args...)
-		if err == sql.ErrNoRows {
-			return nil, errors.Wrap(pkg.ErrNotFound, "")
-		} else if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var urn string
-			if err = rows.Scan(&urn); err != nil {
-				return nil, errors.WithStack(err)
-			}
-			ids = append(ids, urn)
-		}
-		return ids, nil
-	}
-
-	var query string
-	switch s.db.DriverName() {
-	case "postgres", "pgx":
-		query = "SELECT policy FROM ladon_policy_subject WHERE $1 ~ ('^' || compiled || '$') GROUP BY policy"
-	case "mysql":
-		query = "SELECT policy FROM ladon_policy_subject WHERE ? REGEXP BINARY CONCAT('^', compiled, '$') GROUP BY policy"
-	}
-
-	if query == "" {
-		return nil, errors.Errorf("driver %s not supported", s.db.DriverName())
-	}
-
-	subjects, err := find(query, subject)
-	if err != nil {
-		return policies, err
-	}
-
-	for _, id := range subjects {
-		p, err := s.Get(id)
-		if err != nil {
-			return nil, err
-		}
-		policies = append(policies, p)
-	}
-	return policies, nil
 }
 
 func getLinkedSQL(db *sqlx.DB, table, policy string) ([]string, error) {

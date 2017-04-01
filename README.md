@@ -465,8 +465,10 @@ func main() {
 #### Persistence
 
 Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
-this purpose with default implementations for In-Memory, RethinkDB, SQL (PostgreSQL, MySQL) and Redis. Let's take a look how to
-instantiate those.
+this purpose with default implementations for In-Memory, RethinkDB, SQL (PostgreSQL, MySQL) and Redis. The SQL and
+memory manager are managed by ORY, all other adapters are community-driven efforts.
+
+Let's take a look how to instantiate those:
 
 **In-Memory**
 
@@ -516,7 +518,7 @@ func main() {
 ```go
 import (
 	"github.com/ory-am/ladon"
-	"gopkg.in/redis.v5"
+	"github.com/go-redis/redis"
 )
 
 func main () {

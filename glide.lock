@@ -1,5 +1,5 @@
-hash: 2899a52ce0b065044f32bab24fffbc031fe490b96de36527b5689c32261204bd
-updated: 2017-04-14T11:24:58.2410603+02:00
+hash: 1a3499d823783c3ada539f2e55ef5c04348c8f107b46ffc549148e1637c4b74e
+updated: 2017-04-01T17:00:42.7582135+02:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -52,7 +52,7 @@ imports:
 - name: github.com/go-errors/errors
   version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
 - name: github.com/go-redis/redis
-  version: 62ecc61210cb7dd8ca9aebb8bebbc849c358383b
+  version: 2cf5af9928978bbef8d1076607022403439e177c
   subpackages:
   - internal
   - internal/consistenthash
@@ -65,10 +65,16 @@ imports:
   version: 69b215d01a5606c843240eab4937eab3acee6530
   subpackages:
   - proto
+- name: github.com/GoRethink/gorethink
+  version: 610fcc04c971a9fa42f1b6625c7c52b5bb472c51
 - name: github.com/hailocab/go-hostpool
   version: e80d13ce29ede4452c43dea11e79b9bc8a15b478
 - name: github.com/hashicorp/go-cleanhttp
   version: 3573b8b52aa7b37b9358d966a898feb387f62437
+- name: github.com/hashicorp/golang-lru
+  version: 0a025b7e63adc15a622f29b0b2c4c3848243bbf6
+  subpackages:
+  - simplelru
 - name: github.com/jmoiron/sqlx
   version: f4076845477b10ac2453a16377a8383467aafe72
   subpackages:
@@ -87,13 +93,11 @@ imports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/ory-am/common
-  version: b6357395e30805e2ad1f6d8fb759fa2b7146d8da
+  version: 7e8c25c0d0c3ab458601d8f725cabb1ac8ee4f8d
   subpackages:
   - compiler
   - integration
   - pkg
-- name: github.com/ory-am/dockertest
-  version: 0eb2fe9391ca8b96bd6bb5ee4cc22aa63291e61a
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
@@ -135,6 +139,16 @@ imports:
   - types
 - name: gopkg.in/gorp.v1
   version: c87af80f3cc5036b55b83d77171e156791085e2e
+- name: gopkg.in/ory-am/dockertest.v3
+  version: 0944e3b802903cb0515b253fb8fe758b019bb052
+- name: gopkg.in/redis.v5
+  version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 testImports:
 - name: github.com/golang/mock
   version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
