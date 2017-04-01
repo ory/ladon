@@ -199,36 +199,3 @@ func TestCreateGetDelete(t *testing.T) {
 		}
 	}
 }
-
-// This test is skipped because the method was deprecated
-//
-//func TestFindPoliciesForSubject(t *testing.T) {
-//	for k, s := range managers {
-//		for _, c := range managerPolicies {
-//			require.Nil(t, s.Create(c), k)
-//		}
-//
-//		policies, err := s.FindPoliciesForSubject("user")
-//		assert.Nil(t, err)
-//		assert.Equal(t, 4, len(policies), k)
-//
-//		policies, err = s.FindPoliciesForSubject("peter")
-//		assert.Nil(t, err)
-//		assert.Equal(t, 3, len(policies), k)
-//
-//		// Test case-sensitive matching
-//		policies, err = s.FindPoliciesForSubject("User")
-//		assert.Nil(t, err)
-//		assert.Equal(t, 1, len(policies), k)
-//
-//		// Test case-sensitive matching
-//		policies, err = s.FindPoliciesForSubject("taKwq")
-//		assert.Nil(t, err)
-//		assert.Equal(t, 1, len(policies), k)
-//
-//		// Test user without policy
-//		policies, err = s.FindPoliciesForSubject("foobar")
-//		assert.Nil(t, err)
-//		assert.Equal(t, 1, len(policies), k)
-//	}
-//}

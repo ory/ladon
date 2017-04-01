@@ -75,8 +75,7 @@ func (m *RedisManager) Delete(id string) error {
 	return nil
 }
 
-// Matches a request to policies.
-func (m *RedisManager) MatchRequest(r *Request) (Policies, error) {
+func (m *RedisManager) FindRequestCandidates(r *Request) (Policies, error) {
 	var ps = Policies{}
 
 	iter := m.db.HScan(m.redisPoliciesKey(), 0, "", 0).Iterator()

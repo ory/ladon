@@ -39,7 +39,7 @@ func BenchmarkLadon(b *testing.B) {
 	mysql := integration.ConnectToMySQL()
 	pg := integration.ConnectToPostgres("ladon_bench")
 
-	for _, num := range []int{10, 100, 1000, 10000, 100000} {
+	for _, num := range []int{10, 100, 1000, 10000} {
 		b.Run(fmt.Sprintf("store=memory/policies=%d", num), func(b *testing.B) {
 			matcher := ladon.NewRegexpMatcher(4096)
 			benchmarkLadon(num, b, &ladon.Ladon{
