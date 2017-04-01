@@ -12,6 +12,8 @@ type Manager interface {
 	// Delete removes a policy.
 	Delete(id string) error
 
-	// Matches a request to policies. If no matching is supported by the manager, it should return all policies.
-	MatchRequest(r *Request) (Policies, error)
+	// FindRequestCandidates returns candidates that could match the request object. It either returns
+	// a set that exactly matches the request, or a superset of it. If an error occurs, it returns nil and
+	// the error.
+	FindRequestCandidates(r *Request) (Policies, error)
 }

@@ -51,8 +51,7 @@ func (m *MemoryManager) Delete(id string) error {
 	return nil
 }
 
-// Matches a request to policies.
-func (m *MemoryManager) MatchRequest(r *Request) (Policies, error) {
+func (m *MemoryManager) FindRequestCandidates(r *Request) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()
 	ps := make(Policies, len(m.Policies))

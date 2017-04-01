@@ -147,8 +147,7 @@ func (m *RethinkManager) matcher() matcher {
 	return m.Matcher
 }
 
-// Matches a request to policies.
-func (m *RethinkManager) MatchRequest(r *Request) (Policies, error) {
+func (m *RethinkManager) FindRequestCandidates(r *Request) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()
 	ps := make(Policies, len(m.Policies))

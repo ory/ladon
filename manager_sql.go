@@ -154,13 +154,12 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 	return nil
 }
 
-// Matches a request to policies.
-func (s *SQLManager) MatchRequest(r *Request) (Policies, error) {
-	var policies = []*DefaultPolicy{}
+func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
+	var policies = map[string]*DefaultPolicy{}
 
 	var query string = `SELECT
-	p.id, p.effect, p.conditions, p.description
-	lps.template, lpr.template, lpp.template
+	p.id, p.effect, p.conditions, p.description,
+	subject.template, resource.template, permission.template
 FROM
 	ladon_policy as p
 JOIN
@@ -175,38 +174,50 @@ JOIN
 	ladon_policy_resource as lpr
 ON
 	lpr.policy = p.id
+JOIN
+	ladon_policy_subject as subject
+ON
+	subject.policy = p.id
+JOIN
+	ladon_policy_resource as resource
+ON
+	resource.policy = p.id
+JOIN
+	ladon_policy_permission as permission
+ON
+	permission.policy = p.id
 WHERE`
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
 		query = query + `
-	? ~ ('^' || lps.compiled || '$')
+	$1 ~ ('^' || lps.compiled || '$')
 AND
-	? ~ ('^' || lpr.compiled || '$')
+	$2 ~ ('^' || lpr.compiled || '$')
 AND
-	? ~ ('^' || lpp.compiled || '$')`
+	$3 ~ ('^' || lpp.compiled || '$')`
+		break
 	case "mysql":
-		query = `
-	"?" REGEXP BINARY CONCAT('^', lps.compiled, '$')
+		query = query + `
+	? REGEXP BINARY CONCAT('^', lps.compiled, '$')
 AND
-	"?" REGEXP BINARY CONCAT('^', lpr.compiled, '$')
+	? REGEXP BINARY CONCAT('^', lpr.compiled, '$')
 AND
-	"?" REGEXP BINARY CONCAT('^', lpp.compiled, '$')`
+	? REGEXP BINARY CONCAT('^', lpp.compiled, '$')`
+		break
 	default:
 		return nil, errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 	}
 
-	rows, err := s.db.Query(s.db.Rebind(query), r.Subject, r.Action, r.Resource)
+	rows, err := s.db.Query(query, r.Subject, r.Resource, r.Action)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-
 	for rows.Next() {
 		var p DefaultPolicy
 		var conditions []byte
 		var resource, subject, action string
-		var found bool
 
 		if err = rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err != nil {
 			return nil, errors.WithStack(err)
@@ -217,25 +228,27 @@ AND
 			return nil, errors.WithStack(err)
 		}
 
-		for k, v := range policies {
-			if v.GetID() == p.ID {
-				policies[k].Actions = append(v.Actions, action)
-				policies[k].Subjects = append(v.Subjects, subject)
-				policies[k].Resources = append(v.Resources, resource)
-			}
-		}
-
-		if !found {
-			policies = append(policies, &p)
+		if c, ok := policies[p.ID]; ok {
+			policies[p.ID].Actions = append(c.Actions, action)
+			policies[p.ID].Subjects = append(c.Subjects, subject)
+			policies[p.ID].Resources = append(c.Resources, resource)
+		} else {
+			p.Actions = []string{action}
+			p.Resources = []string{resource}
+			p.Subjects = []string{subject}
+			policies[p.ID] = &p
 		}
 	}
 
-	result := make(Policies, len(policies))
-	for k, v := range policies {
+
+	var result = make(Policies, len(policies))
+	var count int
+	for _, v := range policies {
 		v.Actions = uniq(v.Actions)
 		v.Resources = uniq(v.Resources)
 		v.Subjects = uniq(v.Subjects)
-		result[k] = v
+		result[count] = v
+		count++
 	}
 
 	return result, nil
