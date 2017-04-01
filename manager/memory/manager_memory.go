@@ -1,9 +1,10 @@
-package ladon
+package memory
 
 import (
 	"sync"
 
 	"github.com/pkg/errors"
+	. "github.com/ory-am/ladon"
 )
 
 // MemoryManager is an in-memory (non-persistent) implementation of Manager.

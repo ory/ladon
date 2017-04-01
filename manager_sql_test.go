@@ -10,7 +10,6 @@ import (
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
 	"fmt"
-	"reflect"
 )
 
 // This test is skipped because the method was deprecated
@@ -22,7 +21,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			Description: "description",
 			Subjects:    []string{"sql<.*>match"},
 			Effect:      ladon.AllowAccess,
-			Resources:   []string{"article", "user", "master"},
+			Resources:   []string{"master", "user", "article"},
 			Actions:     []string{"create", "update", "delete"},
 			Conditions:  ladon.Conditions{
 				"foo": &ladon.StringEqualCondition{
@@ -35,7 +34,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			Description: "description",
 			Subjects:    []string{"sqlmatch"},
 			Effect:      ladon.AllowAccess,
-			Resources:   []string{"article", "user", "master"},
+			Resources:   []string{"master", "user", "article"},
 			Actions:     []string{"create", "update", "delete"},
 			Conditions:  ladon.Conditions{
 				"foo": &ladon.StringEqualCondition{
@@ -61,12 +60,12 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			})
 			require.Nil(t, err)
 			require.Len(t, res, 2)
-			if (reflect.DeepEqual(policies[0], res[0])) {
-				assert.Equal(t, policies[0], res[0])
-				assert.Equal(t, policies[1], res[1])
+			if policies[0].ID == res[0].GetID() {
+				assertEqual(t, policies[0], res[0])
+				assertEqual(t, policies[1], res[1])
 			} else {
-				assert.Equal(t, policies[0], res[1])
-				assert.Equal(t, policies[1], res[0])
+				assertEqual(t, policies[0], res[1])
+				assertEqual(t, policies[1], res[0])
 			}
 
 			res, err = s.FindRequestCandidates(&ladon.Request{
@@ -76,7 +75,49 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			})
 			require.Nil(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, policies[0], res[0])
+			assertEqual(t, policies[0], res[0])
 		})
 	}
+}
+
+func assertEqual(t *testing.T, a, b  ladon.Policy) {
+	assert.Equal(t, a.GetID(), b.GetID())
+	assert.Equal(t, a.GetDescription(), b.GetDescription())
+	assert.Equal(t, a.GetEffect(), b.GetEffect())
+	assert.True(t, testEq(a.GetActions(), b.GetActions()))
+	assert.True(t, testEq(a.GetResources(), b.GetResources()))
+	assert.True(t, testEq(a.GetSubjects(), b.GetSubjects()))
+	assert.EqualValues(t, a.GetConditions(), b.GetConditions())
+}
+func testEq(a, b []string) bool {
+
+	if a == nil && b == nil {
+		return true;
+	}
+
+	if a == nil || b == nil {
+		return false;
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	var found bool
+	for i := range a {
+		found = false
+
+		for y := range b {
+			if a[i] == b[y] {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	return true
 }
