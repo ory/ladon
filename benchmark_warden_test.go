@@ -49,7 +49,7 @@ func benchmarkLadon(i int, b *testing.B, warden *ladon.Ladon) {
 }
 
 func BenchmarkLadon(b *testing.B) {
-	for _, num := range []int{10, 100, 1000, 10000} {
+	for _, num := range []int{10, 100, 1000, 10000, 100000, 1000000} {
 		b.Run(fmt.Sprintf("store=memory/policies=%d", num), func(b *testing.B) {
 			matcher := ladon.NewRegexpMatcher(4096)
 			benchmarkLadon(num, b, &ladon.Ladon{
