@@ -567,9 +567,18 @@ func main() {
 
 ## Limitations
 
-Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not fully
-leverage indizes when parsing regular expressions. Thus, there is a considerable overhead when using regular
+Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not
+leverage indexes when parsing regular expressions. Thus, there is a considerable overhead when using regular
 expressions.
+
+We have implemented various strategies for improving regex lookup time:
+
+1. An LRU cache is used for caching frequently compiled regular expressions. This reduces cpu complexity
+significantly for memory manager implementations.
+2. The SQL schema was changed to 3NF.
+3. Policies, subjects and actions are stored uniquely, reducing look-up times.
+4. Only one query per look up is executed.
+5. If no regular expression is used, a simple equal match is done.
 
 This holds true especially for regular expressions in the subject field of a policy, as th
 

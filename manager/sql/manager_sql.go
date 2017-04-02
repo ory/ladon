@@ -3,7 +3,7 @@ package sql
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	. "github.com/ory-am/ladon"
 
 	"github.com/jmoiron/sqlx"
@@ -11,6 +11,11 @@ import (
 	"github.com/ory-am/common/pkg"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
+	"crypto/sha256"
+	//"log"
+	//"crypto/sha256"
+	"fmt"
+	"strings"
 )
 
 var sqlDown = map[string][]string{
@@ -47,6 +52,46 @@ template varchar(1023) NOT NULL,
 policy   varchar(255) NOT NULL,
 FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE
 )`},
+	"2": []string{`CREATE TABLE IF NOT EXISTS ladon_subject (
+id          varchar(64) NOT NULL PRIMARY KEY,
+has_regex   bool NOT NULL,
+compiled 	varchar(511) NOT NULL UNIQUE,
+template 	varchar(511) NOT NULL UNIQUE
+)`,
+		`CREATE TABLE IF NOT EXISTS ladon_action (
+id       varchar(64) NOT NULL PRIMARY KEY,
+has_regex   bool NOT NULL,
+compiled varchar(511) NOT NULL UNIQUE,
+template varchar(511) NOT NULL UNIQUE
+)`,
+		`CREATE TABLE IF NOT EXISTS ladon_resource (
+id       varchar(64) NOT NULL PRIMARY KEY,
+has_regex   bool NOT NULL,
+compiled varchar(511) NOT NULL UNIQUE,
+template varchar(511) NOT NULL UNIQUE
+)`,
+		`CREATE TABLE IF NOT EXISTS ladon_policy_subject_rel (
+policy varchar(255) NOT NULL,
+subject varchar(64) NOT NULL,
+PRIMARY KEY (policy, subject),
+FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE,
+FOREIGN KEY (subject) REFERENCES ladon_subject(id) ON DELETE CASCADE
+)`,
+		`CREATE TABLE IF NOT EXISTS ladon_policy_action_rel (
+policy varchar(255) NOT NULL,
+action varchar(64) NOT NULL,
+PRIMARY KEY (policy, action),
+FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE,
+FOREIGN KEY (action) REFERENCES ladon_action(id) ON DELETE CASCADE
+)`,
+		`CREATE TABLE IF NOT EXISTS ladon_policy_resource_rel (
+policy varchar(255) NOT NULL,
+resource varchar(64) NOT NULL,
+PRIMARY KEY (policy, resource),
+FOREIGN KEY (policy) REFERENCES ladon_policy(id) ON DELETE CASCADE,
+FOREIGN KEY (resource) REFERENCES ladon_resource(id) ON DELETE CASCADE
+)`,
+	},
 }
 
 var migrations = map[string]*migrate.MemoryMigrationSource{
@@ -55,15 +100,18 @@ var migrations = map[string]*migrate.MemoryMigrationSource{
 			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
 			{
 				Id: "2",
+				Up: sqlUp["2"],
+			},
+			{Id: "3",
 				Up: []string{
-					"CREATE INDEX ladon_policy_subject_compiled_idx ON ladon_policy_subject (compiled text_pattern_ops)",
-					"CREATE INDEX ladon_policy_permission_compiled_idx ON ladon_policy_permission (compiled text_pattern_ops)",
-					"CREATE INDEX ladon_policy_resource_compiled_idx ON ladon_policy_resource (compiled text_pattern_ops)",
+					"CREATE INDEX ladon_subject_compiled_idx ON ladon_subject (compiled text_pattern_ops)",
+					"CREATE INDEX ladon_permission_compiled_idx ON ladon_action (compiled text_pattern_ops)",
+					"CREATE INDEX ladon_resource_compiled_idx ON ladon_resource (compiled text_pattern_ops)",
 				},
 				Down: []string{
-					"DROP INDEX ladon_policy_subject_compiled_idx",
-					"DROP INDEX ladon_policy_permission_compiled_idx",
-					"DROP INDEX ladon_policy_resource_compiled_idx",
+					"DROP INDEX ladon_subject_compiled_idx",
+					"DROP INDEX ladon_permission_compiled_idx",
+					"DROP INDEX ladon_resource_compiled_idx",
 				},
 			},
 		},
@@ -73,15 +121,20 @@ var migrations = map[string]*migrate.MemoryMigrationSource{
 			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
 			{
 				Id: "2",
+				Up: sqlUp["2"],
+				Down: []string{},
+			},
+			{
+				Id: "3",
 				Up: []string{
-					"CREATE FULLTEXT INDEX ladon_policy_subject_compiled_idx ON ladon_policy_subject (compiled)",
-					"CREATE FULLTEXT INDEX ladon_policy_permission_compiled_idx ON ladon_policy_permission (compiled)",
-					"CREATE FULLTEXT INDEX ladon_policy_resource_compiled_idx ON ladon_policy_resource (compiled)",
+					"CREATE FULLTEXT INDEX ladon_subject_compiled_idx ON ladon_subject (compiled)",
+					"CREATE FULLTEXT INDEX ladon_action_compiled_idx ON ladon_action (compiled)",
+					"CREATE FULLTEXT INDEX ladon_resource_compiled_idx ON ladon_resource (compiled)",
 				},
 				Down: []string{
-					"DROP INDEX ladon_policy_subject_compiled_idx",
-					"DROP INDEX ladon_policy_permission_compiled_idx",
-					"DROP INDEX ladon_policy_resource_compiled_idx",
+					"DROP INDEX ladon_subject_compiled_idx",
+					"DROP INDEX ladon_permission_compiled_idx",
+					"DROP INDEX ladon_resource_compiled_idx",
 				},
 			},
 		},
@@ -132,20 +185,82 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		}
 	}
 
-	if tx, err := s.db.Begin(); err != nil {
+	//fmt.Printf("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (\"%s\", \"%s\", \"%s\", '%s');\n", policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions)
+	tx, err := s.db.Begin()
+	if err != nil {
 		return errors.WithStack(err)
 	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return errors.WithStack(err)
 		}
 		return errors.WithStack(err)
-	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
-		return err
-	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
-		return err
-	} else if err = createLinkSQL(s.db, tx, "ladon_policy_resource", policy, policy.GetResources()); err != nil {
-		return err
-	} else if err = tx.Commit(); err != nil {
+	}
+
+	type relation struct {
+		p []string
+		t string
+	}
+	var relations = []relation{{p: policy.GetActions(), t: "action"}, {p: policy.GetResources(), t: "resource"}, {p: policy.GetSubjects(), t: "subject"}}
+
+	for _, v := range relations {
+		for _, template := range v.p {
+			h := sha256.New()
+			h.Write([]byte(template))
+			id := fmt.Sprintf("%x", h.Sum(nil))
+
+			compiled, err := compiler.CompileRegex(template, policy.GetStartDelimiter(), policy.GetEndDelimiter())
+			if err != nil {
+				if err := tx.Rollback(); err != nil {
+					return errors.WithStack(err)
+				}
+				return errors.WithStack(err)
+			}
+
+			switch s.db.DriverName() {
+			case "postgres", "pgx":
+				//fmt.Printf("INSERT INTO ladon_%s (id, template, compiled) VALUES (\"%s\", \"%s\", \"%s\") ON CONFLICT DO NOTHING;\n", v.t, id, template, compiled.String())
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
+					if err := tx.Rollback(); err != nil {
+						return errors.WithStack(err)
+					}
+					return errors.WithStack(err)
+				}
+
+				//fmt.Printf("INSERT INTO ladon_policy_%s_rel (policy, %s) VALUES (\"%s\", \"%s\") ON CONFLICT DO NOTHING;\n", v.t, v.t, policy.GetID(), id)
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?) ON CONFLICT DO NOTHING", v.t, v.t)), policy.GetID(), id); err != nil {
+					if err := tx.Rollback(); err != nil {
+						return errors.WithStack(err)
+					}
+					return errors.WithStack(err)
+				}
+				break
+			case "mysql":
+				//fmt.Printf("INSERT IGNORE INTO `ladon_%s` (`id`, `template`, `compiled`) VALUES (\"%s\", \"%s\", \"%s\");\n", v.t, id, template, compiled.String())
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?)", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
+					if err := tx.Rollback(); err != nil {
+						return errors.WithStack(err)
+					}
+					return errors.WithStack(err)
+				}
+
+				//fmt.Printf("INSERT IGNORE INTO ladon_policy_%s_rel (policy, %s) VALUES (\"%s\", \"%s\");\n", v.t, v.t, policy.GetID(), id)
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?)", v.t, v.t)), policy.GetID(), id); err != nil {
+					if err := tx.Rollback(); err != nil {
+						return errors.WithStack(err)
+					}
+					return errors.WithStack(err)
+				}
+				break
+			default:
+				if err := tx.Rollback(); err != nil {
+					return errors.WithStack(err)
+				}
+				return errors.Errorf("Database driver %s is not supported", s.db.DriverName())
+			}
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return errors.WithStack(err)
 		}
@@ -156,41 +271,48 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 }
 
 func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
-	var policies = map[string]*DefaultPolicy{}
-
 	var query string = `SELECT
 	p.id, p.effect, p.conditions, p.description,
-	subject.template, resource.template, permission.template
+	subject.template as subject, resource.template as resource, action.template as action
 FROM
 	ladon_policy as p
 
 INNER JOIN
-	ladon_policy_subject as lps
+	ladon_policy_subject_rel as rs
 ON
-	lps.policy = p.id
+	rs.policy = p.id
+INNER JOIN
+	ladon_policy_action_rel as ra
+ON
+	ra.policy = p.id
+INNER JOIN
+	ladon_policy_resource_rel as rr
+ON
+	rr.policy = p.id
+
 
 INNER JOIN
-	ladon_policy_subject as subject
+	ladon_subject as subject
 ON
-	subject.policy = p.id
+	rs.subject = subject.id
 INNER JOIN
-	ladon_policy_resource as resource
+	ladon_action as action
 ON
-	resource.policy = p.id
+	ra.action = action.id
 INNER JOIN
-	ladon_policy_permission as permission
+	ladon_resource as resource
 ON
-	permission.policy = p.id
+	rr.resource = resource.id
 
 WHERE`
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
 		query = query + `
-	$1 ~ ('^' || lps.compiled || '$')`
+	$1 ~ ('^' || subject.compiled || '$')`
 		break
 	case "mysql":
 		query = query + `
-	? REGEXP BINARY CONCAT('^', lps.compiled, '$')`
+	? REGEXP BINARY CONCAT('^', subject.compiled, '$')`
 		break
 	default:
 		return nil, errors.Errorf("Database driver %s is not supported", s.db.DriverName())
@@ -200,14 +322,20 @@ WHERE`
 	if err != nil {
 		return nil, err
 	}
-
 	defer rows.Close()
+
+	return scanRows(rows)
+}
+
+func scanRows(rows *sql.Rows) (Policies, error) {
+	var policies = map[string]*DefaultPolicy{}
+
 	for rows.Next() {
 		var p DefaultPolicy
 		var conditions []byte
 		var resource, subject, action string
 
-		if err = rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err != nil {
+		if err := rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err != nil {
 			return nil, errors.WithStack(err)
 		}
 
@@ -228,7 +356,6 @@ WHERE`
 		}
 	}
 
-
 	var result = make(Policies, len(policies))
 	var count int
 	for _, v := range policies {
@@ -244,79 +371,62 @@ WHERE`
 
 // Get retrieves a policy.
 func (s *SQLManager) Get(id string) (Policy, error) {
-	var p DefaultPolicy
-	var conditions []byte
+	query := s.db.Rebind(`SELECT
+	p.id, p.effect, p.conditions, p.description,
+	subject.template, resource.template, action.template
+FROM
+	ladon_policy as p
 
-	if err := s.db.QueryRow(s.db.Rebind("SELECT id, description, effect, conditions FROM ladon_policy WHERE id=?"), id).Scan(&p.ID, &p.Description, &p.Effect, &conditions); err == sql.ErrNoRows {
-		return nil, pkg.ErrNotFound
-	} else if err != nil {
-		return nil, errors.WithStack(err)
-	}
+INNER JOIN
+	ladon_policy_subject_rel as rs
+ON
+	rs.policy = p.id
+INNER JOIN
+	ladon_policy_action_rel as ra
+ON
+	ra.policy = p.id
+INNER JOIN
+	ladon_policy_resource_rel as rr
+ON
+	rr.policy = p.id
 
-	p.Conditions = Conditions{}
-	if err := json.Unmarshal(conditions, &p.Conditions); err != nil {
-		return nil, errors.WithStack(err)
-	}
+INNER JOIN
+	ladon_subject as subject
+ON
+	rs.subject = subject.id
+INNER JOIN
+	ladon_action as action
+ON
+	ra.action = action.id
+INNER JOIN
+	ladon_resource as resource
+ON
+	rr.resource = resource.id
 
-	subjects, err := getLinkedSQL(s.db, "ladon_policy_subject", id)
+WHERE
+	p.id=?
+`)
+
+	rows, err := s.db.Query(query, id)
 	if err != nil {
 		return nil, err
 	}
-	permissions, err := getLinkedSQL(s.db, "ladon_policy_permission", id)
+	defer rows.Close()
+
+	policies, err := scanRows(rows)
 	if err != nil {
 		return nil, err
-	}
-	resources, err := getLinkedSQL(s.db, "ladon_policy_resource", id)
-	if err != nil {
-		return nil, err
+	} else if len(policies) == 0 {
+		return nil, errors.WithStack(pkg.ErrNotFound)
 	}
 
-	p.Actions = permissions
-	p.Subjects = subjects
-	p.Resources = resources
-	return &p, nil
+	return policies[0], nil
 }
 
 // Delete removes a policy.
 func (s *SQLManager) Delete(id string) error {
 	_, err := s.db.Exec(s.db.Rebind("DELETE FROM ladon_policy WHERE id=?"), id)
 	return errors.WithStack(err)
-}
-
-func getLinkedSQL(db *sqlx.DB, table, policy string) ([]string, error) {
-	urns := []string{}
-	rows, err := db.Query(db.Rebind(fmt.Sprintf("SELECT template FROM %s WHERE policy=?", table)), policy)
-	if err == sql.ErrNoRows {
-		return nil, errors.Wrap(pkg.ErrNotFound, "")
-	} else if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var urn string
-		if err = rows.Scan(&urn); err != nil {
-			return []string{}, errors.WithStack(err)
-		}
-		urns = append(urns, urn)
-	}
-	return urns, nil
-}
-
-func createLinkSQL(db *sqlx.DB, tx *sql.Tx, table string, p Policy, templates []string) error {
-	for _, template := range templates {
-		reg, err := compiler.CompileRegex(template, p.GetStartDelimiter(), p.GetEndDelimiter())
-
-		// Execute SQL statement
-		query := db.Rebind(fmt.Sprintf("INSERT INTO %s (policy, template, compiled) VALUES (?, ?, ?)", table))
-		if _, err = tx.Exec(query, p.GetID(), template, reg.String()); err != nil {
-			if rb := tx.Rollback(); rb != nil {
-				return errors.WithStack(rb)
-			}
-			return errors.WithStack(err)
-		}
-	}
-	return nil
 }
 
 func uniq(input []string) []string {
