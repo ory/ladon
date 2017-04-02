@@ -567,20 +567,36 @@ func main() {
 
 ## Limitations
 
+Ladon's limitations are listed here.
+
+### Regular expressions
+
 Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not
-leverage indexes when parsing regular expressions. Thus, there is a considerable overhead when using regular
+leverage indexes when parsing regular expressions. Thus, there is considerable overhead when using regular
 expressions.
 
-We have implemented various strategies for improving regex lookup time:
+We have implemented various strategies for reducing policy matching time:
 
 1. An LRU cache is used for caching frequently compiled regular expressions. This reduces cpu complexity
 significantly for memory manager implementations.
-2. The SQL schema was changed to 3NF.
-3. Policies, subjects and actions are stored uniquely, reducing look-up times.
+2. The SQL schema is 3NF normalized.
+3. Policies, subjects and actions are stored uniquely, reducing the total number of rows.
 4. Only one query per look up is executed.
-5. If no regular expression is used, a simple equal match is done.
+5. If no regular expression is used, a simple equal match is done in SQL back-ends.
 
-This holds true especially for regular expressions in the subject field of a policy, as th
+You will get the best performance with the in-memory manager. The SQL adapters perform about
+1000:1 compared to the in-memory solution. Please note that these
+tests where in laboratory environments with Docker, without an SSD, and single-threaded. You might get better
+results on your system. We are thinking about introducing It would be possible a simple cache strategy such as
+LRU with a maximum age to further reduce runtime complexity.
+
+We are also considering to offer different matching strategies (e.g. wildcard match) in the future, which will perform better
+with SQL databases. If you have ideas or suggestions, leave us an issue.
+
+### Unofficial RethinkDB & Redis DBAL
+
+Please note that RethinkDB and Redis are community efforts and not officially supported by ORY. We will try to ship
+stable set ups, but they might have issues regarding implementation or speed.
 
 ## Examples
 

@@ -80,7 +80,7 @@ func generatePolicies(n int) map[string]ladon.Policy {
 		id := uuid.New()
 		policies[id] = &ladon.DefaultPolicy{
 			ID:        id,
-			Subjects:  []string{"foobar", "some-resource" + fmt.Sprintf("%d", i % 100), strconv.Itoa(i), id + "<[^sdf]+>"},
+			Subjects:  []string{"foobar", "some-resource" + fmt.Sprintf("%d", i % 100), strconv.Itoa(i)},
 			Actions:   []string{"foobar", "foobar", "foobar", "foobar", "foobar"},
 			Resources: []string{"foobar", id},
 			Effect:    ladon.AllowAccess,
