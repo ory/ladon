@@ -308,9 +308,9 @@ WHERE`
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
 		query = query + `
-( subject.has_regex = 0 AND subject.template = $1 )
+( subject.has_regex IS NOT TRUE AND subject.template = $1 )
 OR
-( subject.has_regex = 1 AND $2 ~ subject.compiled )`
+( subject.has_regex IS TRUE AND $2 ~ subject.compiled )`
 		break
 	case "mysql":
 		query = query + `
