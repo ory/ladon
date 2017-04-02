@@ -308,17 +308,22 @@ WHERE`
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
 		query = query + `
-	$1 ~ ('^' || subject.compiled || '$')`
+
+( subject.has_regex = 0 AND subject.template = ? )
+OR
+( subject.has_regex = 1 AND $1 ~ subject.compiled )`
 		break
 	case "mysql":
 		query = query + `
-	? REGEXP BINARY CONCAT('^', subject.compiled, '$')`
+( subject.has_regex = 0 AND subject.template = ? )
+OR
+( subject.has_regex = 1 AND ? REGEXP BINARY subject.compiled )`
 		break
 	default:
 		return nil, errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 	}
 
-	rows, err := s.db.Query(query, r.Subject)
+	rows, err := s.db.Query(query, r.Subject, r.Subject)
 	if err != nil {
 		return nil, err
 	}
