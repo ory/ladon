@@ -7,6 +7,7 @@ import (
 	. "github.com/ory-am/ladon"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"fmt"
 )
 
 func TestWardenIsGranted(t *testing.T) {
@@ -156,13 +157,14 @@ func TestWardenIsGranted(t *testing.T) {
 			expectErr: false,
 		},
 	} {
-		c.setup()
-		err := w.IsAllowed(c.r)
-		if c.expectErr {
-			assert.NotNil(t, err, "(%d) %s", k, c.description)
-		} else {
-			assert.Nil(t, err, "(%d) %s", k, c.description)
-		}
-		t.Logf("Passed test case (%d) %s", k, c.description)
+		t.Run(fmt.Sprintf("case=%d/description=%s", k, c.description), func (t *testing.T) {
+			c.setup()
+			err := w.IsAllowed(c.r)
+			if c.expectErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+			}
+		})
 	}
 }

@@ -7,6 +7,7 @@ import (
 	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"fmt"
 )
 
 var policyConditions = Conditions{
@@ -35,17 +36,18 @@ func TestHasAccess(t *testing.T) {
 }
 
 func TestMarshalling(t *testing.T) {
-	for _, c := range policyCases {
-		var cc = DefaultPolicy{
-			Conditions: make(Conditions),
-		}
-		data, err := json.Marshal(c)
-		RequireError(t, false, err)
+	for k, c := range policyCases {
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			var cc = DefaultPolicy{
+				Conditions: make(Conditions),
+			}
+			data, err := json.Marshal(c)
+			RequireError(t, false, err)
 
-		t.Logf("Got data: %s\n", data)
-		json.Unmarshal(data, &cc)
-		RequireError(t, false, err)
-		assert.Equal(t, c, &cc)
+			json.Unmarshal(data, &cc)
+			RequireError(t, false, err)
+			assert.Equal(t, c, &cc)
+		})
 	}
 }
 

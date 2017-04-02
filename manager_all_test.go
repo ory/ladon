@@ -20,6 +20,9 @@ import (
 	. "github.com/ory-am/ladon/manager/redis"
 	. "github.com/ory-am/ladon/manager/sql"
 	. "github.com/ory-am/ladon/manager/memory"
+	"fmt"
+	"github.com/stretchr/testify/require"
+	"sync"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -100,23 +103,27 @@ var managers = map[string]Manager{}
 var rethinkManager *RethinkManager
 
 func TestMain(m *testing.M) {
-	connectPG()
-	connectRDB()
-	connectMEM()
-	connectPG()
-	connectMySQL()
-	connectRedis()
+	var wg sync.WaitGroup
+	wg.Add(5)
+	 connectMySQL(&wg)
+	 connectPG(&wg)
+	 connectRDB(&wg)
+	 connectRedis(&wg)
+	 connectMEM(&wg)
+	//wg.Wait()
 
 	s := m.Run()
-	integration.KillAll()
+	//integration.KillAll()
 	os.Exit(s)
 }
 
-func connectMEM() {
+func connectMEM(wg *sync.WaitGroup) {
+	defer wg.Done()
 	managers["memory"] = NewMemoryManager()
 }
 
-func connectPG() {
+func connectPG(wg *sync.WaitGroup) {
+	defer wg.Done()
 	var db = integration.ConnectToPostgres("ladon")
 	s := NewSQLManager(db, nil)
 	if err := s.CreateSchemas(); err != nil {
@@ -126,7 +133,8 @@ func connectPG() {
 	managers["postgres"] = s
 }
 
-func connectMySQL() {
+func connectMySQL(wg *sync.WaitGroup) {
+	defer wg.Done()
 	var db = integration.ConnectToMySQL()
 	s := NewSQLManager(db, nil)
 	if err := s.CreateSchemas(); err != nil {
@@ -136,7 +144,8 @@ func connectMySQL() {
 	managers["mysql"] = s
 }
 
-func connectRDB() {
+func connectRDB(wg *sync.WaitGroup) {
+	defer wg.Done()
 	var session = integration.ConnectToRethinkDB("ladon", "policies")
 	rethinkManager = &RethinkManager{
 		Session:  session,
@@ -149,7 +158,8 @@ func connectRDB() {
 	managers["rethink"] = rethinkManager
 }
 
-func connectRedis() {
+func connectRedis(wg *sync.WaitGroup) {
+	defer wg.Done()
 	var db = integration.ConnectToRedis()
 	managers["redis"] = NewRedisManager(db, "")
 }
@@ -185,21 +195,22 @@ func TestGetErrors(t *testing.T) {
 
 func TestCreateGetDelete(t *testing.T) {
 	for k, s := range managers {
-		for _, c := range managerPolicies {
-			err := s.Create(c)
-			assert.Nil(t, err, "%s: %s", k, err)
-			time.Sleep(time.Millisecond * 100)
+		t.Run(fmt.Sprintf("manager=%s", k), func(t *testing.T) {
+			for i, c := range managerPolicies {
+				t.Run(fmt.Sprintf("case=%d/id=%s", i, c.GetID()), func(t *testing.T) {
+					require.Nil(t, s.Create(c))
+					time.Sleep(time.Millisecond * 100)
 
-			get, err := s.Get(c.GetID())
-			assert.Nil(t, err, "%s: %s", k, err)
-			pkg.AssertObjectKeysEqual(t, c, get, "Description", "Subjects", "Resources", "Effect", "Actions")
-			assert.EqualValues(t, c.Conditions, get.GetConditions(), "%s", k)
-		}
+					get, err := s.Get(c.GetID())
+					require.Nil(t, err)
 
-		for _, c := range managerPolicies {
-			assert.Nil(t, s.Delete(c.GetID()), k)
-			_, err := s.Get(c.GetID())
-			assert.NotNil(t, err, "%s: %s", k, err)
-		}
+					assertPolicyEqual(t, get, c)
+
+					require.Nil(t, s.Delete(c.GetID()), k)
+					_, err = s.Get(c.GetID())
+					assert.NotNil(t, err)
+				})
+			}
+		})
 	}
 }

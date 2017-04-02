@@ -61,11 +61,11 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			require.Nil(t, err)
 			require.Len(t, res, 2)
 			if policies[0].ID == res[0].GetID() {
-				assertEqual(t, policies[0], res[0])
-				assertEqual(t, policies[1], res[1])
+				assertPolicyEqual(t, policies[0], res[0])
+				assertPolicyEqual(t, policies[1], res[1])
 			} else {
-				assertEqual(t, policies[0], res[1])
-				assertEqual(t, policies[1], res[0])
+				assertPolicyEqual(t, policies[0], res[1])
+				assertPolicyEqual(t, policies[1], res[0])
 			}
 
 			res, err = s.FindRequestCandidates(&ladon.Request{
@@ -75,12 +75,12 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			})
 			require.Nil(t, err)
 			require.Len(t, res, 1)
-			assertEqual(t, policies[0], res[0])
+			assertPolicyEqual(t, policies[0], res[0])
 		})
 	}
 }
 
-func assertEqual(t *testing.T, a, b  ladon.Policy) {
+func assertPolicyEqual(t *testing.T, a, b  ladon.Policy) {
 	assert.Equal(t, a.GetID(), b.GetID())
 	assert.Equal(t, a.GetDescription(), b.GetDescription())
 	assert.Equal(t, a.GetEffect(), b.GetEffect())
