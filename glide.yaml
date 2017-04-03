@@ -9,7 +9,7 @@ import:
 - package: github.com/hashicorp/golang-lru
 - package: github.com/jmoiron/sqlx
 - package: github.com/ory-am/common
-  version: ~0.2.1
+  version: ~0.2.2
   subpackages:
   - compiler
   - pkg
