@@ -470,17 +470,18 @@ memory manager are managed by ORY, all other adapters are community-driven effor
 
 Let's take a look how to instantiate those:
 
-**In-Memory**
+**In-Memory** (officially supported)
 
 ```go
 import (
 	"github.com/ory-am/ladon"
+	manager "github.com/ory-am/ladon/manager/memory"
 )
 
 
 func main() {
 	warden := &ladon.Ladon{
-		Manager: ladon.NewMemoryManager(),
+		Manager: manager.NewMemoryManager(),
 	}
 	err := warden.Manager.Create(pol)
 
@@ -488,10 +489,11 @@ func main() {
 }
 ```
 
-**SQL**
+**SQL** (officially supported)
 
 ```go
 import "github.com/ory-am/ladon"
+import manager "github.com/ory-am/ladon/manager/sql"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -506,19 +508,20 @@ func main() {
 	}
 
     warden := ladon.Ladon{
-        Manager: ladon.NewSQLManager(db, nil),
+        Manager: manager.NewSQLManager(db, nil),
     }
 
     // ...
 }
 ```
 
-**Redis**
+**Redis** (supported by community)
 
 ```go
 import (
 	"github.com/ory-am/ladon"
 	"github.com/go-redis/redis"
+    manager "github.com/ory-am/ladon/manager/redis"
 )
 
 func main () {
@@ -531,7 +534,7 @@ func main () {
 	}
 
 	warden := ladon.Ladon{
-		Manager: ladon.NewRedisManager(db, "redis_key_prefix:")
+		Manager: manager.NewRedisManager(db, "redis_key_prefix:")
 	}
 
 	// ...
