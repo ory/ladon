@@ -1,5 +1,5 @@
-hash: 1a3499d823783c3ada539f2e55ef5c04348c8f107b46ffc549148e1637c4b74e
-updated: 2017-04-03T13:12:49.300375+02:00
+hash: 369edfc3fa14d58c4a67fcaeaf3671abfaff3f6e0f3e8e94072addf8a8f63563
+updated: 2017-04-03T13:42:32.9128048+02:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -93,11 +93,13 @@ imports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/ory-am/common
-  version: 7e8c25c0d0c3ab458601d8f725cabb1ac8ee4f8d
+  version: 0a58b72cc437bde21d341d7b07b00100140183c6
   subpackages:
   - compiler
   - integration
   - pkg
+- name: github.com/ory-am/dockertest
+  version: 0944e3b802903cb0515b253fb8fe758b019bb052
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
@@ -139,16 +141,6 @@ imports:
   - types
 - name: gopkg.in/gorp.v1
   version: c87af80f3cc5036b55b83d77171e156791085e2e
-- name: gopkg.in/ory-am/dockertest.v3
-  version: 0944e3b802903cb0515b253fb8fe758b019bb052
-- name: gopkg.in/redis.v5
-  version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
-  subpackages:
-  - internal
-  - internal/consistenthash
-  - internal/hashtag
-  - internal/pool
-  - internal/proto
 testImports:
 - name: github.com/golang/mock
   version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
