@@ -4,7 +4,7 @@ import:
   version: ~0.11.0
 - package: github.com/jmoiron/sqlx
 - package: github.com/ory-am/common
-  version: ~0.0.1
+  version: ~0.4.0
   subpackages:
   - compiler
   - pkg
@@ -14,7 +14,7 @@ import:
 - package: golang.org/x/net
   subpackages:
   - context
-- package: gopkg.in/dancannon/gorethink.v2
+- package: gopkg.in/gorethink/gorethink.v3
   version: ~3.0.0
 - package: gopkg.in/redis.v5
   version: ~5.1.6
