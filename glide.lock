@@ -1,5 +1,5 @@
-hash: 0ef38066ec85c6615074bc29b2f8a3f3ecdeebbaaa385079bd44f449a0d0639e
-updated: 2017-04-14T10:56:31.8211704+02:00
+hash: 2899a52ce0b065044f32bab24fffbc031fe490b96de36527b5689c32261204bd
+updated: 2017-04-14T11:24:58.2410603+02:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -135,14 +135,6 @@ imports:
   - types
 - name: gopkg.in/gorp.v1
   version: c87af80f3cc5036b55b83d77171e156791085e2e
-- name: gopkg.in/redis.v5
-  version: 8fcba2ea878201b70c5a63dd416141d4ddbc601a
-  subpackages:
-  - internal
-  - internal/consistenthash
-  - internal/hashtag
-  - internal/pool
-  - internal/proto
 testImports:
 - name: github.com/golang/mock
   version: bd3c8e81be01eef76d4b503f5e687d2d1354d2d9
