@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"gopkg.in/redis.v5"
+	"github.com/go-redis/redis"
 )
 
 // RedisManager is a redis implementation of Manager to store policies persistently.
