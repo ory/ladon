@@ -92,11 +92,11 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 		}
 		return errors.WithStack(err)
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_subject", policy, policy.GetSubjects()); err != nil {
-		return err
+		return errors.WithStack(err)
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_permission", policy, policy.GetActions()); err != nil {
-		return err
+		return errors.WithStack(err)
 	} else if err = createLinkSQL(s.db, tx, "ladon_policy_resource", policy, policy.GetResources()); err != nil {
-		return err
+		return errors.WithStack(err)
 	} else if err = tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return errors.WithStack(err)
@@ -125,15 +125,15 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 
 	subjects, err := getLinkedSQL(s.db, "ladon_policy_subject", id)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	permissions, err := getLinkedSQL(s.db, "ladon_policy_permission", id)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	resources, err := getLinkedSQL(s.db, "ladon_policy_resource", id)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	p.Actions = permissions
@@ -182,13 +182,13 @@ func (s *SQLManager) FindPoliciesForSubject(subject string) (policies Policies, 
 
 	subjects, err := find(query, subject)
 	if err != nil {
-		return policies, err
+		return policies, errors.WithStack(err)
 	}
 
 	for _, id := range subjects {
 		p, err := s.Get(id)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		policies = append(policies, p)
 	}

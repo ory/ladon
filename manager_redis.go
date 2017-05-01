@@ -3,8 +3,8 @@ package ladon
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/go-redis/redis"
+	"github.com/pkg/errors"
 )
 
 // RedisManager is a redis implementation of Manager to store policies persistently.
@@ -83,7 +83,7 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 
 		p, err := redisUnmarshalPolicy(resp)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 
 		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
