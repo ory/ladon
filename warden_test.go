@@ -1,13 +1,13 @@
 package ladon_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/ory-am/ladon"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"fmt"
 )
 
 func TestWardenIsGranted(t *testing.T) {
@@ -157,7 +157,7 @@ func TestWardenIsGranted(t *testing.T) {
 			expectErr: false,
 		},
 	} {
-		t.Run(fmt.Sprintf("case=%d/description=%s", k, c.description), func (t *testing.T) {
+		t.Run(fmt.Sprintf("case=%d/description=%s", k, c.description), func(t *testing.T) {
 			c.setup()
 			err := w.IsAllowed(c.r)
 			if c.expectErr {

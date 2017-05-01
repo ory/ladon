@@ -1,12 +1,12 @@
 package ladon
 
 import (
-	//"github.com/Sirupsen/logrus"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/golang-lru"
 	"github.com/ory-am/common/compiler"
 	"github.com/pkg/errors"
-	"regexp"
-	"strings"
 )
 
 func NewRegexpMatcher(size int) *RegexpMatcher {

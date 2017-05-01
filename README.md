@@ -18,7 +18,7 @@ In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBA
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 
-Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL), Redis and RethinkDB (community supported).
+Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL) and in-memory.
 
 ---
 
@@ -465,8 +465,8 @@ func main() {
 #### Persistence
 
 Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
-this purpose with default implementations for In-Memory, RethinkDB, SQL (PostgreSQL, MySQL) and Redis. The SQL and
-memory manager are managed by ORY, all other adapters are community-driven efforts.
+this purpose with default implementations for In-Memory and SQL (PostgreSQL, MySQL). There are also adapters available
+written by the community [for Redis and RethinkDB](https://github.com/ory/ladon-community)
 
 Let's take a look how to instantiate those:
 
@@ -512,32 +512,6 @@ func main() {
     }
 
     // ...
-}
-```
-
-**Redis** (supported by community)
-
-```go
-import (
-	"github.com/ory-am/ladon"
-	"github.com/go-redis/redis"
-    manager "github.com/ory-am/ladon/manager/redis"
-)
-
-func main () {
-	db = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-	})
-
-	if err := db.Ping().Err(); err != nil {
-		log.Fatalf("Could not connect to database: %s". err)
-	}
-
-	warden := ladon.Ladon{
-		Manager: manager.NewRedisManager(db, "redis_key_prefix:")
-	}
-
-	// ...
 }
 ```
 
@@ -595,11 +569,6 @@ LRU with a maximum age to further reduce runtime complexity.
 
 We are also considering to offer different matching strategies (e.g. wildcard match) in the future, which will perform better
 with SQL databases. If you have ideas or suggestions, leave us an issue.
-
-### Unofficial RethinkDB & Redis DBAL
-
-Please note that RethinkDB and Redis are community efforts and not officially supported by ORY. We will try to ship
-stable set ups, but they might have issues regarding implementation or speed.
 
 ## Examples
 

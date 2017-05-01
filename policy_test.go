@@ -2,12 +2,12 @@ package ladon_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	. "github.com/ory-am/ladon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"fmt"
 )
 
 var policyConditions = Conditions{

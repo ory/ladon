@@ -2,12 +2,13 @@ package ladon_test
 
 import (
 	"fmt"
+	"strconv"
+	"testing"
+
 	"github.com/ory-am/ladon"
 	"github.com/ory-am/ladon/manager/memory"
 	"github.com/pborman/uuid"
-	"testing"
 	"github.com/pkg/errors"
-	"strconv"
 )
 
 func benchmarkLadon(i int, b *testing.B, warden *ladon.Ladon) {
@@ -60,7 +61,7 @@ func BenchmarkLadon(b *testing.B) {
 
 		b.Run(fmt.Sprintf("store=mysql/policies=%d", num), func(b *testing.B) {
 			benchmarkLadon(num, b, &ladon.Ladon{
-				Manager:  managers["mysql"],
+				Manager: managers["mysql"],
 				Matcher: ladon.NewRegexpMatcher(4096),
 			})
 		})
@@ -80,7 +81,7 @@ func generatePolicies(n int) map[string]ladon.Policy {
 		id := uuid.New()
 		policies[id] = &ladon.DefaultPolicy{
 			ID:        id,
-			Subjects:  []string{"foobar", "some-resource" + fmt.Sprintf("%d", i % 100), strconv.Itoa(i)},
+			Subjects:  []string{"foobar", "some-resource" + fmt.Sprintf("%d", i%100), strconv.Itoa(i)},
 			Actions:   []string{"foobar", "foobar", "foobar", "foobar", "foobar"},
 			Resources: []string{"foobar", id},
 			Effect:    ladon.AllowAccess,

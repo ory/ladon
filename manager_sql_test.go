@@ -1,15 +1,15 @@
 package ladon_test
 
 import (
+	"fmt"
 	"testing"
+
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/stretchr/testify/require"
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
-	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // This test is skipped because the method was deprecated
@@ -23,7 +23,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			Effect:      ladon.AllowAccess,
 			Resources:   []string{"master", "user", "article"},
 			Actions:     []string{"create", "update", "delete"},
-			Conditions:  ladon.Conditions{
+			Conditions: ladon.Conditions{
 				"foo": &ladon.StringEqualCondition{
 					Equals: "foo",
 				},
@@ -36,7 +36,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			Effect:      ladon.AllowAccess,
 			Resources:   []string{"master", "user", "article"},
 			Actions:     []string{"create", "update", "delete"},
-			Conditions:  ladon.Conditions{
+			Conditions: ladon.Conditions{
 				"foo": &ladon.StringEqualCondition{
 					Equals: "foo",
 				},
@@ -46,7 +46,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 
 	for k, s := range map[string]ladon.Manager{
 		"postgres": managers["postgres"],
-		"mysql": managers["mysql"],
+		"mysql":    managers["mysql"],
 	} {
 		t.Run(fmt.Sprintf("manager=%s", k), func(t *testing.T) {
 			for _, c := range policies {
@@ -54,9 +54,9 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			}
 
 			res, err := s.FindRequestCandidates(&ladon.Request{
-				Subject: "sqlmatch",
+				Subject:  "sqlmatch",
 				Resource: "article",
-				Action: "create",
+				Action:   "create",
 			})
 			require.Nil(t, err)
 			require.Len(t, res, 2)
@@ -69,9 +69,9 @@ func TestFindPoliciesForSubject(t *testing.T) {
 			}
 
 			res, err = s.FindRequestCandidates(&ladon.Request{
-				Subject: "sqlamatch",
+				Subject:  "sqlamatch",
 				Resource: "article",
-				Action: "create",
+				Action:   "create",
 			})
 			require.Nil(t, err)
 			require.Len(t, res, 1)
@@ -80,7 +80,7 @@ func TestFindPoliciesForSubject(t *testing.T) {
 	}
 }
 
-func assertPolicyEqual(t *testing.T, a, b  ladon.Policy) {
+func assertPolicyEqual(t *testing.T, a, b ladon.Policy) {
 	assert.Equal(t, a.GetID(), b.GetID())
 	assert.Equal(t, a.GetDescription(), b.GetDescription())
 	assert.Equal(t, a.GetEffect(), b.GetEffect())
@@ -92,11 +92,11 @@ func assertPolicyEqual(t *testing.T, a, b  ladon.Policy) {
 func testEq(a, b []string) bool {
 
 	if a == nil && b == nil {
-		return true;
+		return true
 	}
 
 	if a == nil || b == nil {
-		return false;
+		return false
 	}
 
 	if len(a) != len(b) {

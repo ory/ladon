@@ -1,12 +1,12 @@
 package ladon_test
 
 import (
+	"fmt"
 	"testing"
 
-	"fmt"
-	"github.com/stretchr/testify/assert"
 	. "github.com/ory-am/ladon"
 	. "github.com/ory-am/ladon/manager/memory"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,21 +1,18 @@
 package sql
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
-	//"fmt"
-	. "github.com/ory-am/ladon"
+	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
+	. "github.com/ory-am/ladon"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
-	"crypto/sha256"
-	//"log"
-	//"crypto/sha256"
-	"fmt"
-	"strings"
 )
 
 var sqlDown = map[string][]string{
@@ -120,8 +117,8 @@ var migrations = map[string]*migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{Id: "1", Up: sqlUp["1"], Down: sqlDown["1"]},
 			{
-				Id: "2",
-				Up: sqlUp["2"],
+				Id:   "2",
+				Up:   sqlUp["2"],
 				Down: []string{},
 			},
 			{

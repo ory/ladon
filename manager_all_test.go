@@ -1,28 +1,23 @@
 package ladon_test
 
 import (
-	. "github.com/ory-am/ladon"
+	"fmt"
 	"log"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"github.com/ory-am/common/integration"
 	"github.com/ory-am/common/pkg"
+	. "github.com/ory-am/ladon"
+	. "github.com/ory-am/ladon/manager/memory"
+	. "github.com/ory-am/ladon/manager/sql"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/ory-am/common/integration"
-	"golang.org/x/net/context"
-	r "github.com/GoRethink/gorethink"
-	. "github.com/ory-am/ladon/manager/rethink"
-	. "github.com/ory-am/ladon/manager/redis"
-	. "github.com/ory-am/ladon/manager/sql"
-	. "github.com/ory-am/ladon/manager/memory"
-	"fmt"
 	"github.com/stretchr/testify/require"
-	"sync"
 )
 
 var managerPolicies = []*DefaultPolicy{
@@ -100,16 +95,13 @@ var managerPolicies = []*DefaultPolicy{
 }
 
 var managers = map[string]Manager{}
-var rethinkManager *RethinkManager
 
 func TestMain(m *testing.M) {
 	var wg sync.WaitGroup
 	wg.Add(5)
-	 connectMySQL(&wg)
-	 connectPG(&wg)
-	 connectRDB(&wg)
-	 connectRedis(&wg)
-	 connectMEM(&wg)
+	connectMySQL(&wg)
+	connectPG(&wg)
+	connectMEM(&wg)
 	//wg.Wait()
 
 	s := m.Run()
@@ -142,45 +134,6 @@ func connectMySQL(wg *sync.WaitGroup) {
 	}
 
 	managers["mysql"] = s
-}
-
-func connectRDB(wg *sync.WaitGroup) {
-	defer wg.Done()
-	var session = integration.ConnectToRethinkDB("ladon", "policies")
-	rethinkManager = &RethinkManager{
-		Session:  session,
-		Table:    r.Table("policies"),
-		Policies: make(map[string]Policy),
-	}
-
-	rethinkManager.Watch(context.Background())
-	time.Sleep(time.Second)
-	managers["rethink"] = rethinkManager
-}
-
-func connectRedis(wg *sync.WaitGroup) {
-	defer wg.Done()
-	var db = integration.ConnectToRedis()
-	managers["redis"] = NewRedisManager(db, "")
-}
-
-func TestColdStart(t *testing.T) {
-	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "foo", Description: "description foo"}))
-	assert.Nil(t, rethinkManager.Create(&DefaultPolicy{ID: "bar", Description: "description bar"}))
-
-	time.Sleep(time.Second / 2)
-	rethinkManager.Policies = make(map[string]Policy)
-	assert.Nil(t, rethinkManager.ColdStart())
-
-	c1, err := rethinkManager.Get("foo")
-	assert.Nil(t, err)
-	c2, err := rethinkManager.Get("bar")
-	assert.Nil(t, err)
-
-	assert.NotEqual(t, c1, c2)
-	assert.Equal(t, "description foo", c1.GetDescription())
-	assert.Equal(t, "description bar", c2.GetDescription())
-	rethinkManager.Policies = make(map[string]Policy)
 }
 
 func TestGetErrors(t *testing.T) {
