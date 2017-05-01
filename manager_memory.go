@@ -58,7 +58,7 @@ func (m *MemoryManager) FindPoliciesForSubject(subject string) (Policies, error)
 	ps := Policies{}
 	for _, p := range m.Policies {
 		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
-			return Policies{}, err
+			return Policies{}, errors.WithStack(err)
 		} else if !ok {
 			continue
 		}

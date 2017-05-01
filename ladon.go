@@ -16,7 +16,7 @@ type Ladon struct {
 func (g *Ladon) IsAllowed(r *Request) (err error) {
 	policies, err := g.Manager.FindPoliciesForSubject(r.Subject)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	return g.doPoliciesAllow(r, policies)
@@ -37,7 +37,7 @@ func (g *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Does the subject match with one of the policies?
 		if sm, err := Match(p, p.GetSubjects(), r.Subject); err != nil {
-			return err
+			return errors.WithStack(err)
 		} else if !sm {
 			// no, continue to next policy
 			continue

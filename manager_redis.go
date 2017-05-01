@@ -83,7 +83,7 @@ func (m *RedisManager) FindPoliciesForSubject(subject string) (Policies, error) 
 
 		p, err := redisUnmarshalPolicy(resp)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 
 		if ok, err := Match(p, p.GetSubjects(), subject); err != nil {
