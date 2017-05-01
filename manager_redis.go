@@ -3,8 +3,8 @@ package ladon
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
 	"github.com/go-redis/redis"
+	"github.com/pkg/errors"
 )
 
 // RedisManager is a redis implementation of Manager to store policies persistently.
