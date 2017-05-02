@@ -1,10 +1,11 @@
 package ladon_test
 
 import (
-	"github.com/ory/ladon"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/ory/ladon"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSQLManagerMigrateFromMajor0Minor6ToMajor0Minor7(t *testing.T) {
@@ -34,7 +35,6 @@ func TestSQLManagerMigrateFromMajor0Minor6ToMajor0Minor7(t *testing.T) {
 					require.NoError(t, s.Create(c))
 				})
 			}
-
 
 			require.NoError(t, s.Migrate())
 

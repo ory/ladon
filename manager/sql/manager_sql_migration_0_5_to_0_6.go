@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"log"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/ory-am/common/compiler"
 	"github.com/ory-am/common/pkg"
-	"github.com/pkg/errors"
-	. "github.com/ory/ladon"
-	"log"
 	"github.com/ory/ladon"
+	. "github.com/ory/ladon"
+	"github.com/pkg/errors"
 )
 
 type SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7 struct {
@@ -24,7 +25,7 @@ func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) GetManager() ladon.Man
 }
 
 // Get retrieves a policy.
-func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Migrate() (error) {
+func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Migrate() error {
 	rows, err := s.DB.Query(s.DB.Rebind("SELECT id, description, effect, conditions FROM ladon_policy"))
 	if err != nil {
 		return errors.WithStack(err)

@@ -174,8 +174,8 @@ func connectPG(wg *sync.WaitGroup) {
 
 	managers["postgres"] = s
 	migrators["postgres"] = &SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7{
-		DB:db,
-		SQLManager:s,
+		DB:         db,
+		SQLManager: s,
 	}
 }
 
@@ -189,8 +189,8 @@ func connectMySQL(wg *sync.WaitGroup) {
 
 	managers["mysql"] = s
 	migrators["mysql"] = &SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7{
-		DB:db,
-		SQLManager:s,
+		DB:         db,
+		SQLManager: s,
 	}
 }
 
