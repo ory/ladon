@@ -144,6 +144,7 @@ var managerPolicies = []*DefaultPolicy{
 }
 
 var managers = map[string]Manager{}
+var migrators = map[string]ManagerMigrator{}
 
 func TestMain(m *testing.M) {
 	var wg sync.WaitGroup
@@ -172,6 +173,10 @@ func connectPG(wg *sync.WaitGroup) {
 	}
 
 	managers["postgres"] = s
+	migrators["postgres"] = &SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7{
+		DB:db,
+		SQLManager:s,
+	}
 }
 
 func connectMySQL(wg *sync.WaitGroup) {
@@ -183,6 +188,10 @@ func connectMySQL(wg *sync.WaitGroup) {
 	}
 
 	managers["mysql"] = s
+	migrators["mysql"] = &SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7{
+		DB:db,
+		SQLManager:s,
+	}
 }
 
 func TestGetErrors(t *testing.T) {

@@ -185,11 +185,28 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return errors.WithStack(err)
-	} else if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	}
+
+	switch s.db.DriverName() {
+	case "postgres", "pgx":
+		if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+			if err := tx.Rollback(); err != nil {
+				return errors.WithStack(err)
+			}
+			return errors.WithStack(err)
+		}
+	case "mysql":
+		if _, err = tx.Exec(s.db.Rebind("INSERT IGNORE INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+			if err := tx.Rollback(); err != nil {
+				return errors.WithStack(err)
+			}
+			return errors.WithStack(err)
+		}
+	default:
 		if err := tx.Rollback(); err != nil {
 			return errors.WithStack(err)
 		}
-		return errors.WithStack(err)
+		return errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 	}
 
 	type relation struct {
@@ -376,7 +393,6 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 				p.Resources = []string{resource.String}
 			}
 
-			fmt.Printf("Found policy: %v+\n", p)
 			policies[p.ID] = &p
 		}
 	}
