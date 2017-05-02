@@ -1,5 +1,18 @@
 # History of breaking changes
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [0.6.0](#060)
+  - [New location](#new-location)
+  - [Deprecating Redis and RethinkDB](#deprecating-redis-and-rethinkdb)
+  - [New packages](#new-packages)
+  - [IMPORTANT: SQL Changes](#important-sql-changes)
+  - [Manager API Changes](#manager-api-changes)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 ## 0.6.0
 
 Version 0.6.0 includes some larger BC breaks. This version focuses on various
@@ -50,3 +63,7 @@ err := migrator.Migrate()
 ```
 
 Please run this migrator **only once and make back ups before you run it**.
+
+### Manager API Changes
+
+`Manager.FindPoliciesForSubject` is now `Manager.FindRequestCandidates`
