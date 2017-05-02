@@ -1,23 +1,24 @@
 package ladon
 
 import (
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 var (
 	// ErrRequestDenied is returned when an access request can not be satisfied by any policy.
 	ErrRequestDenied = errors.WithStack(&errorWithContext{
 		error:  errors.New("Request was denied by default"),
-		code: http.StatusForbidden,
+		code:   http.StatusForbidden,
 		status: http.StatusText(http.StatusForbidden),
 		reason: "The request was denied because no matching policy was found.",
 	})
 
 	// ErrRequestForcefullyDenied is returned when an access request is explicitly denied by a policy.
 	ErrRequestForcefullyDenied = errors.WithStack(&errorWithContext{
-		error: errors.New("Request was forcefully denied"),
-		code: http.StatusForbidden,
+		error:  errors.New("Request was forcefully denied"),
+		code:   http.StatusForbidden,
 		status: http.StatusText(http.StatusForbidden),
 		reason: "The request was denied because a policy denied request.",
 	})
@@ -29,8 +30,8 @@ func NewErrResourceNotFound(err error) error {
 	}
 
 	return errors.WithStack(&errorWithContext{
-		error: err,
-		code: http.StatusNotFound,
+		error:  err,
+		code:   http.StatusNotFound,
 		status: http.StatusText(http.StatusNotFound),
 		reason: "The requested resource could not be found.",
 	})
@@ -47,7 +48,6 @@ type errorWithContext struct {
 func (e *errorWithContext) StatusCode() int {
 	return e.code
 }
-
 
 // RequestID returns the ID of the request that caused the error, if applicable.
 func (e *errorWithContext) RequestID() string {

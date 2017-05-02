@@ -8,9 +8,9 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/ory-am/ladon"
 	"github.com/pborman/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/pkg/errors"
 )
 
 // This test is skipped because the method was deprecated
