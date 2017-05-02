@@ -2,7 +2,7 @@ package: github.com/ory/ladon
 import:
 - package: github.com/hashicorp/golang-lru
 - package: github.com/jmoiron/sqlx
-- package: github.com/ory/common
+- package: github.com/ory-am/common
   version: ~0.4.0
   subpackages:
   - compiler

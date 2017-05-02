@@ -94,7 +94,7 @@ imports:
   - libcontainer/user
 - name: github.com/ory-am/dockertest
   version: 9d0647ae761f96a6738c5afb49688d22979b21ff
-- name: github.com/ory/common
+- name: github.com/ory-am/common
   version: b6357395e30805e2ad1f6d8fb759fa2b7146d8da
   subpackages:
   - compiler

@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/ory/common/integration"
+	"github.com/ory-am/common/integration"
 	. "github.com/ory/ladon"
 	. "github.com/ory/ladon/manager/memory"
 	. "github.com/ory/ladon/manager/sql"
