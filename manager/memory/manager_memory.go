@@ -24,6 +24,7 @@ func NewMemoryManager() *MemoryManager {
 func (m *MemoryManager) Create(policy Policy) error {
 	m.Lock()
 	defer m.Unlock()
+
 	if _, found := m.Policies[policy.GetID()]; found {
 		return errors.New("Policy exists")
 	}

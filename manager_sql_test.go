@@ -10,6 +10,7 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/pkg/errors"
 )
 
 // This test is skipped because the method was deprecated
@@ -42,6 +43,31 @@ func TestFindPoliciesForSubject(t *testing.T) {
 				},
 			},
 		},
+		{
+			ID:          uuid.New(),
+			Description: "description",
+			Subjects:    []string{},
+			Effect:      ladon.AllowAccess,
+			Resources:   []string{"master", "user", "article"},
+			Actions:     []string{"create", "update", "delete"},
+			Conditions: ladon.Conditions{
+				"foo": &ladon.StringEqualCondition{
+					Equals: "foo",
+				},
+			},
+		},
+		{
+			ID:          uuid.New(),
+			Description: "description",
+			Effect:      ladon.AllowAccess,
+			Resources:   []string{"master", "user", "article"},
+			Actions:     []string{"create", "update", "delete"},
+			Conditions: ladon.Conditions{
+				"foo": &ladon.StringEqualCondition{
+					Equals: "foo",
+				},
+			},
+		},
 	}
 
 	for k, s := range map[string]ladon.Manager{
@@ -50,7 +76,9 @@ func TestFindPoliciesForSubject(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("manager=%s", k), func(t *testing.T) {
 			for _, c := range policies {
-				require.Nil(t, s.Create(c))
+				t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
+					require.NoError(t, s.Create(c))
+				})
 			}
 
 			res, err := s.FindRequestCandidates(&ladon.Request{
@@ -58,8 +86,9 @@ func TestFindPoliciesForSubject(t *testing.T) {
 				Resource: "article",
 				Action:   "create",
 			})
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Len(t, res, 2)
+
 			if policies[0].ID == res[0].GetID() {
 				assertPolicyEqual(t, policies[0], res[0])
 				assertPolicyEqual(t, policies[1], res[1])
@@ -73,34 +102,43 @@ func TestFindPoliciesForSubject(t *testing.T) {
 				Resource: "article",
 				Action:   "create",
 			})
-			require.Nil(t, err)
+
+			require.NoError(t, err)
 			require.Len(t, res, 1)
 			assertPolicyEqual(t, policies[0], res[0])
 		})
 	}
 }
 
-func assertPolicyEqual(t *testing.T, a, b ladon.Policy) {
-	assert.Equal(t, a.GetID(), b.GetID())
-	assert.Equal(t, a.GetDescription(), b.GetDescription())
-	assert.Equal(t, a.GetEffect(), b.GetEffect())
-	assert.True(t, testEq(a.GetActions(), b.GetActions()))
-	assert.True(t, testEq(a.GetResources(), b.GetResources()))
-	assert.True(t, testEq(a.GetSubjects(), b.GetSubjects()))
-	assert.EqualValues(t, a.GetConditions(), b.GetConditions())
+func assertPolicyEqual(t *testing.T, expected, got ladon.Policy) {
+	assert.Equal(t, expected.GetID(), got.GetID())
+	assert.Equal(t, expected.GetDescription(), got.GetDescription())
+	assert.Equal(t, expected.GetEffect(), got.GetEffect())
+
+	// This won't work in the memory manager
+	//assert.NotNil(t, got.GetActions())
+	//assert.NotNil(t, got.GetResources())
+	//assert.NotNil(t, got.GetSubjects())
+
+	assert.NoError(t, testEq(expected.GetActions(), got.GetActions()))
+	assert.NoError(t, testEq(expected.GetResources(), got.GetResources()))
+	assert.NoError(t, testEq(expected.GetSubjects(), got.GetSubjects()))
+	assert.EqualValues(t, expected.GetConditions(), got.GetConditions())
 }
-func testEq(a, b []string) bool {
 
-	if a == nil && b == nil {
-		return true
-	}
+func testEq(a, b []string) error {
 
-	if a == nil || b == nil {
-		return false
-	}
+	// We don't care about nil types
+	//if a == nil && b == nil {
+	//	return true
+	//}
+	//
+	//if a == nil || b == nil {
+	//	return false
+	//}
 
 	if len(a) != len(b) {
-		return false
+		return errors.Errorf("Length not equal: %v (%d) != %v (%d)", a, len(a), b, len(b))
 	}
 
 	var found bool
@@ -115,9 +153,9 @@ func testEq(a, b []string) bool {
 		}
 
 		if !found {
-			return false
+			return errors.Errorf("No match found: %s from %v in %v", i, a, b)
 		}
 	}
 
-	return true
+	return nil
 }

@@ -6,12 +6,10 @@ import (
 	"os"
 	"sync"
 	"testing"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/ory-am/common/integration"
-	"github.com/ory-am/common/pkg"
 	. "github.com/ory-am/ladon"
 	. "github.com/ory-am/ladon/manager/memory"
 	. "github.com/ory-am/ladon/manager/sql"
@@ -37,6 +35,57 @@ var managerPolicies = []*DefaultPolicy{
 		Effect:      AllowAccess,
 		Resources:   []string{"<article|user>"},
 		Actions:     []string{"view"},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{},
+		Actions:     []string{"view"},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{"foo"},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"foo"},
+		Effect:      AllowAccess,
+		Resources:   []string{"foo"},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"foo"},
+		Effect:      AllowAccess,
+		Resources:   []string{},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Effect:      AllowAccess,
 		Conditions:  Conditions{},
 	},
 	{
@@ -98,14 +147,14 @@ var managers = map[string]Manager{}
 
 func TestMain(m *testing.M) {
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(3)
 	connectMySQL(&wg)
 	connectPG(&wg)
 	connectMEM(&wg)
-	//wg.Wait()
+	wg.Wait()
 
 	s := m.Run()
-	//integration.KillAll()
+	integration.KillAll()
 	os.Exit(s)
 }
 
@@ -137,12 +186,12 @@ func connectMySQL(wg *sync.WaitGroup) {
 }
 
 func TestGetErrors(t *testing.T) {
-	for k, s := range managers {
+	for _, s := range managers {
 		_, err := s.Get(uuid.New())
-		assert.EqualError(t, err, pkg.ErrNotFound.Error(), k)
+		assert.Error(t, err)
 
 		_, err = s.Get("asdf")
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	}
 }
 
@@ -151,17 +200,19 @@ func TestCreateGetDelete(t *testing.T) {
 		t.Run(fmt.Sprintf("manager=%s", k), func(t *testing.T) {
 			for i, c := range managerPolicies {
 				t.Run(fmt.Sprintf("case=%d/id=%s", i, c.GetID()), func(t *testing.T) {
-					require.Nil(t, s.Create(c))
-					time.Sleep(time.Millisecond * 100)
+					_, err := s.Get(c.GetID())
+					require.Error(t, err)
+
+					require.NoError(t, s.Create(c))
 
 					get, err := s.Get(c.GetID())
-					require.Nil(t, err)
+					require.NoError(t, err)
 
-					assertPolicyEqual(t, get, c)
+					assertPolicyEqual(t, c, get)
 
-					require.Nil(t, s.Delete(c.GetID()), k)
+					require.NoError(t, s.Delete(c.GetID()))
 					_, err = s.Get(c.GetID())
-					assert.NotNil(t, err)
+					assert.Error(t, err)
 				})
 			}
 		})

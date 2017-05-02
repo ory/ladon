@@ -9,7 +9,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/ory-am/common/compiler"
-	"github.com/ory-am/common/pkg"
 	. "github.com/ory-am/ladon"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
@@ -278,11 +277,11 @@ INNER JOIN
 	ladon_policy_subject_rel as rs
 ON
 	rs.policy = p.id
-INNER JOIN
+LEFT JOIN
 	ladon_policy_action_rel as ra
 ON
 	ra.policy = p.id
-INNER JOIN
+LEFT JOIN
 	ladon_policy_resource_rel as rr
 ON
 	rr.policy = p.id
@@ -292,11 +291,11 @@ INNER JOIN
 	ladon_subject as subject
 ON
 	rs.subject = subject.id
-INNER JOIN
+LEFT JOIN
 	ladon_action as action
 ON
 	ra.action = action.id
-INNER JOIN
+LEFT JOIN
 	ladon_resource as resource
 ON
 	rr.resource = resource.id
@@ -320,8 +319,10 @@ OR
 	}
 
 	rows, err := s.db.Query(query, r.Subject, r.Subject)
-	if err != nil {
-		return nil, err
+	if err == sql.ErrNoRows {
+		return nil, NewErrResourceNotFound(err)
+	} else if err != nil {
+		return nil, errors.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -334,9 +335,14 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 	for rows.Next() {
 		var p DefaultPolicy
 		var conditions []byte
-		var resource, subject, action string
+		var resource, subject, action sql.NullString
+		p.Actions = []string{}
+		p.Subjects = []string{}
+		p.Resources = []string{}
 
-		if err := rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err != nil {
+		if err := rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err == sql.ErrNoRows {
+			return nil, NewErrResourceNotFound(err)
+		} else if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
@@ -346,13 +352,31 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 		}
 
 		if c, ok := policies[p.ID]; ok {
-			policies[p.ID].Actions = append(c.Actions, action)
-			policies[p.ID].Subjects = append(c.Subjects, subject)
-			policies[p.ID].Resources = append(c.Resources, resource)
+			if action.Valid {
+				policies[p.ID].Actions = append(c.Actions, action.String)
+			}
+
+			if subject.Valid {
+				policies[p.ID].Subjects = append(c.Subjects, subject.String)
+			}
+
+			if resource.Valid {
+				policies[p.ID].Resources = append(c.Resources, resource.String)
+			}
 		} else {
-			p.Actions = []string{action}
-			p.Resources = []string{resource}
-			p.Subjects = []string{subject}
+			if action.Valid {
+				p.Actions = []string{action.String}
+			}
+
+			if subject.Valid {
+				p.Subjects = []string{subject.String}
+			}
+
+			if resource.Valid {
+				p.Resources = []string{resource.String}
+			}
+
+			fmt.Printf("Found policy: %v+\n", p)
 			policies[p.ID] = &p
 		}
 	}
@@ -374,32 +398,32 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 func (s *SQLManager) Get(id string) (Policy, error) {
 	query := s.db.Rebind(`SELECT
 	p.id, p.effect, p.conditions, p.description,
-	subject.template, resource.template, action.template
+	subject.template as subject, resource.template as resource, action.template as action
 FROM
 	ladon_policy as p
 
-INNER JOIN
+LEFT JOIN
 	ladon_policy_subject_rel as rs
 ON
 	rs.policy = p.id
-INNER JOIN
+LEFT JOIN
 	ladon_policy_action_rel as ra
 ON
 	ra.policy = p.id
-INNER JOIN
+LEFT JOIN
 	ladon_policy_resource_rel as rr
 ON
 	rr.policy = p.id
 
-INNER JOIN
+LEFT JOIN
 	ladon_subject as subject
 ON
 	rs.subject = subject.id
-INNER JOIN
+LEFT JOIN
 	ladon_action as action
 ON
 	ra.action = action.id
-INNER JOIN
+LEFT JOIN
 	ladon_resource as resource
 ON
 	rr.resource = resource.id
@@ -409,16 +433,18 @@ WHERE
 `)
 
 	rows, err := s.db.Query(query, id)
-	if err != nil {
-		return nil, err
+	if err == sql.ErrNoRows {
+		return nil, NewErrResourceNotFound(err)
+	} else if err != nil {
+		return nil, errors.WithStack(err)
 	}
 	defer rows.Close()
 
 	policies, err := scanRows(rows)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else if len(policies) == 0 {
-		return nil, errors.WithStack(pkg.ErrNotFound)
+		return nil, NewErrResourceNotFound(sql.ErrNoRows)
 	}
 
 	return policies[0], nil
