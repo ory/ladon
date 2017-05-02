@@ -7,8 +7,8 @@
 [![Become a patron!](https://img.shields.io/badge/support%20us-on%20patreon-green.svg)](https://patreon.com/user?u=4298803)
 
 [![Build Status](https://travis-ci.org/ory/ladon.svg?branch=master)](https://travis-ci.org/ory/ladon)
-[![Coverage Status](https://coveralls.io/repos/ory-am/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory-am/ladon?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
+[![Coverage Status](https://coveralls.io/repos/ory/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory/ladon?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ory/ladon)](https://goreportcard.com/report/github.com/ory/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
@@ -59,7 +59,7 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 ## Installation
 
 ```
-go get github.com/ory-am/ladon
+go get github.com/ory/ladon
 ```
 
 We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
@@ -184,7 +184,7 @@ are abstracted as the `ladon.Policy` interface, and Ladon comes with a standard 
 which is `ladon.DefaultPolicy`. Creating such a policy could look like:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 var pol = &ladon.DefaultPolicy{
 	// A required unique identifier. Used primarily for database retrieval.
@@ -449,7 +449,7 @@ var err = warden.IsAllowed(&ladon.Request{
 You can add custom conditions by appending it to `ladon.ConditionFactories`:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -474,8 +474,8 @@ Let's take a look how to instantiate those:
 
 ```go
 import (
-	"github.com/ory-am/ladon"
-	manager "github.com/ory-am/ladon/manager/memory"
+	"github.com/ory/ladon"
+	manager "github.com/ory/ladon/manager/memory"
 )
 
 
@@ -492,8 +492,8 @@ func main() {
 **SQL** (officially supported)
 
 ```go
-import "github.com/ory-am/ladon"
-import manager "github.com/ory-am/ladon/manager/sql"
+import "github.com/ory/ladon"
+import manager "github.com/ory/ladon/manager/sql"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -522,7 +522,7 @@ Now that we have defined our policies, we can use the warden to check if a reque
 will return `nil` if the access request can be granted and an error otherwise.
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -585,5 +585,5 @@ Ladon does not use reflection for matching conditions to their appropriate struc
 
 **Create mocks**
 ```sh
-mockgen -package ladon_test -destination manager_mock_test.go github.com/ory-am/ladon Manager
+mockgen -package ladon_test -destination manager_mock_test.go github.com/ory/ladon Manager
 ```

@@ -13,7 +13,7 @@ The location of this library changed from `github.com/ory-am/ladon` to `github.c
 ### Deprecating Redis and RethinkDB
 
 Redis and RethinkDB are no longer maintained by ORY and were moved to
-[ory-am/ladon-community](https://github.com/ory-am/ladon-community). The adapters had various
+[ory/ladon-community](https://github.com/ory/ladon-community). The adapters had various
 bugs and performance issues which is why they were removed from the official repository.
 
 ### New packages

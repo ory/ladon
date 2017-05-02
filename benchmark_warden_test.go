@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ory-am/ladon"
-	"github.com/ory-am/ladon/manager/memory"
+	"github.com/ory/ladon"
+	"github.com/ory/ladon/manager/memory"
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 )

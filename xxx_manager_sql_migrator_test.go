@@ -1,7 +1,7 @@
 package ladon_test
 
 import (
-	"github.com/ory-am/ladon"
+	"github.com/ory/ladon"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"

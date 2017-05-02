@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory-am/common/compiler"
-	. "github.com/ory-am/ladon"
+	"github.com/ory/common/compiler"
+	. "github.com/ory/ladon"
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
 )
