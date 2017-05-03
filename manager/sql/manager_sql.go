@@ -231,7 +231,6 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 
 			switch s.db.DriverName() {
 			case "postgres", "pgx":
-				//fmt.Printf("INSERT INTO ladon_%s (id, template, compiled) VALUES (\"%s\", \"%s\", \"%s\") ON CONFLICT DO NOTHING;\n", v.t, id, template, compiled.String())
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
@@ -239,7 +238,6 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 					return errors.WithStack(err)
 				}
 
-				//fmt.Printf("INSERT INTO ladon_policy_%s_rel (policy, %s) VALUES (\"%s\", \"%s\") ON CONFLICT DO NOTHING;\n", v.t, v.t, policy.GetID(), id)
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?) ON CONFLICT DO NOTHING", v.t, v.t)), policy.GetID(), id); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
@@ -248,7 +246,6 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 				}
 				break
 			case "mysql":
-				//fmt.Printf("INSERT IGNORE INTO `ladon_%s` (`id`, `template`, `compiled`) VALUES (\"%s\", \"%s\", \"%s\");\n", v.t, id, template, compiled.String())
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?)", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
@@ -256,7 +253,6 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 					return errors.WithStack(err)
 				}
 
-				//fmt.Printf("INSERT IGNORE INTO ladon_policy_%s_rel (policy, %s) VALUES (\"%s\", \"%s\");\n", v.t, v.t, policy.GetID(), id)
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?)", v.t, v.t)), policy.GetID(), id); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
@@ -290,32 +286,13 @@ func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
 FROM
 	ladon_policy as p
 
-INNER JOIN
-	ladon_policy_subject_rel as rs
-ON
-	rs.policy = p.id
-LEFT JOIN
-	ladon_policy_action_rel as ra
-ON
-	ra.policy = p.id
-LEFT JOIN
-	ladon_policy_resource_rel as rr
-ON
-	rr.policy = p.id
+INNER JOIN ladon_policy_subject_rel as rs ON rs.policy = p.id
+LEFT JOIN ladon_policy_action_rel as ra ON ra.policy = p.id
+LEFT JOIN ladon_policy_resource_rel as rr ON rr.policy = p.id
 
-
-INNER JOIN
-	ladon_subject as subject
-ON
-	rs.subject = subject.id
-LEFT JOIN
-	ladon_action as action
-ON
-	ra.action = action.id
-LEFT JOIN
-	ladon_resource as resource
-ON
-	rr.resource = resource.id
+INNER JOIN ladon_subject as subject ON rs.subject = subject.id
+LEFT JOIN ladon_action as action ON ra.action = action.id
+LEFT JOIN ladon_resource as resource ON rr.resource = resource.id
 
 WHERE`
 	switch s.db.DriverName() {
@@ -410,43 +387,38 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 	return result, nil
 }
 
-// Get retrieves a policy.
-func (s *SQLManager) Get(id string) (Policy, error) {
-	query := s.db.Rebind(`SELECT
+var getQuery = `SELECT
 	p.id, p.effect, p.conditions, p.description,
 	subject.template as subject, resource.template as resource, action.template as action
 FROM
 	ladon_policy as p
 
-LEFT JOIN
-	ladon_policy_subject_rel as rs
-ON
-	rs.policy = p.id
-LEFT JOIN
-	ladon_policy_action_rel as ra
-ON
-	ra.policy = p.id
-LEFT JOIN
-	ladon_policy_resource_rel as rr
-ON
-	rr.policy = p.id
+LEFT JOIN ladon_policy_subject_rel as rs ON rs.policy = p.id
+LEFT JOIN ladon_policy_action_rel as ra ON ra.policy = p.id
+LEFT JOIN ladon_policy_resource_rel as rr ON rr.policy = p.id
 
-LEFT JOIN
-	ladon_subject as subject
-ON
-	rs.subject = subject.id
-LEFT JOIN
-	ladon_action as action
-ON
-	ra.action = action.id
-LEFT JOIN
-	ladon_resource as resource
-ON
-	rr.resource = resource.id
+LEFT JOIN ladon_subject as subject ON rs.subject = subject.id
+LEFT JOIN ladon_action as action ON ra.action = action.id
+LEFT JOIN ladon_resource as resource ON rr.resource = resource.id
 
-WHERE
-	p.id=?
-`)
+`
+
+// GetAll returns all policies
+func (s *SQLManager) GetAll(limit, offset int64) (Policies, error) {
+	query := s.db.Rebind(getQuery + "LIMIT ? OFFSET ?")
+
+	rows, err := s.db.Query(query, limit, offset)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	defer rows.Close()
+
+	return scanRows(rows)
+}
+
+// Get retrieves a policy.
+func (s *SQLManager) Get(id string) (Policy, error) {
+	query := s.db.Rebind(getQuery + "WHERE p.id=?")
 
 	rows, err := s.db.Query(query, id)
 	if err == sql.ErrNoRows {

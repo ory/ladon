@@ -70,3 +70,14 @@ func (_m *MockManager) Get(_param0 string) (ladon.Policy, error) {
 func (_mr *_MockManagerRecorder) Get(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
 }
+
+func (_m *MockManager) GetAll(_param0 int64, _param1 int64) (ladon.Policies, error) {
+	ret := _m.ctrl.Call(_m, "GetAll", _param0, _param1)
+	ret0, _ := ret[0].(ladon.Policies)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockManagerRecorder) GetAll(arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetAll", arg0, arg1)
+}

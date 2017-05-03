@@ -20,6 +20,23 @@ func NewMemoryManager() *MemoryManager {
 	}
 }
 
+// GetAll returns all policies
+func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
+	ps := make(Policies, len(m.Policies))
+	i := 0
+	for _, p := range m.Policies {
+		ps[i] = p
+		i++
+	}
+
+	if offset + limit > int64(len(m.Policies)) {
+		limit = int64(len(m.Policies))
+		offset = 0
+	}
+
+	return ps[offset:limit], nil
+}
+
 // Create a new pollicy to MemoryManager
 func (m *MemoryManager) Create(policy Policy) error {
 	m.Lock()

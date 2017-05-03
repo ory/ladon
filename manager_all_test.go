@@ -208,19 +208,44 @@ func TestCreateGetDelete(t *testing.T) {
 	for k, s := range managers {
 		t.Run(fmt.Sprintf("manager=%s", k), func(t *testing.T) {
 			for i, c := range managerPolicies {
-				t.Run(fmt.Sprintf("case=%d/id=%s", i, c.GetID()), func(t *testing.T) {
+				t.Run(fmt.Sprintf("case=%d/id=%s/type=create", i, c.GetID()), func(t *testing.T) {
 					_, err := s.Get(c.GetID())
 					require.Error(t, err)
-
 					require.NoError(t, s.Create(c))
+				})
 
+				t.Run(fmt.Sprintf("case=%d/id=%s/type=query", i, c.GetID()), func(t *testing.T) {
 					get, err := s.Get(c.GetID())
 					require.NoError(t, err)
 
 					assertPolicyEqual(t, c, get)
+				})
+			}
 
-					require.NoError(t, s.Delete(c.GetID()))
-					_, err = s.Get(c.GetID())
+			t.Run("type=query-all", func(t *testing.T) {
+				pols, err := s.GetAll(100, 0)
+				require.NoError(t, err)
+				assert.Len(t, pols, len(managerPolicies))
+
+				found := map[string]int{}
+				for _, got := range pols {
+					for _, expect := range managerPolicies {
+						if got.GetID() == expect.GetID() {
+							found[got.GetID()]++
+						}
+					}
+				}
+
+				for _, f := range found {
+					assert.Equal(t, 1, f)
+				}
+			})
+
+			for i, c := range managerPolicies {
+				t.Run(fmt.Sprintf("case=%d/id=%s/type=delete", i, c.GetID()), func(t *testing.T) {
+					assert.NoError(t, s.Delete(c.ID))
+
+					_, err := s.Get(c.GetID())
 					assert.Error(t, err)
 				})
 			}
