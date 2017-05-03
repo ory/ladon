@@ -1,5 +1,5 @@
-hash: 7c325176797486987b7692b14fd0bbfd24ae117b969157e943f44681ac9891d7
-updated: 2017-05-02T14:26:07.5353293+02:00
+hash: b5611fae89e4bbfa1d5e532daff04ba990d66fa67e7cf813a2048e1b302981da
+updated: 2017-05-03T15:35:29.9729739+02:00
 imports:
 - name: github.com/Azure/go-ansiterm
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
@@ -92,14 +92,14 @@ imports:
   subpackages:
   - libcontainer/system
   - libcontainer/user
-- name: github.com/ory-am/dockertest
-  version: 9d0647ae761f96a6738c5afb49688d22979b21ff
 - name: github.com/ory-am/common
   version: b6357395e30805e2ad1f6d8fb759fa2b7146d8da
   subpackages:
   - compiler
   - integration
   - pkg
+- name: github.com/ory-am/dockertest
+  version: 9d0647ae761f96a6738c5afb49688d22979b21ff
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/pmezard/go-difflib
