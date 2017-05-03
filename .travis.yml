@@ -8,7 +8,7 @@ env:
 
 language: go
 
-go_import_path: github.com/ory-am/ladon
+go_import_path: github.com/ory/ladon
 
 go:
   - tip

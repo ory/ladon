@@ -12,6 +12,11 @@ type Manager interface {
 	// Delete removes a policy.
 	Delete(id string) error
 
-	// Finds all policies associated with the subject.
-	FindPoliciesForSubject(subject string) (Policies, error)
+	// GetAll retrieves all policies.
+	GetAll(limit, offset int64) (Policies, error)
+
+	// FindRequestCandidates returns candidates that could match the request object. It either returns
+	// a set that exactly matches the request, or a superset of it. If an error occurs, it returns nil and
+	// the error.
+	FindRequestCandidates(r *Request) (Policies, error)
 }

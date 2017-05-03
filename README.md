@@ -7,18 +7,18 @@
 [![Become a patron!](https://img.shields.io/badge/support%20us-on%20patreon-green.svg)](https://patreon.com/user?u=4298803)
 
 [![Build Status](https://travis-ci.org/ory/ladon.svg?branch=master)](https://travis-ci.org/ory/ladon)
-[![Coverage Status](https://coveralls.io/repos/ory-am/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory-am/ladon?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ory-am/ladon)](https://goreportcard.com/report/github.com/ory-am/ladon)
+[![Coverage Status](https://coveralls.io/repos/ory/ladon/badge.svg?branch=master&service=github)](https://coveralls.io/github/ory/ladon?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ory/ladon)](https://goreportcard.com/report/github.com/ory/ladon)
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
 Ladon is a library written in [Go](https://golang.org) for access control policies, similar to [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control)
-or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list). 
+or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list).
 In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control)
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 
-Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL), Redis and RethinkDB (community supported).
+Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL) and in-memory.
 
 ---
 
@@ -59,7 +59,7 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 ## Installation
 
 ```
-go get github.com/ory-am/ladon
+go get github.com/ory/ladon
 ```
 
 We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
@@ -184,7 +184,7 @@ are abstracted as the `ladon.Policy` interface, and Ladon comes with a standard 
 which is `ladon.DefaultPolicy`. Creating such a policy could look like:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 var pol = &ladon.DefaultPolicy{
 	// A required unique identifier. Used primarily for database retrieval.
@@ -449,7 +449,7 @@ var err = warden.IsAllowed(&ladon.Request{
 You can add custom conditions by appending it to `ladon.ConditionFactories`:
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -465,20 +465,23 @@ func main() {
 #### Persistence
 
 Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
-this purpose with default implementations for In-Memory, RethinkDB, SQL (PostgreSQL, MySQL) and Redis. Let's take a look how to
-instantiate those.
+this purpose with default implementations for In-Memory and SQL (PostgreSQL, MySQL). There are also adapters available
+written by the community [for Redis and RethinkDB](https://github.com/ory/ladon-community)
 
-**In-Memory**
+Let's take a look how to instantiate those:
+
+**In-Memory** (officially supported)
 
 ```go
 import (
-	"github.com/ory-am/ladon"
+	"github.com/ory/ladon"
+	manager "github.com/ory/ladon/manager/memory"
 )
 
 
 func main() {
 	warden := &ladon.Ladon{
-		Manager: ladon.NewMemoryManager(),
+		Manager: manager.NewMemoryManager(),
 	}
 	err := warden.Manager.Create(pol)
 
@@ -486,10 +489,11 @@ func main() {
 }
 ```
 
-**SQL**
+**SQL** (officially supported)
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
+import manager "github.com/ory/ladon/manager/sql"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
 
@@ -497,42 +501,17 @@ func main() {
     db, err = sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
     // Or, if using postgres:
     //  import _ "github.com/lib/pq"
-    //  
+    //
     //  db, err = sql.Open("postgres", "postgres://foo:bar@localhost/ladon")
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
     warden := ladon.Ladon{
-        Manager: ladon.NewSQLManager(db, nil),
+        Manager: manager.NewSQLManager(db, nil),
     }
 
     // ...
-}
-```
-
-**Redis**
-
-```go
-import (
-	"github.com/ory-am/ladon"
-	"gopkg.in/redis.v5"
-)
-
-func main () {
-	db = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-	})
-
-	if err := db.Ping().Err(); err != nil {
-		log.Fatalf("Could not connect to database: %s". err)
-	}
-
-	warden := ladon.Ladon{
-		Manager: ladon.NewRedisManager(db, "redis_key_prefix:")
-	}
-
-	// ...
 }
 ```
 
@@ -543,7 +522,7 @@ Now that we have defined our policies, we can use the warden to check if a reque
 will return `nil` if the access request can be granted and an error otherwise.
 
 ```go
-import "github.com/ory-am/ladon"
+import "github.com/ory/ladon"
 
 func main() {
     // ...
@@ -563,6 +542,34 @@ func main() {
 }
 ```
 
+## Limitations
+
+Ladon's limitations are listed here.
+
+### Regular expressions
+
+Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not
+leverage indexes when parsing regular expressions. Thus, there is considerable overhead when using regular
+expressions.
+
+We have implemented various strategies for reducing policy matching time:
+
+1. An LRU cache is used for caching frequently compiled regular expressions. This reduces cpu complexity
+significantly for memory manager implementations.
+2. The SQL schema is 3NF normalized.
+3. Policies, subjects and actions are stored uniquely, reducing the total number of rows.
+4. Only one query per look up is executed.
+5. If no regular expression is used, a simple equal match is done in SQL back-ends.
+
+You will get the best performance with the in-memory manager. The SQL adapters perform about
+1000:1 compared to the in-memory solution. Please note that these
+tests where in laboratory environments with Docker, without an SSD, and single-threaded. You might get better
+results on your system. We are thinking about introducing It would be possible a simple cache strategy such as
+LRU with a maximum age to further reduce runtime complexity.
+
+We are also considering to offer different matching strategies (e.g. wildcard match) in the future, which will perform better
+with SQL databases. If you have ideas or suggestions, leave us an issue.
+
 ## Examples
 
 Check out [ladon_test.go](ladon_test.go) which includes a couple of policies and tests cases. You can run the code with `go test -run=TestLadon -v .`
@@ -578,5 +585,5 @@ Ladon does not use reflection for matching conditions to their appropriate struc
 
 **Create mocks**
 ```sh
-mockgen -package ladon_test -destination manager_mock_test.go github.com/ory-am/ladon Manager
+mockgen -package ladon_test -destination manager_mock_test.go github.com/ory/ladon Manager
 ```
