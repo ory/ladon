@@ -3,6 +3,8 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
+- [0.7.0](#070)
 - [0.6.0](#060)
   - [New location](#new-location)
   - [Deprecating Redis and RethinkDB](#deprecating-redis-and-rethinkdb)
