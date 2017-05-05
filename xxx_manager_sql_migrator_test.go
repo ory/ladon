@@ -13,7 +13,7 @@ func TestSQLManagerMigrateFromMajor0Minor6ToMajor0Minor7(t *testing.T) {
 	//  var db = getSqlDatabaseFromSomewhere()
 	//  s := NewSQLManager(db, nil)
 	//
-	//  if err := s.CreateSchemas(); err != nil {
+	//  if _, err := s.CreateSchemas(); err != nil {
 	//  	log.Fatalf("Could not create mysql schema: %v", err)
 	//  }
 	//

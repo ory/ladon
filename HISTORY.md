@@ -12,6 +12,10 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## 0.7.0
+
+Version 0.7.0 includes a minor BC break in the SQLManager. The method signature `CreateSchemas() ( error)`
+was changed to `CreateSchemas() (int, error)` where int now returns the number of migrations applied.
 
 ## 0.6.0
 
