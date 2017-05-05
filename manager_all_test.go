@@ -168,7 +168,7 @@ func connectPG(wg *sync.WaitGroup) {
 	defer wg.Done()
 	var db = integration.ConnectToPostgres("ladon")
 	s := NewSQLManager(db, nil)
-	if _, err := s.CreateSchemas(); err != nil {
+	if _, err := s.CreateSchemas("",""); err != nil {
 		log.Fatalf("Could not create postgres schema: %v", err)
 	}
 
@@ -183,7 +183,7 @@ func connectMySQL(wg *sync.WaitGroup) {
 	defer wg.Done()
 	var db = integration.ConnectToMySQL()
 	s := NewSQLManager(db, nil)
-	if _, err := s.CreateSchemas(); err != nil {
+	if _, err := s.CreateSchemas("",""); err != nil {
 		log.Fatalf("Could not create mysql schema: %v", err)
 	}
 

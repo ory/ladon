@@ -14,8 +14,13 @@
 
 ## 0.7.0
 
-Version 0.7.0 includes a minor BC break in the SQLManager. The method signature `CreateSchemas() ( error)`
-was changed to `CreateSchemas() (int, error)` where int now returns the number of migrations applied.
+Version 0.7.0 includes two minor BC breaks in the SQLManager. The method signature `CreateSchemas() ( error)`
+was changed to `CreateSchemas(schema, table string) (int, error)` where int now returns the number of migrations applied.
+Arguments `schema` and `table` are passed to the migration script, defining which schema and table name should be used
+to store and look up migration plans.
+
+To keep the default values from the migrate package, use `CreateSchemas("", "")`. It is safe to reapply all migration
+commands with this version - implying that you can choose an arbitrary name and it won't break your schema.
 
 ## 0.6.0
 

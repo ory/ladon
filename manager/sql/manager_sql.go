@@ -152,7 +152,7 @@ func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
 }
 
 // CreateSchemas creates ladon_policy tables
-func (s *SQLManager) CreateSchemas() (int, error) {
+func (s *SQLManager) CreateSchemas(schema, table string) (int, error) {
 	var source *migrate.MemoryMigrationSource
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
@@ -163,6 +163,8 @@ func (s *SQLManager) CreateSchemas() (int, error) {
 		return 0, errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 	}
 
+	migrate.SetSchema(schema)
+	migrate.SetTable(table)
 	n, err := migrate.Exec(s.db.DB, s.db.DriverName(), source, migrate.Up)
 	if err != nil {
 		return 0, errors.Wrapf(err, "Could not migrate sql schema, applied %d migrations", n)
