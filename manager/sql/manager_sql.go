@@ -191,7 +191,7 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
-		if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+		if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions, policy.GetID()); err != nil {
 			if err := tx.Rollback(); err != nil {
 				return errors.WithStack(err)
 			}
@@ -233,14 +233,14 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 
 			switch s.db.DriverName() {
 			case "postgres", "pgx":
-				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_%s (id, template, compiled, has_regex) SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_%s WHERE id = ?)", v.t, v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1, id); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
 					}
 					return errors.WithStack(err)
 				}
 
-				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?) ON CONFLICT DO NOTHING", v.t, v.t)), policy.GetID(), id); err != nil {
+				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_policy_%s_rel (policy, %s) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_%s_rel WHERE policy = ? AND %s = ?)", v.t, v.t, v.t, v.t)), policy.GetID(), id, policy.GetID(), id); err != nil {
 					if err := tx.Rollback(); err != nil {
 						return errors.WithStack(err)
 					}
