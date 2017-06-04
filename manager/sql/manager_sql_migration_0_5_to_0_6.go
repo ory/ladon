@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-
 	"log"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory-am/common/compiler"
-	"github.com/ory-am/common/pkg"
+	"github.com/ory/ladon/compiler"
 	"github.com/ory/ladon"
 	. "github.com/ory/ladon"
 	"github.com/pkg/errors"
@@ -86,7 +84,7 @@ func getLinkedSQL(db *sqlx.DB, table, policy string) ([]string, error) {
 	urns := []string{}
 	rows, err := db.Query(db.Rebind(fmt.Sprintf("SELECT template FROM %s WHERE policy=?", table)), policy)
 	if err == sql.ErrNoRows {
-		return nil, errors.Wrap(pkg.ErrNotFound, "")
+		return nil, errors.Wrap(ladon.ErrNotFound, "")
 	} else if err != nil {
 		return nil, errors.WithStack(err)
 	}
