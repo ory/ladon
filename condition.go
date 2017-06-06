@@ -55,8 +55,10 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 	}
 
 	for k, jc := range jcs {
+		var found bool
 		for name, c := range ConditionFactories {
 			if name == jc.Type {
+				found = true
 				dc = c()
 
 				if len(jc.Options) == 0 {
@@ -71,6 +73,10 @@ func (cs Conditions) UnmarshalJSON(data []byte) error {
 				cs[k] = dc
 				break
 			}
+		}
+
+		if !found {
+			return errors.Errorf("Could not find condition type %s", jc.Type)
 		}
 	}
 
