@@ -54,3 +54,12 @@ func TestMarshalUnmarshal(t *testing.T) {
 	assert.IsType(t, &EqualsSubjectCondition{}, cs["owner"])
 	assert.IsType(t, &CIDRCondition{}, cs["clientIP"])
 }
+
+func TestUnmarshalFails(t *testing.T) {
+	cs := Conditions{}
+	require.NotNil(t, json.Unmarshal([]byte(`{
+	"somefield": {
+		"type": "DoesntExist"
+	}
+}`), &cs))
+}
