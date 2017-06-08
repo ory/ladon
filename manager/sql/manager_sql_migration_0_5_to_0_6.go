@@ -7,9 +7,9 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory/ladon/compiler"
 	"github.com/ory/ladon"
 	. "github.com/ory/ladon"
+	"github.com/ory/ladon/compiler"
 	"github.com/pkg/errors"
 )
 
@@ -70,7 +70,7 @@ func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Migrate() error {
 	for _, p := range pols {
 		log.Printf("[DEBUG] Inserting policy %s", p.GetID())
 		if err := s.SQLManager.Create(p); err != nil {
-			log.Printf("[DEBUG] Unable to insert policy %d: %s", p.GetID(), err)
+			log.Printf("[DEBUG] Unable to insert policy %s: %s", p.GetID(), err)
 			return errors.WithStack(err)
 		}
 	}
