@@ -18,7 +18,7 @@ In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBA
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 
-Ladon ships with storage adapters for SQL (officially supported: MySQL, PostgreSQL) and in-memory.
+Ladon ships with storage adapters for SQL (officially supported: MySQL 5.5+, PostgreSQL 9.2+) and in-memory.
 
 ---
 
@@ -26,7 +26,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
 
 * **[Hydra](https://github.com/ory/hydra)**, a security-first open source OAuth2 and OpenID Connect server for new and existing infrastructures that uses Ladon for access control.
 * **[ORY Editor](https://github.com/ory/editor)**, an extensible, modern WYSI editor for the web written in React.
-* **[Fosite](https://github.com/ory/fosite)**, an extensible security first OAuth 2.0 and OpenID Connect SDK for Go. 
+* **[Fosite](https://github.com/ory/fosite)**, an extensible security first OAuth 2.0 and OpenID Connect SDK for Go.
 * **[Dockertest](https://github.com/ory/dockertest)**: Write better integration tests with dockertest!
 
 ---

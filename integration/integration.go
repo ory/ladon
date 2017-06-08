@@ -32,7 +32,7 @@ func ConnectToMySQL() *sqlx.DB {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	resource, err := pool.Run("mysql", "5.7", []string{"MYSQL_ROOT_PASSWORD=secret"})
+	resource, err := pool.Run("mysql", "5.6", []string{"MYSQL_ROOT_PASSWORD=secret"})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
@@ -60,7 +60,7 @@ func ConnectToPostgres(database string) *sqlx.DB {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	resource, err := pool.Run("postgres", "9.6", []string{"POSTGRES_PASSWORD=secret", "POSTGRES_DB=" + database})
+	resource, err := pool.Run("postgres", "9.2", []string{"POSTGRES_PASSWORD=secret", "POSTGRES_DB=" + database})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
