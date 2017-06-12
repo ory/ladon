@@ -35,8 +35,18 @@ func (_m *MockManager) Create(_param0 ladon.Policy) error {
 	return ret0
 }
 
+func (_m *MockManager) Update(_param0 ladon.Policy) error {
+	ret := _m.ctrl.Call(_m, "Update", _param0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
 func (_mr *_MockManagerRecorder) Create(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Create", arg0)
+}
+
+func (_mr *_MockManagerRecorder) Update(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Update", arg0)
 }
 
 func (_m *MockManager) Delete(_param0 string) error {
