@@ -29,7 +29,7 @@ func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 		i++
 	}
 
-	if offset + limit > int64(len(m.Policies)) {
+	if offset+limit > int64(len(m.Policies)) {
 		limit = int64(len(m.Policies))
 		offset = 0
 	}
@@ -60,6 +60,14 @@ func (m *MemoryManager) Get(id string) (Policy, error) {
 	}
 
 	return p, nil
+}
+
+// Update updates an existing policy.
+func (m *MemoryManager) Update(policy Policy) error {
+	m.Lock()
+	defer m.Unlock()
+	m.Policies[policy.GetID()] = policy
+	return nil
 }
 
 // Delete removes a policy.
