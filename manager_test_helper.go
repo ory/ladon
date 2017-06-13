@@ -12,6 +12,131 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var TestManagerPolicies = []*DefaultPolicy{
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"user", "anonymous"},
+		Effect:      AllowAccess,
+		Resources:   []string{"article", "user"},
+		Actions:     []string{"create", "update"},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{"<article|user>"},
+		Actions:     []string{"view"},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{},
+		Actions:     []string{"view"},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{},
+		Effect:      AllowAccess,
+		Resources:   []string{"foo"},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"foo"},
+		Effect:      AllowAccess,
+		Resources:   []string{"foo"},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"foo"},
+		Effect:      AllowAccess,
+		Resources:   []string{},
+		Actions:     []string{},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Effect:      AllowAccess,
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<peter|max>"},
+		Effect:      DenyAccess,
+		Resources:   []string{"article", "user"},
+		Actions:     []string{"view"},
+		Conditions: Conditions{
+			"owner": &EqualsSubjectCondition{},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<user|max|anonymous>", "peter"},
+		Effect:      DenyAccess,
+		Resources:   []string{".*"},
+		Actions:     []string{"disable"},
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
+				CIDR: "1234",
+			},
+			"owner": &EqualsSubjectCondition{},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<.*>"},
+		Effect:      AllowAccess,
+		Resources:   []string{"<article|user>"},
+		Actions:     []string{"view"},
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
+				CIDR: "1234",
+			},
+			"owner": &EqualsSubjectCondition{},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"<us[er]+>"},
+		Effect:      AllowAccess,
+		Resources:   []string{"<article|user>"},
+		Actions:     []string{"view"},
+		Conditions: Conditions{
+			"ip": &CIDRCondition{
+				CIDR: "1234",
+			},
+			"owner": &EqualsSubjectCondition{},
+		},
+	},
+}
+
 var testPolicies = []*DefaultPolicy{
 	{
 		ID:          uuid.New(),
@@ -149,4 +274,63 @@ func testEq(a, b []string) error {
 	}
 
 	return nil
+}
+
+func TestHelperGetErrors(s Manager) func (t *testing.T) {
+	return func (t *testing.T) {
+		_, err := s.Get(uuid.New())
+		assert.Error(t, err)
+
+		_, err = s.Get("asdf")
+		assert.Error(t, err)
+	}
+}
+
+func TestHelperCreateGetDelete(s Manager) func (t *testing.T) {
+	return func (t *testing.T) {
+
+		for i, c := range TestManagerPolicies {
+			t.Run(fmt.Sprintf("case=%d/id=%s/type=create", i, c.GetID()), func(t *testing.T) {
+				_, err := s.Get(c.GetID())
+				require.Error(t, err)
+				require.NoError(t, s.Create(c))
+			})
+
+			t.Run(fmt.Sprintf("case=%d/id=%s/type=query", i, c.GetID()), func(t *testing.T) {
+				get, err := s.Get(c.GetID())
+				require.NoError(t, err)
+
+				AssertPolicyEqual(t, c, get)
+			})
+		}
+
+		t.Run("type=query-all", func(t *testing.T) {
+			pols, err := s.GetAll(100, 0)
+			require.NoError(t, err)
+			assert.Len(t, pols, len(TestManagerPolicies))
+
+			found := map[string]int{}
+			for _, got := range pols {
+				for _, expect := range TestManagerPolicies {
+					if got.GetID() == expect.GetID() {
+						found[got.GetID()]++
+					}
+				}
+			}
+
+			for _, f := range found {
+				assert.Equal(t, 1, f)
+			}
+		})
+
+		for i, c := range TestManagerPolicies {
+			t.Run(fmt.Sprintf("case=%d/id=%s/type=delete", i, c.GetID()), func(t *testing.T) {
+				assert.NoError(t, s.Delete(c.ID))
+
+				_, err := s.Get(c.GetID())
+				assert.Error(t, err)
+			})
+		}
+
+	}
 }
