@@ -218,7 +218,7 @@ func TestCreateGetDelete(t *testing.T) {
 					get, err := s.Get(c.GetID())
 					require.NoError(t, err)
 
-					assertPolicyEqual(t, c, get)
+					AssertPolicyEqual(t, c, get)
 				})
 			}
 
