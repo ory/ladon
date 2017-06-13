@@ -30,7 +30,7 @@ func TestSQLManagerMigrateFromMajor0Minor6ToMajor0Minor7(t *testing.T) {
 
 			// This create part is only necessary to populate the data store with some values. If you
 			// migrate you won't need this
-			for _, c := range managerPolicies {
+			for _, c := range ladon.TestManagerPolicies {
 				t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
 					require.NoError(t, s.Create(c))
 				})
@@ -38,7 +38,7 @@ func TestSQLManagerMigrateFromMajor0Minor6ToMajor0Minor7(t *testing.T) {
 
 			require.NoError(t, s.Migrate())
 
-			for _, c := range managerPolicies {
+			for _, c := range ladon.TestManagerPolicies {
 				t.Run(fmt.Sprintf("fetch=%s", k), func(t *testing.T) {
 					get, err := s.GetManager().Get(c.GetID())
 					require.NoError(t, err)
