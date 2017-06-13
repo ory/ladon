@@ -43,7 +43,7 @@ func TestSQLManagerMigrateFromMajor0Minor6ToMajor0Minor7(t *testing.T) {
 					get, err := s.GetManager().Get(c.GetID())
 					require.NoError(t, err)
 
-					assertPolicyEqual(t, c, get)
+					ladon.AssertPolicyEqual(t, c, get)
 
 					require.NoError(t, s.GetManager().Delete(c.GetID()))
 				})
