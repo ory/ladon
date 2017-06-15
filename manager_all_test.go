@@ -7,8 +7,6 @@ import (
 	"sync"
 	"testing"
 
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
 	"github.com/ory/ladon/integration"
 	. "github.com/ory/ladon"
 	. "github.com/ory/ladon/manager/memory"
