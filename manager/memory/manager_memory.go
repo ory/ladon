@@ -13,14 +13,22 @@ type MemoryManager struct {
 	sync.RWMutex
 }
 
-// NewMemoryManager constructs and initializes new MemoryManager with no policies
+// NewMemoryManager constructs and initializes new MemoryManager with no policies.
 func NewMemoryManager() *MemoryManager {
 	return &MemoryManager{
 		Policies: map[string]Policy{},
 	}
 }
 
-// GetAll returns all policies
+// Update updates an existing policy.
+func (m *MemoryManager) Update(policy Policy) error {
+	m.Lock()
+	defer m.Unlock()
+	m.Policies[policy.GetID()] = policy
+	return nil
+}
+
+// GetAll returns all policies.
 func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 	ps := make(Policies, len(m.Policies))
 	i := 0
@@ -29,7 +37,7 @@ func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 		i++
 	}
 
-	if offset + limit > int64(len(m.Policies)) {
+	if offset+limit > int64(len(m.Policies)) {
 		limit = int64(len(m.Policies))
 		offset = 0
 	}
@@ -37,7 +45,7 @@ func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 	return ps[offset:limit], nil
 }
 
-// Create a new pollicy to MemoryManager
+// Create a new pollicy to MemoryManager.
 func (m *MemoryManager) Create(policy Policy) error {
 	m.Lock()
 	defer m.Unlock()
@@ -70,6 +78,9 @@ func (m *MemoryManager) Delete(id string) error {
 	return nil
 }
 
+// FindRequestCandidates returns candidates that could match the request object. It either returns
+// a set that exactly matches the request, or a superset of it. If an error occurs, it returns nil and
+// the error.
 func (m *MemoryManager) FindRequestCandidates(r *Request) (Policies, error) {
 	m.RLock()
 	defer m.RUnlock()

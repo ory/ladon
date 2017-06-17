@@ -81,3 +81,13 @@ func (_m *MockManager) GetAll(_param0 int64, _param1 int64) (ladon.Policies, err
 func (_mr *_MockManagerRecorder) GetAll(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetAll", arg0, arg1)
 }
+
+func (_m *MockManager) Update(_param0 ladon.Policy) error {
+	ret := _m.ctrl.Call(_m, "Update", _param0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (_mr *_MockManagerRecorder) Update(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Update", arg0)
+}

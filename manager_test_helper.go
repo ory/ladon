@@ -189,8 +189,8 @@ var testPolicies = []*DefaultPolicy{
 	},
 }
 
-func TestHelperFindPoliciesForSubject(k string, s Manager) func (t *testing.T) {
-	return func (t *testing.T) {
+func TestHelperFindPoliciesForSubject(k string, s Manager) func(t *testing.T) {
+	return func(t *testing.T) {
 		for _, c := range testPolicies {
 			t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
 				require.NoError(t, s.Create(c))
@@ -274,8 +274,8 @@ func testEq(a, b []string) error {
 	return nil
 }
 
-func TestHelperGetErrors(s Manager) func (t *testing.T) {
-	return func (t *testing.T) {
+func TestHelperGetErrors(s Manager) func(t *testing.T) {
+	return func(t *testing.T) {
 		_, err := s.Get(uuid.New())
 		assert.Error(t, err)
 
@@ -284,14 +284,31 @@ func TestHelperGetErrors(s Manager) func (t *testing.T) {
 	}
 }
 
-func TestHelperCreateGetDelete(s Manager) func (t *testing.T) {
-	return func (t *testing.T) {
+func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
+	return func(t *testing.T) {
 
 		for i, c := range TestManagerPolicies {
 			t.Run(fmt.Sprintf("case=%d/id=%s/type=create", i, c.GetID()), func(t *testing.T) {
 				_, err := s.Get(c.GetID())
 				require.Error(t, err)
 				require.NoError(t, s.Create(c))
+			})
+
+			t.Run(fmt.Sprintf("case=%d/id=%s/type=query", i, c.GetID()), func(t *testing.T) {
+				get, err := s.Get(c.GetID())
+				require.NoError(t, err)
+
+				AssertPolicyEqual(t, c, get)
+			})
+
+			t.Run(fmt.Sprintf("case=%d/id=%s/type=update", i, c.GetID()), func(t *testing.T) {
+				c.Description = c.Description + "_updated"
+				require.NoError(t, s.Update(c))
+
+				get, err := s.Get(c.GetID())
+				require.NoError(t, err)
+
+				AssertPolicyEqual(t, c, get)
 			})
 
 			t.Run(fmt.Sprintf("case=%d/id=%s/type=query", i, c.GetID()), func(t *testing.T) {

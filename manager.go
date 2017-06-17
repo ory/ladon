@@ -6,6 +6,9 @@ type Manager interface {
 	// Create persists the policy.
 	Create(policy Policy) error
 
+	// Update updates an existing policy.
+	Update(policy Policy) error
+
 	// Get retrieves a policy.
 	Get(id string) (Policy, error)
 
