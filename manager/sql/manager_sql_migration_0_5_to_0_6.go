@@ -7,9 +7,9 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ory/ladon/compiler"
 	"github.com/ory/ladon"
 	. "github.com/ory/ladon"
+	"github.com/ory/ladon/compiler"
 	"github.com/pkg/errors"
 )
 
