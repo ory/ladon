@@ -479,6 +479,22 @@ func (s *SQLManager) Get(id string) (Policy, error) {
 	return policies[0], nil
 }
 
+// Update updates an existing policy.
+func (s *SQLManager) Update(policy Policy) (err error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := s.Delete(policy.GetID()); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return s.Create(policy)
+}
+
 // Delete removes a policy.
 func (s *SQLManager) Delete(id string) error {
 	tx, err := s.db.Beginx()

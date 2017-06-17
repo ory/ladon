@@ -70,6 +70,14 @@ func (m *MemoryManager) Get(id string) (Policy, error) {
 	return p, nil
 }
 
+// Update updates an existing policy.
+func (m *MemoryManager) Update(policy Policy) error {
+	m.Lock()
+	defer m.Unlock()
+	m.Policies[policy.GetID()] = policy
+	return nil
+}
+
 // Delete removes a policy.
 func (m *MemoryManager) Delete(id string) error {
 	m.Lock()
