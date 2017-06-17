@@ -14,6 +14,10 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## 0.8.0
+
+Managers now must implement `Update(policy Policy) error`.
+
 ## 0.7.0
 
 Version 0.7.0 includes two minor BC breaks in the SQLManager. The method signature `CreateSchemas() ( error)`
