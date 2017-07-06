@@ -6,7 +6,7 @@ import:
 - package: github.com/jmoiron/sqlx
 - package: github.com/lib/pq
 - package: github.com/ory/dockertest
-  version: ~3.0.7
+  version: ~3.0.9
 - package: github.com/pkg/errors
   version: ~0.8.0
 - package: github.com/rubenv/sql-migrate
