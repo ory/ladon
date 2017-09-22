@@ -318,7 +318,7 @@ The CIDR condition matches CIDR IP Ranges. Using this condition would look like 
 ```json
 {
     "conditions": {
-        "remoteIP": {
+        "remoteIPAddress": {
             "type": "CIDRCondition",
             "options": {
                 "cidr": "192.168.0.1/16"
