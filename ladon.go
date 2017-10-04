@@ -27,10 +27,12 @@ func (l *Ladon) IsAllowed(r *Request) (err error) {
 	// Although the manager is responsible of matching the policies, it might decide to just scan for
 	// subjects, it might return all policies, or it might have a different pattern matching than Golang.
 	// Thus, we need to make sure that we actually matched the right policies.
-	return l.doPoliciesAllow(r, policies)
+	return l.DoPoliciesAllow(r, policies)
 }
 
-func (l *Ladon) doPoliciesAllow(r *Request, policies []Policy) (err error) {
+// DoPoliciesAllow returns nil if subject s has permission p on resource r with context c for a given policy list or an error otherwise.
+// The IsAllowed interface should be preferred since it uses the manager directly. This is a lower level interface for when you don't want to use the ladon manager.
+func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	var allowed = false
 
 	// Iterate through all policies
