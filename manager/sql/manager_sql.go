@@ -180,20 +180,22 @@ func (s *SQLManager) Update(policy Policy) error {
 	}
 
 	if err := s.delete(policy.GetID(), tx); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
+		return errors.WithStack(err)
 	}
 
 	if err := s.create(policy, tx); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
+		return errors.WithStack(err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
 		return errors.WithStack(err)
 	}
@@ -209,14 +211,15 @@ func (s *SQLManager) Create(policy Policy) (err error) {
 	}
 
 	if err := s.create(policy, tx); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
+		return errors.WithStack(err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
 		return errors.WithStack(err)
 	}
@@ -237,22 +240,13 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 	switch s.db.DriverName() {
 	case "postgres", "pgx":
 		if _, err = tx.Exec(s.db.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions, policy.GetID()); err != nil {
-			if err := tx.Rollback(); err != nil {
-				return errors.WithStack(err)
-			}
 			return errors.WithStack(err)
 		}
 	case "mysql":
 		if _, err = tx.Exec(s.db.Rebind("INSERT IGNORE INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
-			if err := tx.Rollback(); err != nil {
-				return errors.WithStack(err)
-			}
 			return errors.WithStack(err)
 		}
 	default:
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
-		}
 		return errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 	}
 
@@ -270,48 +264,30 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 
 			compiled, err := compiler.CompileRegex(template, policy.GetStartDelimiter(), policy.GetEndDelimiter())
 			if err != nil {
-				if err := tx.Rollback(); err != nil {
-					return errors.WithStack(err)
-				}
 				return errors.WithStack(err)
 			}
 
 			switch s.db.DriverName() {
 			case "postgres", "pgx":
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_%s (id, template, compiled, has_regex) SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_%[1]s WHERE id = ?)", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1, id); err != nil {
-					if err := tx.Rollback(); err != nil {
-						return errors.WithStack(err)
-					}
 					return errors.WithStack(err)
 				}
 
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT INTO ladon_policy_%s_rel (policy, %[1]s) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_%[1]s_rel WHERE policy = ? AND %[1]s = ?)", v.t)), policy.GetID(), id, policy.GetID(), id); err != nil {
-					if err := tx.Rollback(); err != nil {
-						return errors.WithStack(err)
-					}
 					return errors.WithStack(err)
 				}
 				break
 
 			case "mysql":
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_%s (id, template, compiled, has_regex) VALUES (?, ?, ?, ?)", v.t)), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
-					if err := tx.Rollback(); err != nil {
-						return errors.WithStack(err)
-					}
 					return errors.WithStack(err)
 				}
 
 				if _, err := tx.Exec(s.db.Rebind(fmt.Sprintf("INSERT IGNORE INTO ladon_policy_%s_rel (policy, %s) VALUES (?, ?)", v.t, v.t)), policy.GetID(), id); err != nil {
-					if err := tx.Rollback(); err != nil {
-						return errors.WithStack(err)
-					}
 					return errors.WithStack(err)
 				}
 				break
 			default:
-				if err := tx.Rollback(); err != nil {
-					return errors.WithStack(err)
-				}
 				return errors.Errorf("Database driver %s is not supported", s.db.DriverName())
 			}
 		}
@@ -487,14 +463,15 @@ func (s *SQLManager) Delete(id string) error {
 	}
 
 	if err := s.delete(id, tx); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
+		return errors.WithStack(err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return errors.WithStack(err)
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, rollErr.Error())
 		}
 		return errors.WithStack(err)
 	}
