@@ -44,18 +44,7 @@ func (s *SQLManager) CreateSchemas(schema, table string) (int, error) {
 
 	source := Databases[s.database].Migrations
 
-	migrate.MigrationDialects["cockroachdb"] = migrate.MigrationDialects["postgres"]
-
-	if s.database == "cockroachdb" {
-		if _, err := s.db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", schema)); err != nil {
-			return 0, errors.Errorf("Unable to create schema: %v", err)
-		}
-		if _, err := s.db.Exec(fmt.Sprintf("SET DATABASE = %s", schema)); err != nil {
-			return 0, errors.Errorf("Unable to switch to schema: %v", err)
-		}
-	} else {
-		migrate.SetSchema(schema)
-	}
+	migrate.SetSchema(schema)
 	migrate.SetTable(table)
 	n, err := migrate.Exec(s.db.DB, s.database, source, migrate.Up)
 	if err != nil {
