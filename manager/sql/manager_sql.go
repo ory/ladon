@@ -133,7 +133,7 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 		return errors.Errorf("Database %s is not supported", s.database)
 	}
 
-	if _, err = tx.Exec(Databases[s.database].CreatePolicy, policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	if _, err = tx.Exec(Databases[s.database].QueryInsertPolicy, policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -153,14 +153,14 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 
 		switch rel.t {
 		case "action":
-			query = Databases[s.database].CreatePolicyActions
-			queryRel = Databases[s.database].CreatePolicyActionsRel
+			query = Databases[s.database].QueryInsertPolicyActions
+			queryRel = Databases[s.database].QueryInsertPolicyActionsRel
 		case "resource":
-			query = Databases[s.database].CreatePolicyResources
-			queryRel = Databases[s.database].CreatePolicyResourcesRel
+			query = Databases[s.database].QueryInsertPolicyResources
+			queryRel = Databases[s.database].QueryInsertPolicyResourcesRel
 		case "subject":
-			query = Databases[s.database].CreatePolicySubjects
-			queryRel = Databases[s.database].CreatePolicySubjectsRel
+			query = Databases[s.database].QueryInsertPolicySubjects
+			queryRel = Databases[s.database].QueryInsertPolicySubjectsRel
 		}
 
 		for _, template := range rel.p {
