@@ -17,7 +17,6 @@ import (
 // SQLManager is a postgres implementation for Manager to store policies persistently.
 type SQLManager struct {
 	db       *sqlx.DB
-	schema   []string
 	database string
 }
 
@@ -31,7 +30,6 @@ func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
 
 	return &SQLManager{
 		db:       db,
-		schema:   schema,
 		database: database,
 	}
 }
