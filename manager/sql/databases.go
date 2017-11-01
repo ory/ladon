@@ -3,15 +3,15 @@ package sql
 import migrate "github.com/rubenv/sql-migrate"
 
 type Database struct {
-	Migrations               *migrate.MemoryMigrationSource
-	CreatePolicy             string
-	CreatePolicyActions      string
-	CreatePolicyActionsRel   string
-	CreatePolicyResources    string
-	CreatePolicyResourcesRel string
-	CreatePolicySubjects     string
-	CreatePolicySubjectsRel  string
-	FindRequestCandidates    string
+	Migrations                    *migrate.MemoryMigrationSource
+	QueryInsertPolicy             string
+	QueryInsertPolicyActions      string
+	QueryInsertPolicyActionsRel   string
+	QueryInsertPolicyResources    string
+	QueryInsertPolicyResourcesRel string
+	QueryInsertPolicySubjects     string
+	QueryInsertPolicySubjectsRel  string
+	FindRequestCandidates         string
 }
 
 var Databases = map[string]Database{
@@ -113,13 +113,13 @@ var Databases = map[string]Database{
 				},
 			},
 		},
-		CreatePolicy:             `INSERT INTO ladon_policy(id, description, effect, conditions) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = $1)`,
-		CreatePolicyActions:      `INSERT INTO ladon_action (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_action WHERE id = $1::varchar)`,
-		CreatePolicyActionsRel:   `INSERT INTO ladon_policy_action_rel (policy, action) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_action_rel WHERE policy = $1::varchar AND action = $2::varchar)`,
-		CreatePolicyResources:    `INSERT INTO ladon_resource (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_resource WHERE id = $1::varchar)`,
-		CreatePolicyResourcesRel: `INSERT INTO ladon_policy_resource_rel (policy, resource) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_resource_rel WHERE policy = $1::varchar AND resource = $2::varchar)`,
-		CreatePolicySubjects:     `INSERT INTO ladon_subject (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_subject WHERE id = $1::varchar)`,
-		CreatePolicySubjectsRel:  `INSERT INTO ladon_policy_subject_rel (policy, subject) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_subject_rel WHERE policy = $1::varchar AND subject = $2::varchar)`,
+		QueryInsertPolicy:             `INSERT INTO ladon_policy(id, description, effect, conditions) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = $1)`,
+		QueryInsertPolicyActions:      `INSERT INTO ladon_action (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_action WHERE id = $1::varchar)`,
+		QueryInsertPolicyActionsRel:   `INSERT INTO ladon_policy_action_rel (policy, action) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_action_rel WHERE policy = $1::varchar AND action = $2::varchar)`,
+		QueryInsertPolicyResources:    `INSERT INTO ladon_resource (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_resource WHERE id = $1::varchar)`,
+		QueryInsertPolicyResourcesRel: `INSERT INTO ladon_policy_resource_rel (policy, resource) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_resource_rel WHERE policy = $1::varchar AND resource = $2::varchar)`,
+		QueryInsertPolicySubjects:     `INSERT INTO ladon_subject (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_subject WHERE id = $1::varchar)`,
+		QueryInsertPolicySubjectsRel:  `INSERT INTO ladon_policy_subject_rel (policy, subject) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_subject_rel WHERE policy = $1::varchar AND subject = $2::varchar)`,
 		FindRequestCandidates: `
 		SELECT
 			p.id,
@@ -242,13 +242,13 @@ var Databases = map[string]Database{
 				},
 			},
 		},
-		CreatePolicy:             `INSERT IGNORE INTO ladon_policy (id, description, effect, conditions) VALUES(?,?,?,?)`,
-		CreatePolicyActions:      `INSERT IGNORE INTO ladon_action (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
-		CreatePolicyActionsRel:   `INSERT IGNORE INTO ladon_policy_action_rel (policy, action) VALUES(?,?)`,
-		CreatePolicyResources:    `INSERT IGNORE INTO ladon_resource (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
-		CreatePolicyResourcesRel: `INSERT IGNORE INTO ladon_policy_resource_rel (policy, resource) VALUES(?,?)`,
-		CreatePolicySubjects:     `INSERT IGNORE INTO ladon_subject (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
-		CreatePolicySubjectsRel:  `INSERT IGNORE INTO ladon_policy_subject_rel (policy, subject) VALUES(?,?)`,
+		QueryInsertPolicy:             `INSERT IGNORE INTO ladon_policy (id, description, effect, conditions) VALUES(?,?,?,?)`,
+		QueryInsertPolicyActions:      `INSERT IGNORE INTO ladon_action (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
+		QueryInsertPolicyActionsRel:   `INSERT IGNORE INTO ladon_policy_action_rel (policy, action) VALUES(?,?)`,
+		QueryInsertPolicyResources:    `INSERT IGNORE INTO ladon_resource (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
+		QueryInsertPolicyResourcesRel: `INSERT IGNORE INTO ladon_policy_resource_rel (policy, resource) VALUES(?,?)`,
+		QueryInsertPolicySubjects:     `INSERT IGNORE INTO ladon_subject (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
+		QueryInsertPolicySubjectsRel:  `INSERT IGNORE INTO ladon_policy_subject_rel (policy, subject) VALUES(?,?)`,
 		FindRequestCandidates: `
 		SELECT
 			p.id,
@@ -343,13 +343,13 @@ var Databases = map[string]Database{
 				},
 			},
 		},
-		CreatePolicy:             `INSERT INTO ladon_policy(id, description, effect, conditions) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
-		CreatePolicyActions:      `INSERT INTO ladon_action (id, template, compiled, has_regex) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
-		CreatePolicyActionsRel:   `INSERT INTO ladon_policy_action_rel (policy, action) VALUES($1, $2) ON CONFLICT (policy, action) DO NOTHING`,
-		CreatePolicyResources:    `INSERT INTO ladon_resource (id, template, compiled, has_regex) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
-		CreatePolicyResourcesRel: `INSERT INTO ladon_policy_resource_rel (policy, resource) VALUES($1, $2) ON CONFLICT (policy, resource) DO NOTHING`,
-		CreatePolicySubjects:     `INSERT INTO ladon_subject (id, template, compiled, has_regex) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
-		CreatePolicySubjectsRel:  `INSERT INTO ladon_policy_subject_rel (policy, subject) VALUES($1, $2) ON CONFLICT (policy, subject) DO NOTHING`,
+		QueryInsertPolicy:             `INSERT INTO ladon_policy(id, description, effect, conditions) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+		QueryInsertPolicyActions:      `INSERT INTO ladon_action (id, template, compiled, has_regex) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+		QueryInsertPolicyActionsRel:   `INSERT INTO ladon_policy_action_rel (policy, action) VALUES($1, $2) ON CONFLICT (policy, action) DO NOTHING`,
+		QueryInsertPolicyResources:    `INSERT INTO ladon_resource (id, template, compiled, has_regex) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+		QueryInsertPolicyResourcesRel: `INSERT INTO ladon_policy_resource_rel (policy, resource) VALUES($1, $2) ON CONFLICT (policy, resource) DO NOTHING`,
+		QueryInsertPolicySubjects:     `INSERT INTO ladon_subject (id, template, compiled, has_regex) VALUES($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+		QueryInsertPolicySubjectsRel:  `INSERT INTO ladon_policy_subject_rel (policy, subject) VALUES($1, $2) ON CONFLICT (policy, subject) DO NOTHING`,
 		FindRequestCandidates: `
 		SELECT
 			p.id,
