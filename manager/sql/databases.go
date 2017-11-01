@@ -2,7 +2,7 @@ package sql
 
 import migrate "github.com/rubenv/sql-migrate"
 
-type Database struct {
+type Statements struct {
 	Migrations                    *migrate.MemoryMigrationSource
 	QueryInsertPolicy             string
 	QueryInsertPolicyActions      string
@@ -14,7 +14,7 @@ type Database struct {
 	FindRequestCandidates         string
 }
 
-var Databases = map[string]Database{
+var Databases = map[string]Statements{
 	"postgres": {
 		Migrations: &migrate.MemoryMigrationSource{
 			Migrations: []*migrate.Migration{
