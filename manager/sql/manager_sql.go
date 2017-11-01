@@ -148,19 +148,19 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 	}
 
 	for _, rel := range relations {
-		var subject string
-		var subjectRel string
+		var query string
+		var queryRel string
 
 		switch rel.t {
 		case "action":
-			subject = Databases[s.database].CreatePolicyActions
-			subjectRel = Databases[s.database].CreatePolicyActionsRel
+			query = Databases[s.database].CreatePolicyActions
+			queryRel = Databases[s.database].CreatePolicyActionsRel
 		case "resource":
-			subject = Databases[s.database].CreatePolicyResources
-			subjectRel = Databases[s.database].CreatePolicyResourcesRel
+			query = Databases[s.database].CreatePolicyResources
+			queryRel = Databases[s.database].CreatePolicyResourcesRel
 		case "subject":
-			subject = Databases[s.database].CreatePolicySubjects
-			subjectRel = Databases[s.database].CreatePolicySubjectsRel
+			query = Databases[s.database].CreatePolicySubjects
+			queryRel = Databases[s.database].CreatePolicySubjectsRel
 		}
 
 		for _, template := range rel.p {
@@ -173,10 +173,10 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 				return errors.WithStack(err)
 			}
 
-			if _, err := tx.Exec(subject, id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) >= -1); err != nil {
+			if _, err := tx.Exec(query, id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) >= -1); err != nil {
 				return errors.WithStack(err)
 			}
-			if _, err := tx.Exec(subjectRel, policy.GetID(), id); err != nil {
+			if _, err := tx.Exec(queryRel, policy.GetID(), id); err != nil {
 				return errors.WithStack(err)
 			}
 		}
