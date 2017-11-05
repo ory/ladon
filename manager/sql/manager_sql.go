@@ -422,7 +422,7 @@ LEFT JOIN ladon_resource as resource ON rr.resource = resource.id
 
 // GetAll returns all policies
 func (s *SQLManager) GetAll(limit, offset int64) (Policies, error) {
-	query := s.db.Rebind(getQuery + "LIMIT ? OFFSET ?")
+	query := s.db.Rebind(getQuery + "ORDER BY p.id LIMIT ? OFFSET ?")
 
 	rows, err := s.db.Query(query, limit, offset)
 	if err != nil {
