@@ -120,7 +120,7 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 		return errors.Errorf("Database %s is not supported", s.database)
 	}
 
-	if _, err = tx.Exec(Databases[s.database].QueryInsertPolicy, policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	if _, err = tx.Exec(s.db.Rebind(Databases[s.database].QueryInsertPolicy), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -160,10 +160,10 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 				return errors.WithStack(err)
 			}
 
-			if _, err := tx.Exec(query, id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) >= -1); err != nil {
+			if _, err := tx.Exec(s.db.Rebind(query), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) >= -1); err != nil {
 				return errors.WithStack(err)
 			}
-			if _, err := tx.Exec(queryRel, policy.GetID(), id); err != nil {
+			if _, err := tx.Exec(s.db.Rebind(queryRel), policy.GetID(), id); err != nil {
 				return errors.WithStack(err)
 			}
 		}
@@ -175,7 +175,7 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
 	query := Databases[s.database].FindRequestCandidates
 
-	rows, err := s.db.Query(query, r.Subject, r.Subject)
+	rows, err := s.db.Query(s.db.Rebind(query), r.Subject, r.Subject)
 	if err == sql.ErrNoRows {
 		return nil, NewErrResourceNotFound(err)
 	} else if err != nil {
