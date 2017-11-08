@@ -36,11 +36,11 @@ func NewSQLManager(db *sqlx.DB, schema []string) *SQLManager {
 
 // CreateSchemas creates ladon_policy tables
 func (s *SQLManager) CreateSchemas(schema, table string) (int, error) {
-	if _, ok := Databases[s.database]; !ok {
+	if _, ok := Migrations[s.database]; !ok {
 		return 0, errors.Errorf("Database %s is not supported", s.database)
 	}
 
-	source := Databases[s.database].Migrations
+	source := Migrations[s.database].Migrations
 
 	migrate.SetSchema(schema)
 	migrate.SetTable(table)
@@ -116,11 +116,11 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 		}
 	}
 
-	if _, ok := Databases[s.database]; !ok {
+	if _, ok := Migrations[s.database]; !ok {
 		return errors.Errorf("Database %s is not supported", s.database)
 	}
 
-	if _, err = tx.Exec(s.db.Rebind(Databases[s.database].QueryInsertPolicy), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	if _, err = tx.Exec(s.db.Rebind(Migrations[s.database].QueryInsertPolicy), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -140,14 +140,14 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 
 		switch rel.t {
 		case "action":
-			query = Databases[s.database].QueryInsertPolicyActions
-			queryRel = Databases[s.database].QueryInsertPolicyActionsRel
+			query = Migrations[s.database].QueryInsertPolicyActions
+			queryRel = Migrations[s.database].QueryInsertPolicyActionsRel
 		case "resource":
-			query = Databases[s.database].QueryInsertPolicyResources
-			queryRel = Databases[s.database].QueryInsertPolicyResourcesRel
+			query = Migrations[s.database].QueryInsertPolicyResources
+			queryRel = Migrations[s.database].QueryInsertPolicyResourcesRel
 		case "subject":
-			query = Databases[s.database].QueryInsertPolicySubjects
-			queryRel = Databases[s.database].QueryInsertPolicySubjectsRel
+			query = Migrations[s.database].QueryInsertPolicySubjects
+			queryRel = Migrations[s.database].QueryInsertPolicySubjectsRel
 		}
 
 		for _, template := range rel.p {
@@ -173,7 +173,7 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 }
 
 func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
-	query := Databases[s.database].FindRequestCandidates
+	query := Migrations[s.database].FindRequestCandidates
 
 	rows, err := s.db.Query(s.db.Rebind(query), r.Subject, r.Subject)
 	if err == sql.ErrNoRows {
