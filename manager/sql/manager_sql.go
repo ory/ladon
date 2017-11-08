@@ -173,7 +173,7 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 }
 
 func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
-	query := Migrations[s.database].FindRequestCandidates
+	query := Migrations[s.database].QueryRequestCandidates
 
 	rows, err := s.db.Query(s.db.Rebind(query), r.Subject, r.Subject)
 	if err == sql.ErrNoRows {
