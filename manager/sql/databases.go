@@ -11,7 +11,7 @@ type Statements struct {
 	QueryInsertPolicyResourcesRel string
 	QueryInsertPolicySubjects     string
 	QueryInsertPolicySubjectsRel  string
-	FindRequestCandidates         string
+	QueryRequestCandidates        string
 }
 
 var sharedMigrations = []*migrate.Migration{
@@ -97,7 +97,7 @@ var sharedMigrations = []*migrate.Migration{
 	},
 }
 
-var Databases = map[string]Statements{
+var Migrations = map[string]Statements{
 	"postgres": {
 		Migrations: &migrate.MemoryMigrationSource{
 			Migrations: []*migrate.Migration{
