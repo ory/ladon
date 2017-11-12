@@ -19,7 +19,7 @@ In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBA
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 
-Ladon ships with storage adapters for SQL (officially supported: MySQL 5.5+, PostgreSQL 9.2+) and in-memory.
+Ladon officially ships with storage adapters for SQL (officially supported: MySQL 5.5+, PostgreSQL 9.2+) and in-memory. Community adapters are available for [CockroachDB](https://github.com/wehco/ladon-crdb).
 
 ---
 
