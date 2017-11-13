@@ -58,14 +58,6 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	var allowed = false
 	var deciders = Policies{}
 
-	defer func() {
-		if allowed {
-			l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
-		} else {
-			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
-		}
-	}()
-
 	// Iterate through all policies
 	for _, p := range policies {
 		// Does the action match with one of the policies?
@@ -106,6 +98,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
 		if !p.AllowAccess() {
 			deciders = append(deciders, p)
+			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 			return errors.WithStack(ErrRequestForcefullyDenied)
 		}
 
@@ -114,9 +107,11 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	}
 
 	if !allowed {
+		l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 		return errors.WithStack(ErrRequestDenied)
 	}
 
+	l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
 	return nil
 }
 
