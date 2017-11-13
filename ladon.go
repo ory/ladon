@@ -20,8 +20,9 @@ import (
 
 // Ladon is an implementation of Warden.
 type Ladon struct {
-	Manager Manager
-	Matcher matcher
+	Manager     Manager
+	Matcher     matcher
+	AuditLogger AuditLogger
 }
 
 func (l *Ladon) matcher() matcher {
@@ -29,6 +30,13 @@ func (l *Ladon) matcher() matcher {
 		l.Matcher = DefaultMatcher
 	}
 	return l.Matcher
+}
+
+func (l *Ladon) auditLogger() AuditLogger {
+	if l.AuditLogger == nil {
+		l.AuditLogger = DefaultAuditLogger
+	}
+	return l.AuditLogger
 }
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
@@ -48,6 +56,7 @@ func (l *Ladon) IsAllowed(r *Request) (err error) {
 // The IsAllowed interface should be preferred since it uses the manager directly. This is a lower level interface for when you don't want to use the ladon manager.
 func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	var allowed = false
+	var deciders = Policies{}
 
 	// Iterate through all policies
 	for _, p := range policies {
@@ -88,15 +97,21 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
 		if !p.AllowAccess() {
+			deciders = append(deciders, p)
+			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 			return errors.WithStack(ErrRequestForcefullyDenied)
 		}
+
 		allowed = true
+		deciders = append(deciders, p)
 	}
 
 	if !allowed {
+		l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 		return errors.WithStack(ErrRequestDenied)
 	}
 
+	l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
 	return nil
 }
 

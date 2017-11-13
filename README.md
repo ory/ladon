@@ -49,6 +49,9 @@ ORY builds solutions for better internet security and accessibility. We have a c
       - [Adding Custom Conditions](#adding-custom-conditions)
     - [Persistence](#persistence)
   - [Access Control (Warden)](#access-control-warden)
+  - [Audit Log (Warden)](#audit-log-warden)
+- [Limitations](#limitations)
+  - [Regular expressions](#regular-expressions)
 - [Examples](#examples)
 - [Good to know](#good-to-know)
 - [Useful commands](#useful-commands)
@@ -569,6 +572,28 @@ func main() {
     // ...
 }
 ```
+
+### Audit Log (Warden)
+
+In order to keep track of authorization grants and denials, it is possible to attach a `ladon.AuditLogger`.
+The provided `ladon.AuditLoggerInfo` outputs information about the policies involved when responding to authorization requests.
+
+```go
+import "github.com/ory/ladon"
+import manager "github.com/ory/ladon/manager/memory"
+
+func main() {
+
+    warden := ladon.Ladon{
+        Manager: manager.NewMemoryManager(),
+        AuditLogger: ladon.AuditLoggerInfo{}
+    }
+
+    // ...
+
+```
+
+It will output to `stderr` by default.
 
 ## Limitations
 
