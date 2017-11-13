@@ -573,6 +573,28 @@ func main() {
 }
 ```
 
+### Audit Log (Warden)
+
+In order to keep track of authorization grants and denials, it is possible to attach a `ladon.AuditLogger`.
+The provided `ladon.AuditLoggerInfo` outputs information about the policies involved when responding to authorization requests.
+
+```go
+import "github.com/ory/ladon"
+import manager "github.com/ory/ladon/manager/memory"
+
+func main() {
+
+    warden := ladon.Ladon{
+        Manager: manager.NewMemoryManager(),
+        AuditLogger: ladon.AuditLoggerInfo{}
+    }
+
+    // ...
+
+```
+
+It will output to `stderr` by default.
+
 ## Limitations
 
 Ladon's limitations are listed here.
