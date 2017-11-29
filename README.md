@@ -91,8 +91,8 @@ To decide what the answer is, Ladon uses policy documents which can be represent
 ```json
 {
   "description": "One policy to rule them all.",
-  "subjects": ["users:<[peter|ken]>", "users:maria", "groups:admins"],
-  "actions" : ["delete", "<[create|update]>"],
+  "subjects": ["users:<peter|ken>", "users:maria", "groups:admins"],
+  "actions" : ["delete", "<create|update>"],
   "effect": "allow",
   "resources": [
     "resources:articles:<.*>",
@@ -115,7 +115,7 @@ and can answer access requests that look like:
 {
   "subject": "users:peter",
   "action" : "delete",
-  "resource": "resource:articles:ladon-introduction",
+  "resource": "resources:articles:ladon-introduction",
   "context": {
     "remoteIP": "192.168.0.5"
   }
@@ -136,8 +136,8 @@ POSTing it to an artificial HTTP endpoint:
       "https://my-ladon-implementation.localhost/policies" <<EOF
         {
           "description": "One policy to rule them all.",
-          "subjects": ["users:<[peter|ken]>", "users:maria", "groups:admins"],
-          "actions" : ["delete", "<[create|update]>"],
+          "subjects": ["users:<peter|ken>", "users:maria", "groups:admins"],
+          "actions" : ["delete", "<create|update>"],
           "effect": "allow",
           "resources": [
             "resources:articles:<.*>",
@@ -166,7 +166,7 @@ Then we test if "peter" (ip: "192.168.0.5") is allowed to "delete" the "ladon-in
         {
           "subject": "users:peter",
           "action" : "delete",
-          "resource": "resource:articles:ladon-introduction",
+          "resource": "resources:articles:ladon-introduction",
           "context": {
             "remoteIP": "192.168.0.5"
           }
