@@ -22,27 +22,27 @@ import (
 
 var (
 	// ErrRequestDenied is returned when an access request can not be satisfied by any policy.
-	ErrRequestDenied = errors.WithStack(&errorWithContext{
+	ErrRequestDenied = &errorWithContext{
 		error:  errors.New("Request was denied by default"),
 		code:   http.StatusForbidden,
 		status: http.StatusText(http.StatusForbidden),
 		reason: "The request was denied because no matching policy was found.",
-	})
+	}
 
 	// ErrRequestForcefullyDenied is returned when an access request is explicitly denied by a policy.
-	ErrRequestForcefullyDenied = errors.WithStack(&errorWithContext{
+	ErrRequestForcefullyDenied = &errorWithContext{
 		error:  errors.New("Request was forcefully denied"),
 		code:   http.StatusForbidden,
 		status: http.StatusText(http.StatusForbidden),
 		reason: "The request was denied because a policy denied request.",
-	})
+	}
 
 	// ErrNotFound is returned when a resource can not be found.
-	ErrNotFound = errors.WithStack(&errorWithContext{
+	ErrNotFound = &errorWithContext{
 		error:  errors.New("Resource could not be found"),
 		code:   http.StatusNotFound,
 		status: http.StatusText(http.StatusNotFound),
-	})
+	}
 )
 
 func NewErrResourceNotFound(err error) error {
