@@ -46,6 +46,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
       - [String Match Condition](#string-match-condition)
       - [Subject Condition](#subject-condition)
       - [String Pairs Equal Condition](#string-pairs-equal-condition)
+      - [Resource Condition](#resource-condition)
       - [Adding Custom Conditions](#adding-custom-conditions)
     - [Persistence](#persistence)
   - [Access Control (Warden)](#access-control-warden)
@@ -474,6 +475,52 @@ var err = warden.IsAllowed(&ladon.Request{
     },
 }
 ```
+
+
+##### Resource Condition
+
+
+Checks if the string value passed in the access request's context is present in the resource string.
+
+The Condition requires a value string and delimiter (needs to match the resource string) to be passed.
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Resource: "rn:city:laholm:part:north"
+    Context: &ladon.Context{
+      Delimiter: ":",
+      Value: "part:north"
+    },
+}
+```
+
+or
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Resource: "rn:city:laholm:part:north"
+    Context: &ladon.Context{
+      Delimiter: ":",
+      Value: "city:laholm"
+    },
+}
+```
+
+but not:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Resource: "rn:city:laholm:part:north"
+    Context: &ladon.Context{
+      Delimiter: ":",
+      Value: "part:west"
+    },
+}
+```
+
 
 ##### Adding Custom Conditions
 
