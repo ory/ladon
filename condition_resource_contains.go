@@ -1,7 +1,7 @@
 package ladon
 
 import (
-	"strings"
+	"regexp"
 )
 
 type ResourceFilter struct {
@@ -9,11 +9,12 @@ type ResourceFilter struct {
 	Value     string
 }
 
-// ResourceCondition is fulfilled if the context matches a substring within the resource name
-type ResourceCondition struct{}
+// ResourceContainsCondition is fulfilled if the context matches a substring within the resource name
+type ResourceContainsCondition struct{}
+
 
 // Fulfills returns true if the request's resouce contains the given value string
-func (c *ResourceCondition) Fulfills(value interface{}, r *Request) bool {
+func (c *ResourceContainsCondition) Fulfills(value interface{}, r *Request) bool {
 
 	filter, ok := value.(*ResourceFilter)
 
@@ -26,11 +27,12 @@ func (c *ResourceCondition) Fulfills(value interface{}, r *Request) bool {
 	filterValue := filter.Value + filter.Delimiter
 	resourceString := r.Resource + filter.Delimiter
 
-	return strings.Contains(resourceString, filterValue)
+	matches, _ := regexp.MatchString(filterValue, resourceString)
+	return matches
 
 }
 
 // GetName returns the condition's name.
-func (c *ResourceCondition) GetName() string {
-	return "ResourceCondition"
+func (c *ResourceContainsCondition) GetName() string {
+	return "ResourceContainsCondition"
 }
