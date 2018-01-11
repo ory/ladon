@@ -477,8 +477,7 @@ var err = warden.IsAllowed(&ladon.Request{
 ```
 
 
-##### Resource Condition
-
+##### [Resource Condition](condition_resource.go)
 
 Checks if the string value passed in the access request's context is present in the resource string.
 
