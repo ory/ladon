@@ -17,6 +17,7 @@ func (c *ResourceCondition) Fulfills(value interface{}, r *Request) bool {
 		panic(errors.New("missing resourceFilter"))
 	}
 
+	filter += ":"
 	resourceString := r.Resource + ":"
 	return strings.Contains(resourceString, filter)
 
