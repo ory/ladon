@@ -22,13 +22,13 @@ func TestResourceMatch(t *testing.T) {
 	for _, c := range []struct {
 		matches        string
 		resource       string
-		resourceRule   string
-		resourceFilter string
+		resourceFilter interface{}
 		pass           bool
 	}{
 		{resourceFilter: "tenantIds:2", resource: "resources:sensor-data:tenantIds:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
 		{resourceFilter: "tenantIds:2", resource: "resources:sensor-data:tenantIds:2:deviceIds:*", pass: true},
 		{resourceFilter: "tenantIds:2", resource: "abc", pass: false},
+		{resourceFilter: nil, resource: "abc", pass: false},
 	} {
 		condition := &ResourceCondition{
 		//Matches: c.matches,
@@ -40,5 +40,6 @@ func TestResourceMatch(t *testing.T) {
 		request := &Request{Resource: c.resource, Subject: "users:arneanka", Context: ctx}
 
 		assert.Equal(t, c.pass, condition.Fulfills(c.resourceFilter, request), "%s", c.matches)
+		assert.Equal(t, condition.GetName(), "ResourceCondition", "should be called ResourceCondition")
 	}
 }
