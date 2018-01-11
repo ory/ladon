@@ -20,26 +20,29 @@ import (
 
 func TestResourceMatch(t *testing.T) {
 	for _, c := range []struct {
-		matches        string
-		resource       string
-		resourceFilter interface{}
-		pass           bool
+		matches   string
+		delimiter string
+		resource  string
+		value     string
+		pass      bool
 	}{
-		{resourceFilter: "tenantIds:2", resource: "resources:sensor-data:tenantIds:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
-		{resourceFilter: "tenantIds:2", resource: "resources:sensor-data:tenantIds:2:deviceIds:*", pass: true},
-		{resourceFilter: "tenantIds:2", resource: "abc", pass: false},
-		{resourceFilter: nil, resource: "abc", pass: false},
+		{delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
+		{delimiter: "_", value: "GroupId_2", resource: "resources_sensordata_GroupId_2_deviceIds_a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
+		{delimiter: "_", value: "deviceIds_a9b", resource: "resources_sensordata_GroupId_2_deviceIds_a9b", pass: true},
+		{delimiter: "_", value: "deviceIds_a9b", resource: "resources_sensordata_GroupId_2_deviceIds_a9b6", pass: false},
+		{delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:*", pass: true},
+		{delimiter: ":", value: "GroupId:2", resource: "abc", pass: false},
+		{delimiter: ":", value: "", resource: "abc", pass: false},
+		{delimiter: "", value: "test", resource: "abc", pass: false},
 	} {
-		condition := &ResourceCondition{
-		//Matches: c.matches,
-		}
+		condition := &ResourceCondition{}
 
 		ctx := make(Context)
-		ctx["resourceFilter"] = c.resourceFilter
 
 		request := &Request{Resource: c.resource, Subject: "users:arneanka", Context: ctx}
+		resourceFilter := &ResourceFilter{Delimiter: c.delimiter, Value: c.value}
 
-		assert.Equal(t, c.pass, condition.Fulfills(c.resourceFilter, request), "%s", c.matches)
+		assert.Equal(t, c.pass, condition.Fulfills(resourceFilter, request), "%s", c.matches)
 		assert.Equal(t, condition.GetName(), "ResourceCondition", "should be called ResourceCondition")
 	}
 }

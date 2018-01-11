@@ -4,21 +4,29 @@ import (
 	"strings"
 )
 
-// ResourceCondition is a condition which is fulfilled if the request's subject is equal to the given value string
+type ResourceFilter struct {
+	Delimiter string
+	Value     string
+}
+
+// ResourceCondition is fulfilled if the context matches a substring within the resource name
 type ResourceCondition struct{}
 
 // Fulfills returns true if the request's resouce contains the given value string
 func (c *ResourceCondition) Fulfills(value interface{}, r *Request) bool {
 
-	filter, ok := value.(string)
-	if !ok {
+	filter, ok := value.(*ResourceFilter)
+
+	if !ok || len(filter.Value) < 1 || len(filter.Delimiter) < 1 {
 		//Default to equal
 		return false
 	}
 
-	filter += ":"
-	resourceString := r.Resource + ":"
-	return strings.Contains(resourceString, filter)
+	// Append delimiter to strings to prevent delim+1 being interpreted as delim+10 being present
+	filterValue := filter.Value + filter.Delimiter
+	resourceString := r.Resource + filter.Delimiter
+
+	return strings.Contains(resourceString, filterValue)
 
 }
 
