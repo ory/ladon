@@ -483,6 +483,13 @@ Checks if the string value passed in the access request's context is present in 
 
 The Condition requires a value string and delimiter (needs to match the resource string) to be passed.
 
+A resource could for instance be: `myrn:some.domain.com:resource:123` and `myrn:some.otherdomain.com:resource:123` (the `:` is then considered a delimiter, and used by the condition to be able to separate the resource components from each other) to allow an action to the resources on `myrn:some.otherdomain.com` you could for instance create a resource condition  with 
+
+{Value: `myrn:some.otherdomain.com`, Delimiter: ":"}
+
+
+This condition is fulfilled by this (allow for all resources containing part:north): 
+
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
@@ -494,7 +501,7 @@ var err = warden.IsAllowed(&ladon.Request{
 }
 ```
 
-or
+or ( allow all resources with city:laholm)
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
@@ -507,7 +514,7 @@ var err = warden.IsAllowed(&ladon.Request{
 }
 ```
 
-but not:
+but not (allow for all resources containing part:west, the resource does not contain part:west):
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
