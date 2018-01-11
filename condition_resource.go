@@ -1,7 +1,6 @@
 package ladon
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -14,7 +13,7 @@ func (c *ResourceCondition) Fulfills(value interface{}, r *Request) bool {
 	filter, ok := value.(string)
 	if !ok {
 		//Default to equal
-		panic(errors.New("missing resourceFilter"))
+		return false
 	}
 
 	filter += ":"
