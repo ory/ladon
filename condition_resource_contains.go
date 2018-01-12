@@ -11,11 +11,17 @@ type ResourceContainsCondition struct{}
 func (c *ResourceContainsCondition) Fulfills(value interface{}, r *Request) bool {
 
 	filter, ok := value.(map[string]interface{})
+	if !ok {
+		return false
+	}
 
-	valueString := filter["Value"].(string)
-	delimiterString := filter["Delimiter"].(string)
+	valueString, ok := filter["Value"].(string)
+	if !ok || len(valueString) < 1 {
+		return false
+	}
 
-	if !ok || len(valueString) < 1 || len(delimiterString) < 1 {
+	delimiterString, ok := filter["Delimiter"].(string)
+	if !ok || len(delimiterString) < 1 {
 		return false
 	}
 
