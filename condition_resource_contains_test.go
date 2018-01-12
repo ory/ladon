@@ -14,20 +14,11 @@ package ladon
 
 import (
 	"testing"
-	"time"
-	"fmt"
+
 	"github.com/stretchr/testify/assert"
 )
 
-func timeTrack(start time.Time, name string) {
-    elapsed := time.Since(start)
-    fmt.Printf("%s took %s", name, elapsed)
-}
-
-
-
 func TestResourceContains(t *testing.T) {
-	defer timeTrack(time.Now(), "factorial")
 	for _, c := range []struct {
 		matches   string
 		delimiter string
@@ -36,7 +27,7 @@ func TestResourceContains(t *testing.T) {
 		pass      bool
 	}{
 		//Correct matching within resource string:
-		{matches: "Exact resource component match in resource string, with : delimiter",delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
+		{matches: "Exact resource component match in resource string, with : delimiter", delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
 		{matches: "Not exact resource component match in resource string, with : delimiter", delimiter: "_", value: "GroupId:2", resource: "resources:sensordata:GroupId:22:deviceIds:a9b6", pass: false},
 		{matches: "Exact resource component match in resource string, with _ delimiter", delimiter: "_", value: "GroupId_2", resource: "resources_sensordata_GroupId_2_deviceIds_a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
 		//Correct matching at the end of the resource string:
@@ -54,9 +45,12 @@ func TestResourceContains(t *testing.T) {
 		condition := &ResourceContainsCondition{}
 
 		ctx := make(Context)
-
 		request := &Request{Resource: c.resource, Subject: "users:arneanka", Context: ctx}
-		resourceFilter := &ResourceFilter{Delimiter: c.delimiter, Value: c.value}
+
+		//The context:
+		resourceFilter := make(map[string]interface{})
+		resourceFilter["Delimiter"] = c.delimiter
+		resourceFilter["Value"] = c.value
 
 		assert.Equal(t, c.pass, condition.Fulfills(resourceFilter, request), "%s", c.matches)
 		assert.Equal(t, condition.GetName(), "ResourceContainsCondition", "should be called ResourceContainsCondition")
