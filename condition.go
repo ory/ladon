@@ -119,4 +119,7 @@ var ConditionFactories = map[string]func() Condition{
 	new(StringMatchCondition).GetName(): func() Condition {
 		return new(StringMatchCondition)
 	},
+	new(ResourceContainsCondition).GetName(): func() Condition {
+		return new(ResourceContainsCondition)
+	},
 }
