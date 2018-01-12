@@ -46,7 +46,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
       - [String Match Condition](#string-match-condition)
       - [Subject Condition](#subject-condition)
       - [String Pairs Equal Condition](#string-pairs-equal-condition)
-      - [Resource Condition](#resource-condition)
+      - [Resource Contains Condition](#resource-contains-condition)
       - [Adding Custom Conditions](#adding-custom-conditions)
     - [Persistence](#persistence)
   - [Access Control (Warden)](#access-control-warden)
@@ -486,6 +486,10 @@ The Condition requires a value string and delimiter (needs to match the resource
 A resource could for instance be: `myrn:some.domain.com:resource:123` and `myrn:some.otherdomain.com:resource:123` (the `:` is then considered a delimiter, and used by the condition to be able to separate the resource components from each other) to allow an action to the resources on `myrn:some.otherdomain.com` you could for instance create a resource condition  with
 
 {Value: `myrn:some.otherdomain.com`, Delimiter: ":"}
+
+The Value foo:bar matches foo:bar but not foo:bara nor foo:bara:baz.
+It is also possible to use regex: foo:* etc.
+The Value foo:ba* matches foo:bar foo:bara but not foo:bye.
 
 
 This condition is fulfilled by this (allow for all resources containing part:north):
