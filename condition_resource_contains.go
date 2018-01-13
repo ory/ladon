@@ -15,14 +15,15 @@ func (c *ResourceContainsCondition) Fulfills(value interface{}, r *Request) bool
 		return false
 	}
 
-	valueString, ok := filter["Value"].(string)
+	valueString, ok := filter["value"].(string)
 	if !ok || len(valueString) < 1 {
 		return false
 	}
 
-	delimiterString, ok := filter["Delimiter"].(string)
+	//If no delimiter provided default to "equals" check
+	delimiterString, ok := filter["delimiter"].(string)
 	if !ok || len(delimiterString) < 1 {
-		return false
+		delimiterString=""
 	}
 
 	// Append delimiter to strings to prevent delim+1 being interpreted as delim+10 being present

@@ -26,6 +26,15 @@ func TestResourceContains(t *testing.T) {
 		value     string
 		pass      bool
 	}{
+		//Correct matching within resource string without delimiter:
+		{matches: "Exact resource component match in resource string, with no delimiter", value: ":GroupId:2:", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
+		{matches: "Exact resource component match in resource string, with no delimiter", value: "myResource", resource: "myResource", pass: true},
+		//Better to use regex for string, to avoid false positives:
+		{matches: "Exact resource component match in resource string, with no delimiter", value: "(notMyResource$)", resource: "myResource", pass: false},
+		{matches: "Exact resource component match with resource string, with no delimiter", value: "(^myResource$)", resource: "notMyResource", pass: false},
+		{matches: "Exact resource component match with resource string, with no delimiter", value: "(^myResource$)", resource: "MyResourceNot", pass: false},
+		{matches: "Exact resource component match with resource string, with no delimiter", value: "(^myResource$)", resource: "myResource", pass: true},
+	
 		//Correct matching within resource string:
 		{matches: "Exact resource component match in resource string, with : delimiter", delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
 		{matches: "Not exact resource component match in resource string, with : delimiter", delimiter: "_", value: "GroupId:2", resource: "resources:sensordata:GroupId:22:deviceIds:a9b6", pass: false},
@@ -51,8 +60,10 @@ func TestResourceContains(t *testing.T) {
 
 		//The context:
 		resourceFilter := make(map[string]interface{})
-		resourceFilter["Delimiter"] = c.delimiter
-		resourceFilter["Value"] = c.value
+		if(len(c.delimiter) > 0){
+			resourceFilter["delimiter"] = c.delimiter
+		}
+		resourceFilter["value"] = c.value
 
 		assert.Equal(t, c.pass, condition.Fulfills(resourceFilter, request), "%s", c.matches)
 		assert.Equal(t, condition.GetName(), "ResourceContainsCondition", "should be called ResourceContainsCondition")
