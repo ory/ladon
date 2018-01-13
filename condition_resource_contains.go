@@ -26,7 +26,7 @@ func (c *ResourceContainsCondition) Fulfills(value interface{}, r *Request) bool
 	}
 
 	// Append delimiter to strings to prevent delim+1 being interpreted as delim+10 being present
-	filterValue := valueString + delimiterString
+	filterValue := delimiterString + valueString + delimiterString
 	resourceString := r.Resource + delimiterString
 
 	matches, _ := regexp.MatchString(filterValue, resourceString)

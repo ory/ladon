@@ -30,6 +30,8 @@ func TestResourceContains(t *testing.T) {
 		{matches: "Exact resource component match in resource string, with : delimiter", delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
 		{matches: "Not exact resource component match in resource string, with : delimiter", delimiter: "_", value: "GroupId:2", resource: "resources:sensordata:GroupId:22:deviceIds:a9b6", pass: false},
 		{matches: "Exact resource component match in resource string, with _ delimiter", delimiter: "_", value: "GroupId_2", resource: "resources_sensordata_GroupId_2_deviceIds_a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
+		{matches: "Not exact resource component match in resource string, with : delimiter", delimiter: ":", value: "roupId:22", resource: "resources:sensordata:GroupId:22:deviceIds:a9b6", pass: false},
+
 		//Correct matching at the end of the resource string:
 		{matches: "Exact resource component match at end of resource string, with _ delimiter", delimiter: "_", value: "deviceIds_a9b", resource: "resources_sensordata_GroupId_2_deviceIds_a9b", pass: true},
 		{matches: "Not exact resource component match at end of resource string, with _ delimiter", delimiter: "_", value: "deviceIds_a9b", resource: "resources_sensordata_GroupId_2_deviceIds_a9b6", pass: false},
