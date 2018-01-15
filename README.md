@@ -491,14 +491,17 @@ alternatively:
 
 {value: `myrn:some.otherdomain.com`}
 
-> The delimiter is optional *but needed for* the condition to be able to separate
+> The delimiter is optional *but needed for* the condition to be able to separate resource string components:
+> i.e. to make sure the value `foo:bar` matches `foo:bar` but not `foo:bara` nor `foo:bara:baz`.
+>
+> That is, a delimiter is necessary to separate:
 >
 > `{value: "myrn:fo", delimiter: ":"}` from `{value: "myrn:foo", delimiter: ":"}` or
 > `{value: "myid:12"}` from `{value: "myid:123"}`.
->
-> *I.e.:* The Value `foo:bar` matches `foo:bar` but not `foo:bara` nor `foo:bara:baz`.
->
-> This condition is fulfilled by this (allow for all resources containing `part:north`):
+
+
+
+This condition is fulfilled by this (allow for all resources containing `part:north`):
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
