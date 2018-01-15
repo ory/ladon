@@ -481,26 +481,32 @@ var err = warden.IsAllowed(&ladon.Request{
 
 Checks if the string value passed in the access request's context is present in the resource string.
 
-The Condition requires a value string and delimiter (needs to match the resource string) to be passed.
+The Condition requires a value string and an optional delimiter (needs to match the resource string) to be passed.
 
 A resource could for instance be: `myrn:some.domain.com:resource:123` and `myrn:some.otherdomain.com:resource:123` (the `:` is then considered a delimiter, and used by the condition to be able to separate the resource components from each other) to allow an action to the resources on `myrn:some.otherdomain.com` you could for instance create a resource condition  with
 
-{Value: `myrn:some.otherdomain.com`, Delimiter: ":"}
+{value: `myrn:some.otherdomain.com`, Delimiter: ":"}
 
-The Value foo:bar matches foo:bar but not foo:bara nor foo:bara:baz.
-It is also possible to use regex: foo:* etc.
-The Value foo:ba* matches foo:bar foo:bara but not foo:bye.
+alternatively:
 
+{value: `myrn:some.otherdomain.com`}
 
-This condition is fulfilled by this (allow for all resources containing part:north):
+> The delimiter is optional *but needed for* the condition to be able to separate
+>
+> {value: `myrn:fo`, delimiter: `:`} from {value: `myrn:foo`, delimiter: `:`} or
+> {value: `myid:12`} from {value: `myid:123`}.
+>
+> *I.e.:* The Value foo:bar matches foo:bar but not foo:bara nor foo:bara:baz.
+>
+> This condition is fulfilled by this (allow for all resources containing part:north):
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
     Resource: "rn:city:laholm:part:north"
     Context: &ladon.Context{
-      Delimiter: ":",
-      Value: "part:north"
+      delimiter: ":",
+      value: "part:north"
     },
 }
 ```
@@ -512,8 +518,8 @@ var err = warden.IsAllowed(&ladon.Request{
     // ...
     Resource: "rn:city:laholm:part:north"
     Context: &ladon.Context{
-      Delimiter: ":",
-      Value: "city:laholm"
+      delimiter: ":",
+      value: "city:laholm"
     },
 }
 ```
@@ -525,8 +531,8 @@ var err = warden.IsAllowed(&ladon.Request{
     // ...
     Resource: "rn:city:laholm:part:north"
     Context: &ladon.Context{
-      Delimiter: ":",
-      Value: "part:west"
+      delimiter: ":",
+      value: "part:west"
     },
 }
 ```

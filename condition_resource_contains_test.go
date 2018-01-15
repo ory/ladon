@@ -26,32 +26,29 @@ func TestResourceContains(t *testing.T) {
 		value     string
 		pass      bool
 	}{
-		//Correct matching within resource string without delimiter:
-		{matches: "Exact resource component match in resource string, with no delimiter", value: ":GroupId:2:", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
-		{matches: "Exact resource component match in resource string, with no delimiter", value: "myResource", resource: "myResource", pass: true},
-		//Better to use regex for string, to avoid false positives:
-		{matches: "Exact resource component match in resource string, with no delimiter", value: "(notMyResource$)", resource: "myResource", pass: false},
-		{matches: "Exact resource component match with resource string, with no delimiter", value: "(^myResource$)", resource: "notMyResource", pass: false},
-		{matches: "Exact resource component match with resource string, with no delimiter", value: "(^myResource$)", resource: "MyResourceNot", pass: false},
-		{matches: "Exact resource component match with resource string, with no delimiter", value: "(^myResource$)", resource: "myResource", pass: true},
-	
-		//Correct matching within resource string:
-		{matches: "Exact resource component match in resource string, with : delimiter", delimiter: ":", value: "GroupId:2", resource: "resources:sensor-data:GroupId:2:deviceIds:a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
-		{matches: "Not exact resource component match in resource string, with : delimiter", delimiter: "_", value: "GroupId:2", resource: "resources:sensordata:GroupId:22:deviceIds:a9b6", pass: false},
-		{matches: "Exact resource component match in resource string, with _ delimiter", delimiter: "_", value: "GroupId_2", resource: "resources_sensordata_GroupId_2_deviceIds_a9b576e8-7419-4eed-a010-7f68ec0ff588", pass: true},
-		{matches: "Not exact resource component match in resource string, with : delimiter", delimiter: ":", value: "roupId:22", resource: "resources:sensordata:GroupId:22:deviceIds:a9b6", pass: false},
+		//Correct matching within resource string with delimiter:
+		{matches: "Find value fails incomplete resource string parts.", delimiter: ":", value: "foo:ba", resource: "foo:bar", pass: false},
 
-		//Correct matching at the end of the resource string:
-		{matches: "Exact resource component match at end of resource string, with _ delimiter", delimiter: "_", value: "deviceIds_a9b", resource: "resources_sensordata_GroupId_2_deviceIds_a9b", pass: true},
-		{matches: "Not exact resource component match at end of resource string, with _ delimiter", delimiter: "_", value: "deviceIds_a9b", resource: "resources_sensordata_GroupId_2_deviceIds_a9b6", pass: false},
-		{matches: "Not found in resource string", delimiter: ":", value: "GroupId:2", resource: "abc", pass: false},
-		//More advanced regex:
-		{matches: "Regex resource component match at end of resource string, with _ delimiter", delimiter: "_", value: "deviceIds_a9.*", resource: "resources_sensordata_GroupId_2_deviceIds_a9b", pass: true},
-		{matches: "Regex resource component match at end of resource string, with : delimiter", delimiter: ":", value: "deviceIds:*", resource: "resources:sensordata:GroupId:2:deviceIds:a9b", pass: true},
+		{matches: "Find value as equal to a resource string", delimiter: ":", value: "foo:bar", resource: "foo:bar", pass: true},
+		{matches: "Find value as prefix of resource string", delimiter: ":", value: "foo:bar", resource: "foo:bar:baz", pass: true},
+		{matches: "Find value not being prefix of resource string", delimiter: ":", value: "foo:baz", resource: "foo:bar:baz", pass: false},
+		{matches: "Find value as afix of resource string", delimiter: ":", value: "bar:baz", resource: "foo:bar:baz", pass: true},
+		{matches: "Find value not being afix of resource string", delimiter: ":", value: "foo:baz", resource: "foo:bar:baz", pass: false},
+		{matches: "Find value as in middle of resource string", delimiter: ":", value: "bar", resource: "foo:bar:baz", pass: true},
+		{matches: "Find value not being in middle of resource string", delimiter: ":", value: "bar", resource: "baz:foo:baz", pass: false},
+
+		//Correct matching within resource string without delimiter:
+		{matches: "Find value does not work for part incomplete resource string parts without delimiter.", value: "foo:ba", resource: "foo:bar", pass: true},
+		{matches: "Find value as equal to a resource string", value: "foo:bar", resource: "foo:bar", pass: true},
+		{matches: "Find value as prefix of resource string", value: "foo:bar", resource: "foo:bar:baz", pass: true},
+		{matches: "Find value not being prefix of resource string", value: "foo:baz", resource: "foo:bar:baz", pass: false},
+		{matches: "Find value as afix of resource string", value: "bar:baz", resource: "foo:bar:baz", pass: true},
+		{matches: "Find value not being afix of resource string", value: "foo:baz", resource: "foo:bar:baz", pass: false},
+		{matches: "Find value as in middle of resource string", value: "bar", resource: "foo:bar:baz", pass: true},
+		{matches: "Find value not being in middle of resource string", value: "bar", resource: "baz:foo:baz", pass: false},
 
 		//Erroneous requests:
 		{matches: "value missing from request", delimiter: ":", value: "", resource: "abc", pass: false},
-		{matches: "delimiter missing from request", delimiter: "", value: "test", resource: "abc", pass: false},
 	} {
 		condition := &ResourceContainsCondition{}
 
@@ -60,7 +57,7 @@ func TestResourceContains(t *testing.T) {
 
 		//The context:
 		resourceFilter := make(map[string]interface{})
-		if(len(c.delimiter) > 0){
+		if len(c.delimiter) > 0 {
 			resourceFilter["delimiter"] = c.delimiter
 		}
 		resourceFilter["value"] = c.value

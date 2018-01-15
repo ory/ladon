@@ -1,8 +1,6 @@
 package ladon
 
-import (
-	"regexp"
-)
+import "strings"
 
 // ResourceContainsCondition is fulfilled if the context matches a substring within the resource name
 type ResourceContainsCondition struct{}
@@ -23,14 +21,14 @@ func (c *ResourceContainsCondition) Fulfills(value interface{}, r *Request) bool
 	//If no delimiter provided default to "equals" check
 	delimiterString, ok := filter["delimiter"].(string)
 	if !ok || len(delimiterString) < 1 {
-		delimiterString=""
+		delimiterString = ""
 	}
 
 	// Append delimiter to strings to prevent delim+1 being interpreted as delim+10 being present
 	filterValue := delimiterString + valueString + delimiterString
-	resourceString := r.Resource + delimiterString
+	resourceString := delimiterString + r.Resource + delimiterString
 
-	matches, _ := regexp.MatchString(filterValue, resourceString)
+	matches := strings.Contains(resourceString, filterValue)
 	return matches
 
 }
