@@ -493,12 +493,12 @@ alternatively:
 
 > The delimiter is optional *but needed for* the condition to be able to separate
 >
-> {value: `myrn:fo`, delimiter: `:`} from {value: `myrn:foo`, delimiter: `:`} or
-> {value: `myid:12`} from {value: `myid:123`}.
+> `{value: "myrn:fo", delimiter: ":"}` from `{value: "myrn:foo", delimiter: ":"}` or
+> `{value: "myid:12"}` from `{value: "myid:123"}`.
 >
-> *I.e.:* The Value foo:bar matches foo:bar but not foo:bara nor foo:bara:baz.
+> *I.e.:* The Value `foo:bar` matches `foo:bar` but not `foo:bara` nor `foo:bara:baz`.
 >
-> This condition is fulfilled by this (allow for all resources containing part:north):
+> This condition is fulfilled by this (allow for all resources containing `part:north`):
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
@@ -511,7 +511,7 @@ var err = warden.IsAllowed(&ladon.Request{
 }
 ```
 
-or ( allow all resources with city:laholm)
+or ( allow all resources with `city:laholm`)
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
@@ -524,7 +524,7 @@ var err = warden.IsAllowed(&ladon.Request{
 }
 ```
 
-but not (allow for all resources containing part:west, the resource does not contain part:west):
+but not (allow for all resources containing `part:west`, the resource does not contain `part:west`):
 
 ```go
 var err = warden.IsAllowed(&ladon.Request{
