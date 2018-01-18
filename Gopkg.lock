@@ -121,6 +121,12 @@
   version = "v3.1.0"
 
 [[projects]]
+  name = "github.com/ory/pagination"
+  packages = ["."]
+  revision = "abd7ec33a01fdec119267449c8f3bad187f881f6"
+  version = "v0.0.1"
+
+[[projects]]
   name = "github.com/pborman/uuid"
   packages = ["."]
   revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
@@ -183,6 +189,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3e779efabb954d86941cee49dd6849c396faecf596da0de2cb7630b06a63009f"
+  inputs-digest = "ddc10960fe98c2bffe0dbc5cea519c599973bfa9f5c1a5d3f224455e7566b94b"
   solver-name = "gps-cdcl"
   solver-version = 1
