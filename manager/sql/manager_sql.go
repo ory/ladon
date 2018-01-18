@@ -278,11 +278,25 @@ LEFT JOIN ladon_subject as subject ON rs.subject = subject.id
 LEFT JOIN ladon_action as action ON ra.action = action.id
 LEFT JOIN ladon_resource as resource ON rr.resource = resource.id
 
-`
+WHERE p.id=?`
+
+var getAllQuery = `SELECT
+	p.id, p.effect, p.conditions, p.description,
+	subject.template as subject, resource.template as resource, action.template as action
+FROM
+	(SELECT * from ladon_policy ORDER BY id LIMIT ? OFFSET ?) as p
+
+LEFT JOIN ladon_policy_subject_rel as rs ON rs.policy = p.id
+LEFT JOIN ladon_policy_action_rel as ra ON ra.policy = p.id
+LEFT JOIN ladon_policy_resource_rel as rr ON rr.policy = p.id
+
+LEFT JOIN ladon_subject as subject ON rs.subject = subject.id
+LEFT JOIN ladon_action as action ON ra.action = action.id
+LEFT JOIN ladon_resource as resource ON rr.resource = resource.id`
 
 // GetAll returns all policies
 func (s *SQLManager) GetAll(limit, offset int64) (Policies, error) {
-	query := s.db.Rebind(getQuery + "ORDER BY p.id LIMIT ? OFFSET ?")
+	query := s.db.Rebind(getAllQuery)
 
 	rows, err := s.db.Query(query, limit, offset)
 	if err != nil {
@@ -295,7 +309,7 @@ func (s *SQLManager) GetAll(limit, offset int64) (Policies, error) {
 
 // Get retrieves a policy.
 func (s *SQLManager) Get(id string) (Policy, error) {
-	query := s.db.Rebind(getQuery + "WHERE p.id=?")
+	query := s.db.Rebind(getQuery)
 
 	rows, err := s.db.Query(query, id)
 	if err == sql.ErrNoRows {
