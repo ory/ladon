@@ -68,13 +68,17 @@ func TestMarshalUnmarshal(t *testing.T) {
 		"options": {
 			"matches": ".*"
 		}
-	}
+	},
+	"resourceFilter": {
+			"type": "ResourceContainsCondition"
+		}
 }`), &cs))
 
-	require.Len(t, cs, 3)
+	require.Len(t, cs, 4)
 	assert.IsType(t, &EqualsSubjectCondition{}, cs["owner"])
 	assert.IsType(t, &CIDRCondition{}, cs["clientIP"])
 	assert.IsType(t, &StringMatchCondition{}, cs["role"])
+	assert.IsType(t, &ResourceContainsCondition{}, cs["resourceFilter"])
 }
 
 func TestUnmarshalFails(t *testing.T) {
