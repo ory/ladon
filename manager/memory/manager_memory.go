@@ -46,14 +46,16 @@ func (m *MemoryManager) Update(policy Policy) error {
 func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 	ps := make(Policies, len(m.Policies))
 	i := 0
+
 	for _, p := range m.Policies {
 		ps[i] = p
 		i++
 	}
 
-	if offset+limit > int64(len(m.Policies)) {
-		limit = int64(len(m.Policies))
-		offset = 0
+	if offset > int64(len(ps)) {
+		return Policies{}, nil
+	} else if offset + limit > int64(len(ps)) {
+		return ps[offset:], nil
 	}
 
 	return ps[offset:limit], nil
