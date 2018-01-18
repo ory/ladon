@@ -25,6 +25,7 @@ import (
 	"github.com/ory/ladon/integration"
 	. "github.com/ory/ladon/manager/memory"
 	. "github.com/ory/ladon/manager/sql"
+	"github.com/stretchr/testify/require"
 )
 
 var managers = map[string]Manager{}
@@ -78,14 +79,56 @@ func connectMySQL(wg *sync.WaitGroup) {
 	}
 }
 
-func TestGetErrors(t *testing.T) {
-	for k, s := range managers {
-		t.Run("manager="+k, TestHelperGetErrors(s))
-	}
-}
+func TestManagers(t *testing.T) {
+	t.Run("type=get errors", func(t *testing.T) {
+		for k, s := range managers {
+			t.Run("manager="+k, TestHelperGetErrors(s))
+		}
+	})
 
-func TestCreateGetDelete(t *testing.T) {
-	for k, s := range managers {
-		t.Run(fmt.Sprintf("manager=%s", k), TestHelperCreateGetDelete(s))
-	}
+	t.Run("type=CRUD", func(t *testing.T) {
+		for k, s := range managers {
+			t.Run(fmt.Sprintf("manager=%s", k), TestHelperCreateGetDelete(s))
+		}
+	})
+
+	t.Run("type=find", func(t *testing.T) {
+		for k, s := range map[string]Manager{
+			"postgres": managers["postgres"],
+			"mysql":    managers["mysql"],
+		} {
+			t.Run(fmt.Sprintf("manager=%s", k), TestHelperFindPoliciesForSubject(k, s))
+		}
+	})
+
+	t.Run("type=migrate 6 to 7", func(t *testing.T) {
+		for k, s := range map[string]ManagerMigrator{
+			"postgres": migrators["postgres"],
+			"mysql":    migrators["mysql"],
+		} {
+			t.Run(fmt.Sprintf("manager=%s", k), func(t *testing.T) {
+
+				// This create part is only necessary to populate the data store with some values. If you
+				// migrate you won't need this
+				for _, c := range TestManagerPolicies {
+					t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
+						require.NoError(t, s.Create(c))
+					})
+				}
+
+				require.NoError(t, s.Migrate())
+
+				for _, c := range TestManagerPolicies {
+					t.Run(fmt.Sprintf("fetch=%s", k), func(t *testing.T) {
+						get, err := s.GetManager().Get(c.GetID())
+						require.NoError(t, err)
+
+						AssertPolicyEqual(t, c, get)
+
+						require.NoError(t, s.GetManager().Delete(c.GetID()))
+					})
+				}
+			})
+		}
+	})
 }

@@ -300,7 +300,6 @@ func TestHelperGetErrors(s Manager) func(t *testing.T) {
 
 func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 	return func(t *testing.T) {
-
 		for i, c := range TestManagerPolicies {
 			t.Run(fmt.Sprintf("case=%d/id=%s/type=create", i, c.GetID()), func(t *testing.T) {
 				_, err := s.Get(c.GetID())
@@ -334,17 +333,23 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 		}
 
 		t.Run("type=query-all", func(t *testing.T) {
-			pols, err := s.GetAll(100, int64(len(TestManagerPolicies)-1))
-			require.NoError(t, err)
-			assert.Len(t, pols, 1)
+			count := int64(len(TestManagerPolicies))
 
-			pols, err = s.GetAll(100, int64(len(TestManagerPolicies)))
-			require.NoError(t, err)
-			assert.Len(t, pols, 0)
-
-			pols, err = s.GetAll(100, 0)
+			pols, err := s.GetAll(100, 0)
 			require.NoError(t, err)
 			assert.Len(t, pols, len(TestManagerPolicies))
+
+			pols4, err := s.GetAll(1, 0)
+			require.NoError(t, err)
+			assert.Len(t, pols4, 1)
+
+			pols2, err := s.GetAll(100, count-1)
+			require.NoError(t, err)
+			assert.Len(t, pols2, 1)
+
+			pols3, err := s.GetAll(100, count)
+			require.NoError(t, err)
+			assert.Len(t, pols3, 0)
 
 			found := map[string]int{}
 			for _, got := range pols {
@@ -368,6 +373,5 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 				assert.Error(t, err)
 			})
 		}
-
 	}
 }

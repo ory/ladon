@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	. "github.com/ory/ladon"
+	"github.com/ory/pagination"
 	"github.com/pkg/errors"
 )
 
@@ -52,13 +53,8 @@ func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 		i++
 	}
 
-	if offset > int64(len(ps)) {
-		return Policies{}, nil
-	} else if offset + limit > int64(len(ps)) {
-		return ps[offset:], nil
-	}
-
-	return ps[offset:limit], nil
+	start, end := pagination.Index(int(limit), int(offset), len(ps))
+	return ps[start:end], nil
 }
 
 // Create a new pollicy to MemoryManager.
