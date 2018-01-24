@@ -68,7 +68,7 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 go get github.com/ory/ladon
 ```
 
-We recommend to use [Glide](https://github.com/Masterminds/glide) for dependency management. Ladon uses [semantic
+We recommend to use [Dep](https://github.com/golang/dep) for dependency management. Ladon uses [semantic
 versioning](http://semver.org/) and versions beginning with zero (`0.1.2`) might introduce backwards compatibility
 breaks with [each minor version](http://semver.org/#how-should-i-deal-with-revisions-in-the-0yz-initial-development-phase).
 
