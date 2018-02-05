@@ -381,7 +381,7 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 
 			for _, f := range found {
 				//This assert is supposed to fail
-				assert.Equal(t, 0, f)
+				assert.Equal(t, 1, f)
 			}
 		})
 
