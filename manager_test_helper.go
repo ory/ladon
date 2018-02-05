@@ -16,6 +16,7 @@ package ladon
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/pborman/uuid"
@@ -146,6 +147,23 @@ var TestManagerPolicies = []*DefaultPolicy{
 			},
 			"owner": &EqualsSubjectCondition{},
 		},
+	},
+	//Two new policies which do not persist in MySQL correctly
+	{
+		ID:          uuid.New(),
+		Description: "A failed policy",
+		Subjects:    []string{"supplier"},
+		Effect:      AllowAccess,
+		Resources:   []string{"product:<.*>"},
+		Actions:     []string{"update"},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "Another failed policy",
+		Subjects:    []string{"buyer"},
+		Effect:      AllowAccess,
+		Resources:   []string{"products:attributeGroup:<.*>"},
+		Actions:     []string{"create"},
 	},
 }
 
@@ -354,14 +372,16 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 			found := map[string]int{}
 			for _, got := range pols {
 				for _, expect := range TestManagerPolicies {
-					if got.GetID() == expect.GetID() {
+					//This is a modified equality check
+					if got.GetID() == expect.GetID() && reflect.DeepEqual(got.GetResources(), expect.GetResources()) && reflect.DeepEqual(got.GetActions(), expect.GetActions()) {
 						found[got.GetID()]++
 					}
 				}
 			}
 
 			for _, f := range found {
-				assert.Equal(t, 1, f)
+				//This assert is supposed to fail
+				assert.Equal(t, 0, f)
 			}
 		})
 
