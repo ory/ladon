@@ -44,7 +44,7 @@ func ConnectToMySQL() *sqlx.DB {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	resource, err := pool.Run("mysql", "5.6", []string{"MYSQL_ROOT_PASSWORD=secret"})
+	resource, err := pool.Run("mysql", "5.7.20", []string{"MYSQL_ROOT_PASSWORD=secret"})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
