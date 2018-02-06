@@ -156,6 +156,7 @@ var TestManagerPolicies = []*DefaultPolicy{
 		Effect:      AllowAccess,
 		Resources:   []string{"product:<.*>"},
 		Actions:     []string{"update"},
+		Conditions:  Conditions{},
 	},
 	{
 		ID:          uuid.New(),
@@ -164,6 +165,7 @@ var TestManagerPolicies = []*DefaultPolicy{
 		Effect:      AllowAccess,
 		Resources:   []string{"products:attributeGroup:<.*>"},
 		Actions:     []string{"create"},
+		Conditions:  Conditions{},
 	},
 }
 
