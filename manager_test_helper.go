@@ -372,6 +372,7 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 			assert.Len(t, pols3, 0)
 
 			found := map[string]int{}
+			assert.Len(t, found, len(TestManagerPolicies))
 			for _, got := range pols {
 				for _, expect := range TestManagerPolicies {
 					//This is a modified equality check
@@ -382,7 +383,7 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 			}
 
 			for _, f := range found {
-				//This assert is supposed to fail
+				//This assert is supposed to pass
 				assert.Equal(t, 1, f)
 			}
 		})
