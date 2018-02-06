@@ -375,7 +375,7 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 			for _, got := range pols {
 				for _, expect := range TestManagerPolicies {
 					if got.GetID() == expect.GetID() {
-						assert.True(t, reflect.DeepEqual(expect, got))
+						assert.ObjectsAreEqualValues(t, reflect.DeepEqual(expect, got))
 						found[got.GetID()]++
 					}
 				}
