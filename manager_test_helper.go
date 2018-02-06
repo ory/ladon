@@ -374,12 +374,20 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 			found := map[string]int{}
 			for _, got := range pols {
 				for _, expect := range TestManagerPolicies {
-					//This is a modified equality check
-					if got.GetID() == expect.GetID() && reflect.DeepEqual(got.GetResources(), expect.GetResources()) && reflect.DeepEqual(got.GetActions(), expect.GetActions()) {
+					if got.GetID() == expect.GetID() {
+						assert.True(t, reflect.DeepEqual(expect, got))
 						found[got.GetID()]++
 					}
 				}
 			}
+			// for _, got := range pols {
+			// 	for _, expect := range TestManagerPolicies {
+			// 		//This is a modified equality check
+			// 		if got.GetID() == expect.GetID() && reflect.DeepEqual(got.GetResources(), expect.GetResources()) && reflect.DeepEqual(got.GetActions(), expect.GetActions()) {
+			// 			found[got.GetID()]++
+			// 		}
+			// 	}
+			// }
 			assert.Len(t, found, len(TestManagerPolicies))
 
 			for _, f := range found {
