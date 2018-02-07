@@ -16,6 +16,7 @@ package ladon
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/pborman/uuid"
@@ -146,6 +147,25 @@ var TestManagerPolicies = []*DefaultPolicy{
 			},
 			"owner": &EqualsSubjectCondition{},
 		},
+	},
+	//Two new policies which do not persist in MySQL correctly
+	{
+		ID:          uuid.New(),
+		Description: "A failed policy",
+		Subjects:    []string{"supplier"},
+		Effect:      AllowAccess,
+		Resources:   []string{"product:<.*>"},
+		Actions:     []string{"update"},
+		Conditions:  Conditions{},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "Another failed policy",
+		Subjects:    []string{"buyer"},
+		Effect:      AllowAccess,
+		Resources:   []string{"products:attributeGroup:<.*>"},
+		Actions:     []string{"create"},
+		Conditions:  Conditions{},
 	},
 }
 
@@ -355,12 +375,23 @@ func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
 			for _, got := range pols {
 				for _, expect := range TestManagerPolicies {
 					if got.GetID() == expect.GetID() {
+						assert.ObjectsAreEqualValues(t, reflect.DeepEqual(expect, got))
 						found[got.GetID()]++
 					}
 				}
 			}
+			// for _, got := range pols {
+			// 	for _, expect := range TestManagerPolicies {
+			// 		//This is a modified equality check
+			// 		if got.GetID() == expect.GetID() && reflect.DeepEqual(got.GetResources(), expect.GetResources()) && reflect.DeepEqual(got.GetActions(), expect.GetActions()) {
+			// 			found[got.GetID()]++
+			// 		}
+			// 	}
+			// }
+			assert.Len(t, found, len(TestManagerPolicies))
 
 			for _, f := range found {
+				//This assert is supposed to pass
 				assert.Equal(t, 1, f)
 			}
 		})
