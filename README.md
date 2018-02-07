@@ -591,15 +591,15 @@ func main() {
 ```go
 import "github.com/ory/ladon"
 import manager "github.com/ory/ladon/manager/sql"
-import "database/sql"
+import "github.com/jmoiron/sqlx"
 import _ "github.com/go-sql-driver/mysql"
 
 func main() {
-    db, err = sql.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
+    db, err = sqlx.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
     // Or, if using postgres:
     //  import _ "github.com/lib/pq"
     //
-    //  db, err = sql.Open("postgres", "postgres://foo:bar@localhost/ladon")
+    //  db, err = sqlx.Open("postgres", "postgres://foo:bar@localhost/ladon")
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
