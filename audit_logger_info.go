@@ -22,17 +22,17 @@ func (a *AuditLoggerInfo) LogRejectedAccessRequest(r *Request, p Policies, d Pol
 	if len(d) > 1 {
 		allowed := joinPoliciesNames(d[0 : len(d)-1])
 		denied := d[len(d)-1].GetID()
-		a.Logger.Printf("policies %s allow access, but policy %s forcefully denied it", allowed, denied)
+		a.logger().Printf("policies %s allow access, but policy %s forcefully denied it", allowed, denied)
 	} else if len(d) == 1 {
 		denied := d[len(d)-1].GetID()
-		a.Logger.Printf("policy %s forcefully denied the access", denied)
+		a.logger().Printf("policy %s forcefully denied the access", denied)
 	} else {
-		a.Logger.Printf("no policy allowed access")
+		a.logger().Printf("no policy allowed access")
 	}
 }
 
 func (a *AuditLoggerInfo) LogGrantedAccessRequest(r *Request, p Policies, d Policies) {
-	a.Logger.Printf("policies %s allow access", joinPoliciesNames(d))
+	a.logger().Printf("policies %s allow access", joinPoliciesNames(d))
 }
 
 func joinPoliciesNames(policies Policies) string {
