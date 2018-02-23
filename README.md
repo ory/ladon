@@ -562,8 +562,8 @@ func main() {
 #### Persistence
 
 Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
-this purpose with default implementations for In-Memory and SQL (PostgreSQL, MySQL). There are also adapters available
-written by the community [for Redis and RethinkDB](https://github.com/ory/ladon-community)
+this purpose with default implementations for In-Memory and SQL (PostgreSQL, MySQL) via [sqlx](github.com/jmoiron/sqlx). 
+There are also adapters available written by the community [for Redis and RethinkDB](https://github.com/ory/ladon-community)
 
 Let's take a look how to instantiate those:
 
@@ -595,18 +595,35 @@ import "github.com/jmoiron/sqlx"
 import _ "github.com/go-sql-driver/mysql"
 
 func main() {
-    db, err = sqlx.Open("mysql", "user:pass@tcp(127.0.0.1:3306)"")
+    // The database manager expects a sqlx.DB object
+    //
+    // For MySQL, be sure to include parseTime=true in the connection string
+    // You can find all of the supported MySQL connection string options for the
+    // driver at: https://github.com/go-sql-driver/mysql
+    //
+    db, err = sqlx.Open("mysql", "user:pass@tcp(127.0.0.1:3306)/?parseTime=true")
     // Or, if using postgres:
     //  import _ "github.com/lib/pq"
     //
     //  db, err = sqlx.Open("postgres", "postgres://foo:bar@localhost/ladon")
-	if err != nil {
-		log.Fatalf("Could not connect to database: %s", err)
-	}
+    if err != nil {
+      log.Fatalf("Could not connect to database: %s", err)
+    }
 
-    warden := ladon.Ladon{
+    warden := &ladon.Ladon{
         Manager: manager.NewSQLManager(db, nil),
     }
+
+    // You must call SQLManager.CreateSchemas(schema, table) before use
+    // to apply the necessary SQL migrations
+    //
+    // You can provide your own schema and table name or pass
+    // empty strings to use the default
+    n, err := warden.Manager.CreateSchemas("", "")
+    if err != nil {
+      log.Fatalf("Failed to create schemas: %s", err)
+    }
+    log.Printf("applied %d migrations", n)
 
     // ...
 }
