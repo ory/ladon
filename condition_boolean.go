@@ -1,5 +1,7 @@
 package ladon
 
+import "github.com/ory/ladon"
+
 /*
 BooleanCondition is used to determine if a boolean context matches an expected
 boolean condition.
