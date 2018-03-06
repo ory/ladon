@@ -374,6 +374,36 @@ var err = warden.IsAllowed(&ladon.Request{
 }
 ```
 
+##### [Boolean Condition](condition_boolean.go)
+
+Checks if the boolean value passed in the access request's context is identical with the expected boolean value in the policy
+```go
+var pol = &ladon.DefaultPolicy{
+    Conditions: ladon.Conditions{
+        "some-arbitrary-key": &ladon.BooleanCondition{
+            BooleanValue: true,
+        }
+    },
+}
+```
+
+and would match in the following case:
+
+```go
+var err = warden.IsAllowed(&ladon.Request{
+    // ...
+    Context: &ladon.Context{
+        "some-arbitrary-key": true,
+    },
+})
+```
+
+This condition type is particularly useful if you need to assert a policy dynamically on resources for multiple subjects. For example, consider
+if you wanted to enforce policy that only allows individuals that own a resource to view that resource. You'd have to be able to create a Ladon
+policy that permits access to every resource for every subject that enters your system.
+
+With the Boolean Condition type, you can use conditional logic at runtime to create a match for a policy's condition.
+
 ##### [String Match Condition](condition_string_match.go)
 
 Checks if the value passed in the access request's context matches the regular expression that was given initially
