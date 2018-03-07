@@ -43,6 +43,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
     - [Conditions](#conditions)
       - [CIDR Condition](#cidr-condition)
       - [String Equal Condition](#string-equal-condition)
+      - [Boolean Condition](#boolean-condition)
       - [String Match Condition](#string-match-condition)
       - [Subject Condition](#subject-condition)
       - [String Pairs Equal Condition](#string-pairs-equal-condition)
