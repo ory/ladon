@@ -136,11 +136,16 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 		}
 	}
 
+	meta := "{}"
+	if policy.GetMeta() != "" {
+		meta = policy.GetMeta()
+	}
+
 	if _, ok := Migrations[s.database]; !ok {
 		return errors.Errorf("Database %s is not supported", s.database)
 	}
 
-	if _, err = tx.Exec(s.db.Rebind(Migrations[s.database].QueryInsertPolicy), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	if _, err = tx.Exec(s.db.Rebind(Migrations[s.database].QueryInsertPolicy), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions, meta); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -217,7 +222,7 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 		p.Subjects = []string{}
 		p.Resources = []string{}
 
-		if err := rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &subject, &resource, &action); err == sql.ErrNoRows {
+		if err := rows.Scan(&p.ID, &p.Effect, &conditions, &p.Description, &p.Meta, &subject, &resource, &action); err == sql.ErrNoRows {
 			return nil, NewErrResourceNotFound(err)
 		} else if err != nil {
 			return nil, errors.WithStack(err)
@@ -271,7 +276,7 @@ func scanRows(rows *sql.Rows) (Policies, error) {
 }
 
 var getQuery = `SELECT
-	p.id, p.effect, p.conditions, p.description,
+	p.id, p.effect, p.conditions, p.description, p.meta,
 	subject.template as subject, resource.template as resource, action.template as action
 FROM
 	ladon_policy as p
@@ -287,7 +292,7 @@ LEFT JOIN ladon_resource as resource ON rr.resource = resource.id
 WHERE p.id=?`
 
 var getAllQuery = `SELECT
-	p.id, p.effect, p.conditions, p.description,
+	p.id, p.effect, p.conditions, p.description, p.meta,
 	subject.template as subject, resource.template as resource, action.template as action
 FROM
 	(SELECT * from ladon_policy ORDER BY id LIMIT ? OFFSET ?) as p

@@ -136,9 +136,18 @@ var Migrations = map[string]Statements{
 						"DROP INDEX ladon_resource_compiled_idx",
 					},
 				},
+				{
+					Id: "4",
+					Up: []string{
+						"ALTER TABLE ladon_policy ADD COLUMN IF NOT EXISTS meta jsonb NOT NULL",
+					},
+					Down: []string{
+						"ALTER TABLE ladon_policy DROP COLUMN IF EXISTS meta",
+					},
+				},
 			},
 		},
-		QueryInsertPolicy:             `INSERT INTO ladon_policy(id, description, effect, conditions) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = $1)`,
+		QueryInsertPolicy:             `INSERT INTO ladon_policy(id, description, effect, conditions, meta) SELECT $1::varchar, $2, $3, $4, $5 WHERE NOT EXISTS (SELECT 1 FROM ladon_policy WHERE id = $1)`,
 		QueryInsertPolicyActions:      `INSERT INTO ladon_action (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_action WHERE id = $1)`,
 		QueryInsertPolicyActionsRel:   `INSERT INTO ladon_policy_action_rel (policy, action) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_action_rel WHERE policy = $1 AND action = $2)`,
 		QueryInsertPolicyResources:    `INSERT INTO ladon_resource (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_resource WHERE id = $1)`,
@@ -151,6 +160,7 @@ var Migrations = map[string]Statements{
 			p.effect,
 			p.conditions,
 			p.description,
+			p.meta,
 			subject.template AS subject,
 			resource.template AS resource,
 			action.template AS action
@@ -187,9 +197,18 @@ var Migrations = map[string]Statements{
 						"DROP INDEX ladon_resource_compiled_idx",
 					},
 				},
+				{
+					Id: "4",
+					Up: []string{
+						"ALTER TABLE ladon_policy ADD COLUMN IF NOT EXISTS meta longtext NOT NULL",
+					},
+					Down: []string{
+						"ALTER TABLE ladon_policy DROP COLUMN meta",
+					},
+				},
 			},
 		},
-		QueryInsertPolicy:             `INSERT IGNORE INTO ladon_policy (id, description, effect, conditions) VALUES(?,?,?,?)`,
+		QueryInsertPolicy:             `INSERT IGNORE INTO ladon_policy (id, description, effect, conditions, meta) VALUES(?,?,?,?,?)`,
 		QueryInsertPolicyActions:      `INSERT IGNORE INTO ladon_action (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
 		QueryInsertPolicyActionsRel:   `INSERT IGNORE INTO ladon_policy_action_rel (policy, action) VALUES(?,?)`,
 		QueryInsertPolicyResources:    `INSERT IGNORE INTO ladon_resource (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
@@ -202,6 +221,7 @@ var Migrations = map[string]Statements{
 			p.effect,
 			p.conditions,
 			p.description,
+			p.meta,
 			subject.template AS subject,
 			resource.template AS resource,
 			action.template AS action
