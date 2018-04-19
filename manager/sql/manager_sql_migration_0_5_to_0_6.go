@@ -44,7 +44,7 @@ func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) GetManager() ladon.Man
 
 // Get retrieves a policy.
 func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Migrate() error {
-	rows, err := s.DB.Query(s.DB.Rebind("SELECT id, description, effect, conditions FROM ladon_policy"))
+	rows, err := s.DB.Query(s.DB.Rebind("SELECT id, description, effect, conditions, meta FROM ladon_policy"))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -55,7 +55,7 @@ func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Migrate() error {
 		var p DefaultPolicy
 		var conditions []byte
 
-		if err := rows.Scan(&p.ID, &p.Description, &p.Effect, &conditions); err != nil {
+		if err := rows.Scan(&p.ID, &p.Description, &p.Effect, &conditions, &p.Meta); err != nil {
 			return errors.WithStack(err)
 		}
 
@@ -131,9 +131,14 @@ func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Create(policy Policy) 
 		}
 	}
 
+	meta := "{}"
+	if policy.GetMeta() != "" {
+		meta = policy.GetMeta()
+	}
+
 	if tx, err := s.DB.Begin(); err != nil {
 		return errors.WithStack(err)
-	} else if _, err = tx.Exec(s.DB.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions) VALUES (?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions); err != nil {
+	} else if _, err = tx.Exec(s.DB.Rebind("INSERT INTO ladon_policy (id, description, effect, conditions, meta) VALUES (?, ?, ?, ?, ?)"), policy.GetID(), policy.GetDescription(), policy.GetEffect(), conditions, meta); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return errors.WithStack(err)
 		}
