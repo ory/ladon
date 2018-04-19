@@ -139,7 +139,7 @@ var Migrations = map[string]Statements{
 				{
 					Id: "4",
 					Up: []string{
-						"ALTER TABLE ladon_policy ADD COLUMN IF NOT EXISTS meta jsonb NOT NULL",
+						"ALTER TABLE ladon_policy ADD COLUMN meta jsonb",
 					},
 					Down: []string{
 						"ALTER TABLE ladon_policy DROP COLUMN IF EXISTS meta",
@@ -200,7 +200,7 @@ var Migrations = map[string]Statements{
 				{
 					Id: "4",
 					Up: []string{
-						"ALTER TABLE ladon_policy ADD COLUMN meta longtext NOT NULL",
+						"ALTER TABLE ladon_policy ADD COLUMN meta longtext",
 					},
 					Down: []string{
 						"ALTER TABLE ladon_policy DROP COLUMN meta",
