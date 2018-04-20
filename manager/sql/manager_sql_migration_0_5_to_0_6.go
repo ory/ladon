@@ -131,8 +131,8 @@ func (s *SQLManagerMigrateFromMajor0Minor6ToMajor0Minor7) Create(policy Policy) 
 		}
 	}
 
-	meta := "{}"
-	if policy.GetMeta() != "" {
+	meta := []byte("{}")
+	if policy.GetMeta() != nil {
 		meta = policy.GetMeta()
 	}
 

@@ -136,8 +136,8 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 		}
 	}
 
-	meta := "{}"
-	if policy.GetMeta() != "" {
+	meta := []byte("{}")
+	if policy.GetMeta() != nil {
 		meta = policy.GetMeta()
 	}
 

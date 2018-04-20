@@ -55,8 +55,8 @@ type Policy interface {
 	// GetConditions returns the policies conditions.
 	GetConditions() Conditions
 
-	// GetMeta returns the policies metadata as serialized json.
-	GetMeta() string
+	// GetMeta returns the policies arbitrary metadata set by the user.
+	GetMeta() []byte
 
 	// GetStartDelimiter returns the delimiter which identifies the beginning of a regular expression.
 	GetStartDelimiter() byte
@@ -74,7 +74,7 @@ type DefaultPolicy struct {
 	Resources   []string   `json:"resources" gorethink:"resources"`
 	Actions     []string   `json:"actions" gorethink:"actions"`
 	Conditions  Conditions `json:"conditions" gorethink:"conditions"`
-	Meta        string     `json:"meta" gorethink:"meta"`
+	Meta        []byte     `json:"meta" gorethink:"meta"`
 }
 
 // UnmarshalJSON overwrite own policy with values of the given in policy in JSON format
@@ -87,7 +87,7 @@ func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
 		Resources   []string   `json:"resources" gorethink:"resources"`
 		Actions     []string   `json:"actions" gorethink:"actions"`
 		Conditions  Conditions `json:"conditions" gorethink:"conditions"`
-		Meta        string     `json:"meta" gorethink:"meta"`
+		Meta        []byte     `json:"meta" gorethink:"meta"`
 	}{
 		Conditions: Conditions{},
 	}
@@ -149,8 +149,8 @@ func (p *DefaultPolicy) GetConditions() Conditions {
 	return p.Conditions
 }
 
-// GetMeta returns the policies metadata as serialized json.
-func (p *DefaultPolicy) GetMeta() string {
+// GetMeta returns the policies arbitrary metadata set by the user.
+func (p *DefaultPolicy) GetMeta() []byte {
 	return p.Meta
 }
 
