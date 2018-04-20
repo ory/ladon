@@ -109,6 +109,15 @@ func (p *DefaultPolicy) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalMeta parses the policies []byte encoded metadata and stores the result in the value pointed to by v.
+func (p *DefaultPolicy) UnmarshalMeta(v interface{}) error {
+	if err := json.Unmarshal(p.Meta, &v); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
 // GetID returns the policies id.
 func (p *DefaultPolicy) GetID() string {
 	return p.ID
