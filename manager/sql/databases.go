@@ -200,7 +200,7 @@ var Migrations = map[string]Statements{
 				{
 					Id: "4",
 					Up: []string{
-						"ALTER TABLE ladon_policy ADD COLUMN meta longtext",
+						"ALTER TABLE ladon_policy ADD COLUMN meta text",
 					},
 					Down: []string{
 						"ALTER TABLE ladon_policy DROP COLUMN meta",
