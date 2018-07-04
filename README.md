@@ -747,3 +747,10 @@ Ladon does not use reflection for matching conditions to their appropriate struc
 ```sh
 mockgen -package ladon_test -destination manager_mock_test.go github.com/ory/ladon Manager
 ```
+
+## Third Party Libraries
+By implementing the warden.Manager it is possible to create your own adapters to persist data in a datastore of your choice. Below are a list of third party implementations.
+
+- [Redis and RethinkDB](https://github.com/ory/ladon-community)
+- [CockroachDB](https://github.com/wehco/ladon-crdb)
+- [sql.DB](https://github.com/wirepair/ladonsecuritymanager)
