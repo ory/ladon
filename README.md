@@ -725,11 +725,7 @@ significantly for memory manager implementations.
 4. Only one query per look up is executed.
 5. If no regular expression is used, a simple equal match is done in SQL back-ends.
 
-You will get the best performance with the in-memory manager. The SQL adapters perform about
-1000:1 compared to the in-memory solution. Please note that these
-tests where in laboratory environments with Docker, without an SSD, and single-threaded. You might get better
-results on your system. We are thinking about introducing It would be possible a simple cache strategy such as
-LRU with a maximum age to further reduce runtime complexity.
+You will get the best performance with the in-memory manager. The SQL adapters perform about 1000:1 compared to the in-memory solution. Please note that these tests where in laboratory environments with Docker, without an SSD, and single-threaded. You might get better results on your system. We are thinking about introducing simple cache strategies such as LRU with a maximum age to further reduce runtime complexity.
 
 We are also considering to offer different matching strategies (e.g. wildcard match) in the future, which will perform better
 with SQL databases. If you have ideas or suggestions, leave us an issue.
