@@ -31,7 +31,8 @@ type Statements struct {
 	QueryInsertPolicyResourcesRel string
 	QueryInsertPolicySubjects     string
 	QueryInsertPolicySubjectsRel  string
-	QueryRequestCandidates        string
+	QueryPoliciesForSubject       string
+	QueryPoliciesForResource      string
 }
 
 var sharedMigrations = []*migrate.Migration{
@@ -154,7 +155,7 @@ var Migrations = map[string]Statements{
 		QueryInsertPolicyResourcesRel: `INSERT INTO ladon_policy_resource_rel (policy, resource) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_resource_rel WHERE policy = $1 AND resource = $2)`,
 		QueryInsertPolicySubjects:     `INSERT INTO ladon_subject (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_subject WHERE id = $1)`,
 		QueryInsertPolicySubjectsRel:  `INSERT INTO ladon_policy_subject_rel (policy, subject) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_subject_rel WHERE policy = $1 AND subject = $2)`,
-		QueryRequestCandidates: `
+		QueryPoliciesForSubject: `
 		SELECT
 			p.id,
 			p.effect,
@@ -178,6 +179,30 @@ var Migrations = map[string]Statements{
 			(subject.has_regex IS NOT TRUE AND subject.template = $1)
 			OR
 			(subject.has_regex IS TRUE AND $2 ~ subject.compiled)`,
+		QueryPoliciesForResource: `
+		SELECT
+			p.id,
+			p.effect,
+			p.conditions,
+			p.description,
+			p.meta,
+			subject.template AS subject,
+			resource.template AS resource,
+			action.template AS action
+		FROM
+			ladon_policy AS p
+
+			INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
+			LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
+			LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
+
+			INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
+			LEFT JOIN ladon_action AS action ON ra.action = action.id
+			LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id
+		WHERE
+			(resource.has_regex IS NOT TRUE AND resource.template = $1)
+			OR
+			(resource.has_regex IS TRUE AND $2 ~ resource.compiled)`,
 	},
 	"mysql": {
 		Migrations: &migrate.MemoryMigrationSource{
@@ -215,7 +240,7 @@ var Migrations = map[string]Statements{
 		QueryInsertPolicyResourcesRel: `INSERT IGNORE INTO ladon_policy_resource_rel (policy, resource) VALUES(?,?)`,
 		QueryInsertPolicySubjects:     `INSERT IGNORE INTO ladon_subject (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
 		QueryInsertPolicySubjectsRel:  `INSERT IGNORE INTO ladon_policy_subject_rel (policy, subject) VALUES(?,?)`,
-		QueryRequestCandidates: `
+		QueryPoliciesForSubject: `
 		SELECT
 			p.id,
 			p.effect,
@@ -239,5 +264,29 @@ var Migrations = map[string]Statements{
 			(subject.has_regex = 0 AND subject.template = ?)
 			OR
 			(subject.has_regex = 1 AND ? REGEXP BINARY subject.compiled)`,
+		QueryPoliciesForResource: `
+		SELECT
+			p.id,
+			p.effect,
+			p.conditions,
+			p.description,
+			p.meta,
+			subject.template AS subject,
+			resource.template AS resource,
+			action.template AS action
+		FROM
+			ladon_policy AS p
+
+			INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
+			LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
+			LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
+
+			INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
+			LEFT JOIN ladon_action AS action ON ra.action = action.id
+			LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id
+		WHERE
+			(resource.has_regex = 0 AND resource.template = ?)
+			OR
+			(resource.has_regex = 1 AND ? REGEXP BINARY resource.compiled)`,
 	},
 }
