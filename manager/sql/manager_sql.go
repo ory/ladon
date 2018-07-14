@@ -197,10 +197,8 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 	return nil
 }
 
-func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
-	query := Migrations[s.database].QueryRequestCandidates
-
-	rows, err := s.db.Query(s.db.Rebind(query), r.Subject, r.Subject)
+func (s *SQLManager) findPolicies(query string, args ...interface{}) (Policies, error) {
+	rows, err := s.db.Query(query, args...)
 	if err == sql.ErrNoRows {
 		return nil, NewErrResourceNotFound(err)
 	} else if err != nil {
@@ -209,6 +207,20 @@ func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
 	defer rows.Close()
 
 	return scanRows(rows)
+}
+
+func (s *SQLManager) FindRequestCandidates(r *Request) (Policies, error) {
+	return s.FindPoliciesForSubject(r.Subject)
+}
+
+func (s *SQLManager) FindPoliciesForSubject(subject string) (Policies, error) {
+	query := Migrations[s.database].QueryPoliciesForSubject
+	return s.findPolicies(s.db.Rebind(query), subject, subject)
+}
+
+func (s *SQLManager) FindPoliciesForResource(resource string) (Policies, error) {
+	query := Migrations[s.database].QueryPoliciesForResource
+	return s.findPolicies(s.db.Rebind(query), resource, resource)
 }
 
 func scanRows(rows *sql.Rows) (Policies, error) {

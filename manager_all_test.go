@@ -104,6 +104,7 @@ func TestManagers(t *testing.T) {
 			"mysql":    managers["mysql"],
 		} {
 			t.Run(fmt.Sprintf("manager=%s", k), TestHelperFindPoliciesForSubject(k, s))
+			t.Run(fmt.Sprintf("manager=%s", k), TestHelperFindPoliciesForResource(k, s))
 		}
 	})
 

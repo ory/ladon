@@ -227,6 +227,32 @@ var testPolicies = []*DefaultPolicy{
 			},
 		},
 	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"some"},
+		Effect:      AllowAccess,
+		Resources:   []string{"sqlmatch_resource"},
+		Actions:     []string{"create", "update", "delete"},
+		Conditions: Conditions{
+			"foo": &StringEqualCondition{
+				Equals: "foo",
+			},
+		},
+	},
+	{
+		ID:          uuid.New(),
+		Description: "description",
+		Subjects:    []string{"other"},
+		Effect:      AllowAccess,
+		Resources:   []string{"sql<.*>resource"},
+		Actions:     []string{"create", "update", "delete"},
+		Conditions: Conditions{
+			"foo": &StringEqualCondition{
+				Equals: "foo",
+			},
+		},
+	},
 }
 
 func TestHelperFindPoliciesForSubject(k string, s Manager) func(t *testing.T) {
@@ -262,6 +288,34 @@ func TestHelperFindPoliciesForSubject(k string, s Manager) func(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res, 1)
 		AssertPolicyEqual(t, testPolicies[0], res[0])
+	}
+}
+
+func TestHelperFindPoliciesForResource(k string, s Manager) func(t *testing.T) {
+	return func(t *testing.T) {
+		for _, c := range testPolicies {
+			t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
+				require.NoError(t, s.Create(c))
+			})
+		}
+
+		res, err := s.FindPoliciesForResource("sqlmatch_resource")
+		require.NoError(t, err)
+		require.Len(t, res, 2)
+
+		if testPolicies[len(testPolicies)-2].ID == res[0].GetID() {
+			AssertPolicyEqual(t, testPolicies[len(testPolicies)-2], res[0])
+			AssertPolicyEqual(t, testPolicies[len(testPolicies)-1], res[1])
+		} else {
+			AssertPolicyEqual(t, testPolicies[len(testPolicies)-2], res[1])
+			AssertPolicyEqual(t, testPolicies[len(testPolicies)-1], res[0])
+		}
+
+		res, err = s.FindPoliciesForResource("sqlamatch_resource")
+
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		AssertPolicyEqual(t, testPolicies[len(testPolicies)-1], res[0])
 	}
 }
 

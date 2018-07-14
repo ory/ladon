@@ -42,4 +42,14 @@ type Manager interface {
 	// a set that exactly matches the request, or a superset of it. If an error occurs, it returns nil and
 	// the error.
 	FindRequestCandidates(r *Request) (Policies, error)
+
+	// FindPoliciesForSubject returns policies that could match the subject. It either returns
+	// a set of policies that applies to the subject, or a superset of it.
+	// If an error occurs, it returns nil and the error.
+	FindPoliciesForSubject(subject string) (Policies, error)
+
+	// FindPoliciesForResource returns policies that could match the resource. It either returns
+	// a set of policies that apply to the resource, or a superset of it.
+	// If an error occurs, it returns nil and the error.
+	FindPoliciesForResource(resource string) (Policies, error)
 }
