@@ -21,22 +21,22 @@
 package sql_test
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"log"
 	"testing"
 
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/ory/ladon"
 	"github.com/ory/ladon/manager/sql"
 	"github.com/ory/sqlcon/dockertest"
-	"github.com/ory/ladon"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
 )
 
 type testDB struct {
-	m *sql.SQLManager
+	m  *sql.SQLManager
 	db *sqlx.DB
 }
 
@@ -91,12 +91,12 @@ func TestCreateExplicitPolicy(t *testing.T) {
 	for k, v := range managers {
 		id := "test-explicit"
 		p := &ladon.DefaultPolicy{
-			Actions: []string{"view", "edit"},
+			Actions:     []string{"view", "edit"},
 			Description: "An explicit (non-regex) test policy",
-			Effect: ladon.AllowAccess,
-			ID: id,
-			Resources: []string{"blog:post:1"},
-			Subjects: []string{"otto"},
+			Effect:      ladon.AllowAccess,
+			ID:          id,
+			Resources:   []string{"blog:post:1"},
+			Subjects:    []string{"otto"},
 		}
 		err := v.m.Create(p)
 		require.NoError(t, err)
@@ -108,12 +108,12 @@ func TestCreateRegexPolicy(t *testing.T) {
 	for k, v := range managers {
 		id := "test-regex"
 		p := &ladon.DefaultPolicy{
-			Actions: []string{"<(view|edit)>"},
+			Actions:     []string{"<(view|edit)>"},
 			Description: "An regex test policy",
-			Effect: ladon.AllowAccess,
-			ID: id,
-			Resources: []string{"blog:post:<.*>"},
-			Subjects: []string{"<(otto|hugo)>"},
+			Effect:      ladon.AllowAccess,
+			ID:          id,
+			Resources:   []string{"blog:post:<.*>"},
+			Subjects:    []string{"<(otto|hugo)>"},
 		}
 		err := v.m.Create(p)
 		require.NoError(t, err)
