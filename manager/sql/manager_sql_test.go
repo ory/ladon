@@ -33,6 +33,7 @@ import (
 	"github.com/ory/ladon/manager/sql"
 	"github.com/ory/sqlcon/dockertest"
 	"github.com/stretchr/testify/require"
+	"sync"
 )
 
 type testDB struct {
@@ -54,6 +55,7 @@ var queries = map[string]testQuery{
 }
 var policyRelations = []string{"action", "resource", "subject"}
 var managers = map[string]testDB{}
+var managersMutex = &sync.Mutex{}
 
 func TestMain(m *testing.M) {
 	runner := dockertest.Register()
@@ -69,7 +71,9 @@ func TestMain(m *testing.M) {
 				}
 				s := sql.NewSQLManager(db, nil)
 				s.CreateSchemas("", "")
+				managersMutex.Lock()
 				managers["postgres"] = testDB{m: s, db: db}
+				managersMutex.Unlock()
 			},
 			func() {
 				db, err := dockertest.ConnectToTestMySQL()
@@ -79,7 +83,9 @@ func TestMain(m *testing.M) {
 				}
 				s := sql.NewSQLManager(db, nil)
 				s.CreateSchemas("", "")
+				managersMutex.Lock()
 				managers["mysql"] = testDB{m: s, db: db}
+				managersMutex.Unlock()
 			},
 		})
 	}
