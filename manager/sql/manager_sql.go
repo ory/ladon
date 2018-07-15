@@ -185,7 +185,7 @@ func (s *SQLManager) create(policy Policy, tx *sqlx.Tx) (err error) {
 				return errors.WithStack(err)
 			}
 
-			if _, err := tx.Exec(s.db.Rebind(query), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) >= -1); err != nil {
+			if _, err := tx.Exec(s.db.Rebind(query), id, template, compiled.String(), strings.Index(template, string(policy.GetStartDelimiter())) > -1); err != nil {
 				return errors.WithStack(err)
 			}
 			if _, err := tx.Exec(s.db.Rebind(queryRel), policy.GetID(), id); err != nil {
