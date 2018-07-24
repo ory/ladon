@@ -20,7 +20,11 @@
 
 package sql
 
-import migrate "github.com/rubenv/sql-migrate"
+import (
+	"fmt"
+
+	migrate "github.com/rubenv/sql-migrate"
+)
 
 type Statements struct {
 	Migrations                    *migrate.MemoryMigrationSource
@@ -33,6 +37,50 @@ type Statements struct {
 	QueryInsertPolicySubjectsRel  string
 	QueryPoliciesForSubject       string
 	QueryPoliciesForResource      string
+}
+
+func createQueryPolicies(objectToQueryFor, db string) string {
+	if objectToQueryFor != "subject" && objectToQueryFor != "resource" {
+		panic(fmt.Sprintf("Cannot call createQueryPolicies for %s", objectToQueryFor))
+	}
+	var whereClause string
+	if db == "postgres" {
+		whereClause = fmt.Sprintf(`
+			WHERE
+				(%[1]s.has_regex IS NOT TRUE AND %[1]s.template = $1)
+				OR
+				(%[1]s.has_regex IS TRUE AND $2 ~ %[1]s.compiled)`,
+			objectToQueryFor)
+	} else if db == "mysql" {
+		whereClause = fmt.Sprintf(`
+			WHERE
+				(%[1]s.has_regex = 0 AND %[1]s.template = ?)
+				OR
+				(%[1]s.has_regex = 1 AND ? REGEXP BINARY %[1]s.compiled)`,
+			objectToQueryFor)
+	} else {
+		panic(fmt.Sprintf("Cannot call createQueryPolicies for db:%s", db))
+	}
+	return `
+			SELECT
+				p.id,
+				p.effect,
+				p.conditions,
+				p.description,
+				p.meta,
+				subject.template AS subject,
+				resource.template AS resource,
+				action.template AS action
+			FROM
+				ladon_policy AS p
+
+				INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
+				LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
+				LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
+
+				INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
+				LEFT JOIN ladon_action AS action ON ra.action = action.id
+				LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id` + whereClause
 }
 
 var sharedMigrations = []*migrate.Migration{
@@ -155,54 +203,8 @@ var Migrations = map[string]Statements{
 		QueryInsertPolicyResourcesRel: `INSERT INTO ladon_policy_resource_rel (policy, resource) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_resource_rel WHERE policy = $1 AND resource = $2)`,
 		QueryInsertPolicySubjects:     `INSERT INTO ladon_subject (id, template, compiled, has_regex) SELECT $1::varchar, $2, $3, $4 WHERE NOT EXISTS (SELECT 1 FROM ladon_subject WHERE id = $1)`,
 		QueryInsertPolicySubjectsRel:  `INSERT INTO ladon_policy_subject_rel (policy, subject) SELECT $1::varchar, $2::varchar WHERE NOT EXISTS (SELECT 1 FROM ladon_policy_subject_rel WHERE policy = $1 AND subject = $2)`,
-		QueryPoliciesForSubject: `
-		SELECT
-			p.id,
-			p.effect,
-			p.conditions,
-			p.description,
-			p.meta,
-			subject.template AS subject,
-			resource.template AS resource,
-			action.template AS action
-		FROM
-			ladon_policy AS p
-
-			INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
-			LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
-			LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
-
-			INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
-			LEFT JOIN ladon_action AS action ON ra.action = action.id
-			LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id
-		WHERE
-			(subject.has_regex IS NOT TRUE AND subject.template = $1)
-			OR
-			(subject.has_regex IS TRUE AND $2 ~ subject.compiled)`,
-		QueryPoliciesForResource: `
-		SELECT
-			p.id,
-			p.effect,
-			p.conditions,
-			p.description,
-			p.meta,
-			subject.template AS subject,
-			resource.template AS resource,
-			action.template AS action
-		FROM
-			ladon_policy AS p
-
-			INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
-			LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
-			LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
-
-			INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
-			LEFT JOIN ladon_action AS action ON ra.action = action.id
-			LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id
-		WHERE
-			(resource.has_regex IS NOT TRUE AND resource.template = $1)
-			OR
-			(resource.has_regex IS TRUE AND $2 ~ resource.compiled)`,
+		QueryPoliciesForSubject:       createQueryPolicies("subject", "postgres"),
+		QueryPoliciesForResource:      createQueryPolicies("resource", "postgres"),
 	},
 	"mysql": {
 		Migrations: &migrate.MemoryMigrationSource{
@@ -240,53 +242,7 @@ var Migrations = map[string]Statements{
 		QueryInsertPolicyResourcesRel: `INSERT IGNORE INTO ladon_policy_resource_rel (policy, resource) VALUES(?,?)`,
 		QueryInsertPolicySubjects:     `INSERT IGNORE INTO ladon_subject (id, template, compiled, has_regex) VALUES(?,?,?,?)`,
 		QueryInsertPolicySubjectsRel:  `INSERT IGNORE INTO ladon_policy_subject_rel (policy, subject) VALUES(?,?)`,
-		QueryPoliciesForSubject: `
-		SELECT
-			p.id,
-			p.effect,
-			p.conditions,
-			p.description,
-			p.meta,
-			subject.template AS subject,
-			resource.template AS resource,
-			action.template AS action
-		FROM
-			ladon_policy AS p
-
-			INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
-			LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
-			LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
-
-			INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
-			LEFT JOIN ladon_action AS action ON ra.action = action.id
-			LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id
-		WHERE
-			(subject.has_regex = 0 AND subject.template = ?)
-			OR
-			(subject.has_regex = 1 AND ? REGEXP BINARY subject.compiled)`,
-		QueryPoliciesForResource: `
-		SELECT
-			p.id,
-			p.effect,
-			p.conditions,
-			p.description,
-			p.meta,
-			subject.template AS subject,
-			resource.template AS resource,
-			action.template AS action
-		FROM
-			ladon_policy AS p
-
-			INNER JOIN ladon_policy_subject_rel AS rs ON rs.policy = p.id
-			LEFT JOIN ladon_policy_action_rel AS ra ON ra.policy = p.id
-			LEFT JOIN ladon_policy_resource_rel AS rr ON rr.policy = p.id
-
-			INNER JOIN ladon_subject AS subject ON rs.subject = subject.id
-			LEFT JOIN ladon_action AS action ON ra.action = action.id
-			LEFT JOIN ladon_resource AS resource ON rr.resource = resource.id
-		WHERE
-			(resource.has_regex = 0 AND resource.template = ?)
-			OR
-			(resource.has_regex = 1 AND ? REGEXP BINARY resource.compiled)`,
+		QueryPoliciesForSubject:       createQueryPolicies("subject", "mysql"),
+		QueryPoliciesForResource:      createQueryPolicies("resource", "mysql"),
 	},
 }
