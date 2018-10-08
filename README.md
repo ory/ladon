@@ -10,6 +10,20 @@
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
+---
+
+This repository has been archived. This has several reasons:
+
+- The SDK is feature-complete.
+- We encourage you to use [ORY Keto](https://github.com/ory/keto) which exposes the same capabilities as ORY Ladon via a REST API.
+- We are no longer using ORY Ladon internally.
+
+You can still use this library, just be aware that we are not supporting it any more. If you do use this library, we discourage you from using the SQL datastore implementation as [it has issues when many writes occur](https://github.com/ory/keto/issues/30) and may become slow when many policies are stored.
+
+If you are just getting started, we highly recommend checking out [ORY Keto](https://github.com/ory/keto). It works out of the box, implements several access control patterns (RBAC, ACL, ...), has better reporting and performance.
+
+---
+
 Ladon is a library written in [Go](https://golang.org) for access control policies, similar to [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control)
 or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list).
 In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control)
