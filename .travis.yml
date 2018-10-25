@@ -1,10 +1,6 @@
 sudo: required
 
-services:
-  - docker
-
 env:
-  - DOCKER_BIND_LOCALHOST=true
   - GO111MODULE=on
 
 language: go
