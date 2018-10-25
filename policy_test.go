@@ -25,9 +25,10 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/ory/ladon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/ory/ladon"
 )
 
 var policyConditions = Conditions{

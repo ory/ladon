@@ -10,27 +10,16 @@
 
 [Ladon](https://en.wikipedia.org/wiki/Ladon_%28mythology%29) is the serpent dragon protecting your resources.
 
----
-
-This repository has been archived. This has several reasons:
-
-- The SDK is feature-complete.
-- We encourage you to use [ORY Keto](https://github.com/ory/keto) which exposes the same capabilities as ORY Ladon via a REST API.
-- We are no longer using ORY Ladon internally.
-
-You can still use this library, just be aware that we are not supporting it any more. If you do use this library, we discourage you from using the SQL datastore implementation as [it has issues when many writes occur](https://github.com/ory/keto/issues/30) and may become slow when many policies are stored.
-
-If you are just getting started, we highly recommend checking out [ORY Keto](https://github.com/ory/keto). It works out of the box, implements several access control patterns (RBAC, ACL, ...), has better reporting and performance.
-
----
-
 Ladon is a library written in [Go](https://golang.org) for access control policies, similar to [Role Based Access Control](https://en.wikipedia.org/wiki/Role-based_access_control)
 or [Access Control Lists](https://en.wikipedia.org/wiki/Access_control_list).
 In contrast to [ACL](https://en.wikipedia.org/wiki/Access_control_list) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control)
 you get fine-grained access control with the ability to answer questions in complex environments such as multi-tenant or distributed applications
 and large organizations. Ladon is inspired by [AWS IAM Policies](http://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
 
-Ladon officially ships with storage adapters for SQL (officially supported: MySQL 5.5+, PostgreSQL 9.2+) and in-memory. Community adapters are available for [CockroachDB](https://github.com/wehco/ladon-crdb).
+Ladon officially ships with an exemplary in-memory storage implementations.
+Community-supported adapters are available for [CockroachDB](https://github.com/wehco/ladon-crdb).
+
+Ladon is now considered stable.
 
 ---
 
@@ -76,12 +65,14 @@ Please refer to [ory-am/dockertest](https://github.com/ory-am/dockertest) for mo
 
 ## Installation
 
+This library works with Go 1.11+.
+
 ```
+export GO111MODULE=on
 go get github.com/ory/ladon
 ```
 
-We recommend to use [Dep](https://github.com/golang/dep) for dependency management. Ladon uses [semantic
-versioning](http://semver.org/) and versions beginning with zero (`0.1.2`) might introduce backwards compatibility
+Ladon uses [semantic versioning](http://semver.org/) and versions beginning with zero (`0.1.2`) might introduce backwards compatibility
 breaks with [each minor version](http://semver.org/#how-should-i-deal-with-revisions-in-the-0yz-initial-development-phase).
 
 ## Concepts
@@ -604,8 +595,8 @@ func main() {
 #### Persistence
 
 Obviously, creating such a policy is not enough. You want to persist it too. Ladon ships an interface `ladon.Manager` for
-this purpose with default implementations for In-Memory and SQL (PostgreSQL, MySQL) via [sqlx](github.com/jmoiron/sqlx). 
-There are also adapters available written by the community [for Redis and RethinkDB](https://github.com/ory/ladon-community)
+this purpose. You have to implement that interface for persistence. An exemplary in-memory adapter can be found in
+[./manager/memory/manager_memory.go](./manager/memory/manager_memory.go):
 
 Let's take a look how to instantiate those:
 
@@ -623,49 +614,6 @@ func main() {
 		Manager: manager.NewMemoryManager(),
 	}
 	err := warden.Manager.Create(pol)
-
-    // ...
-}
-```
-
-**SQL** (officially supported)
-
-```go
-import "github.com/ory/ladon"
-import manager "github.com/ory/ladon/manager/sql"
-import "github.com/jmoiron/sqlx"
-import _ "github.com/go-sql-driver/mysql"
-
-func main() {
-    // The database manager expects a sqlx.DB object
-    //
-    // For MySQL, be sure to include parseTime=true in the connection string
-    // You can find all of the supported MySQL connection string options for the
-    // driver at: https://github.com/go-sql-driver/mysql
-    //
-    db, err = sqlx.Open("mysql", "user:pass@tcp(127.0.0.1:3306)/?parseTime=true")
-    // Or, if using postgres:
-    //  import _ "github.com/lib/pq"
-    //
-    //  db, err = sqlx.Open("postgres", "postgres://foo:bar@localhost/ladon")
-    if err != nil {
-      log.Fatalf("Could not connect to database: %s", err)
-    }
-
-    warden := &ladon.Ladon{
-        Manager: manager.NewSQLManager(db, nil),
-    }
-
-    // You must call SQLManager.CreateSchemas(schema, table) before use
-    // to apply the necessary SQL migrations
-    //
-    // You can provide your own schema and table name or pass
-    // empty strings to use the default
-    n, err := warden.Manager.CreateSchemas("", "")
-    if err != nil {
-      log.Fatalf("Failed to create schemas: %s", err)
-    }
-    log.Printf("applied %d migrations", n)
 
     // ...
 }
