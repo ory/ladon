@@ -25,6 +25,7 @@ package ladon_test
 
 import (
 	gomock "github.com/golang/mock/gomock"
+
 	ladon "github.com/ory/ladon"
 )
 

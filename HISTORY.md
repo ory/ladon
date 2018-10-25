@@ -14,6 +14,13 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## 1.0.0
+
+The SQL storage implementation has been removed. The reason being that it had serious scalability issues which could
+cause trouble in high-throughput environments.
+
+Everything else stays the same, ORY Ladon is now feature-complete.
+
 ## 0.8.0
 
 Managers now must implement `Update(policy Policy) error`.

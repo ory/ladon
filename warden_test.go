@@ -25,9 +25,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	. "github.com/ory/ladon"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/ory/ladon"
 )
 
 func TestWardenIsGranted(t *testing.T) {

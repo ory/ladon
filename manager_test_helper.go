@@ -361,7 +361,7 @@ func testEq(a, b []string) error {
 		}
 
 		if !found {
-			return errors.Errorf("No match found: %s from %v in %v", i, a, b)
+			return errors.Errorf("No match found: %d from %v in %v", i, a, b)
 		}
 	}
 
