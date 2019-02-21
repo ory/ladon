@@ -289,7 +289,7 @@ This condition is fulfilled by (we will cover the warden in the next section)
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
         "some-arbitrary-key": "the-value-should-be-this",
     },
 }
@@ -300,7 +300,7 @@ but not by
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
         "some-arbitrary-key": "some other value",
     },
 }
@@ -311,7 +311,7 @@ and neither by:
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
         "same value but other key": "the-value-should-be-this",
     },
 }
@@ -371,7 +371,7 @@ and would match in the following case:
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
          "some-arbitrary-key": "the-value-should-be-this",
     },
 }
@@ -395,7 +395,7 @@ and would match in the following case:
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
         "some-arbitrary-key": true,
     },
 })
@@ -426,7 +426,7 @@ and would match in the following case:
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
           "some-arbitrary-key": "regex-pattern-here111"
     }
   }
@@ -451,7 +451,7 @@ and would match
 var err = warden.IsAllowed(&ladon.Request{
     // ...
     Subject: "peter",
-    Context: &ladon.Context{
+    Context: ladon.Context{
          "some-arbitrary-key": "peter",
     },
 }
@@ -463,7 +463,7 @@ but not:
 var err = warden.IsAllowed(&ladon.Request{
     // ...
     Subject: "peter",
-    Context: &ladon.Context{
+    Context: ladon.Context{
          "some-arbitrary-key": "max",
     },
 }
@@ -487,7 +487,7 @@ and would match
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
          "some-arbitrary-key": [
              ["some-arbitrary-pair-value", "some-arbitrary-pair-value"],
              ["some-other-arbitrary-pair-value", "some-other-arbitrary-pair-value"],
@@ -501,7 +501,7 @@ but not:
 ```go
 var err = warden.IsAllowed(&ladon.Request{
     // ...
-    Context: &ladon.Context{
+    Context: ladon.Context{
          "some-arbitrary-key": [
              ["some-arbitrary-pair-value", "some-other-arbitrary-pair-value"],
          ]
@@ -540,7 +540,7 @@ This condition is fulfilled by this (allow for all resources containing `part:no
 var err = warden.IsAllowed(&ladon.Request{
     // ...
     Resource: "rn:city:laholm:part:north"
-    Context: &ladon.Context{
+    Context: ladon.Context{
       delimiter: ":",
       value: "part:north"
     },
@@ -553,7 +553,7 @@ or ( allow all resources with `city:laholm`)
 var err = warden.IsAllowed(&ladon.Request{
     // ...
     Resource: "rn:city:laholm:part:north"
-    Context: &ladon.Context{
+    Context: ladon.Context{
       delimiter: ":",
       value: "city:laholm"
     },
@@ -566,7 +566,7 @@ but not (allow for all resources containing `part:west`, the resource does not c
 var err = warden.IsAllowed(&ladon.Request{
     // ...
     Resource: "rn:city:laholm:part:north"
-    Context: &ladon.Context{
+    Context: ladon.Context{
       delimiter: ":",
       value: "part:west"
     },
