@@ -34,7 +34,7 @@ import (
 // A bunch of exemplary policies
 var pols = []Policy{
 	&DefaultPolicy{
-		ID: "1",
+		ID: "0",
 		Description: `This policy allows max, peter, zac and ken to create, delete and get the listed resources,
 			but only if the client ip matches and the request states that they are the owner of those resources as well.`,
 		Subjects:  []string{"max", "peter", "<zac|ken>"},
@@ -49,7 +49,7 @@ var pols = []Policy{
 		},
 	},
 	&DefaultPolicy{
-		ID:          "2",
+		ID:          "1",
 		Description: "This policy allows max to update any resource",
 		Subjects:    []string{"max"},
 		Actions:     []string{"update"},
@@ -61,6 +61,14 @@ var pols = []Policy{
 		Description: "This policy denies max to broadcast any of the resources",
 		Subjects:    []string{"max"},
 		Actions:     []string{"broadcast"},
+		Resources:   []string{"<.*>"},
+		Effect:      DenyAccess,
+	},
+	&DefaultPolicy{
+		ID:          "2",
+		Description: "This policy denies max to broadcast any of the resources",
+		Subjects:    []string{"max"},
+		Actions:     []string{"random"},
 		Resources:   []string{"<.*>"},
 		Effect:      DenyAccess,
 	},
@@ -157,6 +165,15 @@ func TestLadon(t *testing.T) {
 		require.Nil(t, warden.Manager.Create(pol))
 	}
 
+	for i := 0; i < len(pols); i++ {
+		polices, err := warden.Manager.GetAll(int64(1), int64(i))
+		require.NoError(t, err)
+		p, err := warden.Manager.Get(fmt.Sprintf("%d", i))
+		if err == nil {
+			AssertPolicyEqual(t, p, polices[0])
+		}
+	}
+
 	for k, c := range cases {
 		t.Run(fmt.Sprintf("case=%d-%s", k, c.description), func(t *testing.T) {
 
@@ -166,6 +183,7 @@ func TestLadon(t *testing.T) {
 			assert.Equal(t, c.expectErr, err != nil)
 		})
 	}
+
 }
 
 func TestLadonEmpty(t *testing.T) {
