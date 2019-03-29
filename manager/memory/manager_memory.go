@@ -27,6 +27,7 @@ import (
 
 	. "github.com/ory/ladon"
 	"github.com/ory/pagination"
+	"sort"
 )
 
 // MemoryManager is an in-memory (non-persistent) implementation of Manager.
@@ -52,16 +53,24 @@ func (m *MemoryManager) Update(policy Policy) error {
 
 // GetAll returns all policies.
 func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
-	ps := make(Policies, len(m.Policies))
+	keys := make([]string, len(m.Policies))
 	i := 0
-
-	for _, p := range m.Policies {
-		ps[i] = p
+	m.RLock()
+	for key := range m.Policies {
+		keys[i] = key
 		i++
 	}
 
-	start, end := pagination.Index(int(limit), int(offset), len(ps))
-	return ps[start:end], nil
+	start, end := pagination.Index(int(limit), int(offset), len(m.Policies))
+	sort.Strings(keys)
+	ps := make(Policies, len(keys[start:end]))
+	i = 0
+	for _, key := range keys[start:end] {
+		ps[i] = m.Policies[key]
+		i++
+	}
+	m.RUnlock()
+	return ps, nil
 }
 
 // Create a new pollicy to MemoryManager.
