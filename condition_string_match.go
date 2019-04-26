@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"regexp"
 )
 
@@ -32,7 +33,7 @@ type StringMatchCondition struct {
 
 // Fulfills returns true if the given value is a string and matches the regex
 // pattern in StringMatchCondition.Matches
-func (c *StringMatchCondition) Fulfills(value interface{}, _ *Request) bool {
+func (c *StringMatchCondition) Fulfills(ctx context.Context, value interface{}, _ *Request) bool {
 	s, ok := value.(string)
 
 	matches, _ := regexp.MatchString(c.Matches, s)

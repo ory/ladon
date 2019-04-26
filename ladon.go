@@ -21,6 +21,8 @@
 package ladon
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 )
 
@@ -46,8 +48,8 @@ func (l *Ladon) auditLogger() AuditLogger {
 }
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
-func (l *Ladon) IsAllowed(r *Request) (err error) {
-	policies, err := l.Manager.FindRequestCandidates(r)
+func (l *Ladon) IsAllowed(ctx context.Context, r *Request) (err error) {
+	policies, err := l.Manager.FindRequestCandidates(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -55,12 +57,12 @@ func (l *Ladon) IsAllowed(r *Request) (err error) {
 	// Although the manager is responsible of matching the policies, it might decide to just scan for
 	// subjects, it might return all policies, or it might have a different pattern matching than Golang.
 	// Thus, we need to make sure that we actually matched the right policies.
-	return l.DoPoliciesAllow(r, policies)
+	return l.DoPoliciesAllow(ctx, r, policies)
 }
 
 // DoPoliciesAllow returns nil if subject s has permission p on resource r with context c for a given policy list or an error otherwise.
 // The IsAllowed interface should be preferred since it uses the manager directly. This is a lower level interface for when you don't want to use the ladon manager.
-func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
+func (l *Ladon) DoPoliciesAllow(ctx context.Context, r *Request, policies []Policy) (err error) {
 	var allowed = false
 	var deciders = Policies{}
 
@@ -96,7 +98,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Are the policies conditions met?
 		// This is checked first because it usually has a small complexity.
-		if !l.passesConditions(p, r) {
+		if !l.passesConditions(ctx, p, r) {
 			// no, continue to next policy
 			continue
 		}
@@ -104,7 +106,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
 		if !p.AllowAccess() {
 			deciders = append(deciders, p)
-			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
+			l.auditLogger().LogRejectedAccessRequest(ctx, r, policies, deciders)
 			return errors.WithStack(ErrRequestForcefullyDenied)
 		}
 
@@ -113,17 +115,17 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	}
 
 	if !allowed {
-		l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
+		l.auditLogger().LogRejectedAccessRequest(ctx, r, policies, deciders)
 		return errors.WithStack(ErrRequestDenied)
 	}
 
-	l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
+	l.auditLogger().LogGrantedAccessRequest(ctx, r, policies, deciders)
 	return nil
 }
 
-func (l *Ladon) passesConditions(p Policy, r *Request) bool {
+func (l *Ladon) passesConditions(ctx context.Context, p Policy, r *Request) bool {
 	for key, condition := range p.GetConditions() {
-		if pass := condition.Fulfills(r.Context[key], r); !pass {
+		if pass := condition.Fulfills(ctx, r.Context[key], r); !pass {
 			return false
 		}
 	}

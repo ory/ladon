@@ -21,6 +21,7 @@
 package ladon_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -157,18 +158,21 @@ var cases = []struct {
 }
 
 func TestLadon(t *testing.T) {
+
+	ctx := context.Background()
+
 	// Instantiate ladon with the default in-memory store.
 	warden := &Ladon{Manager: NewMemoryManager()}
 
 	// Add the policies defined above to the memory manager.
 	for _, pol := range pols {
-		require.Nil(t, warden.Manager.Create(pol))
+		require.Nil(t, warden.Manager.Create(ctx, pol))
 	}
 
 	for i := 0; i < len(pols); i++ {
-		polices, err := warden.Manager.GetAll(int64(1), int64(i))
+		polices, err := warden.Manager.GetAll(ctx, int64(1), int64(i))
 		require.NoError(t, err)
-		p, err := warden.Manager.Get(fmt.Sprintf("%d", i))
+		p, err := warden.Manager.Get(ctx, fmt.Sprintf("%d", i))
 		if err == nil {
 			AssertPolicyEqual(t, p, polices[0])
 		}
@@ -178,7 +182,7 @@ func TestLadon(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d-%s", k, c.description), func(t *testing.T) {
 
 			// This is where we ask the warden if the access requests should be granted
-			err := warden.IsAllowed(c.accessRequest)
+			err := warden.IsAllowed(ctx, c.accessRequest)
 
 			assert.Equal(t, c.expectErr, err != nil)
 		})
@@ -187,7 +191,10 @@ func TestLadon(t *testing.T) {
 }
 
 func TestLadonEmpty(t *testing.T) {
+
+	ctx := context.Background()
+
 	// If no policy was given, the warden must return an error!
 	warden := &Ladon{Manager: NewMemoryManager()}
-	assert.NotNil(t, warden.IsAllowed(&Request{}))
+	assert.NotNil(t, warden.IsAllowed(ctx, &Request{}))
 }

@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,6 +44,6 @@ func TestStringPairsEqualMatch(t *testing.T) {
 	} {
 		condition := &StringPairsEqualCondition{}
 
-		assert.Equal(t, c.pass, condition.Fulfills(c.pairs, new(Request)), "%s", c.pairs)
+		assert.Equal(t, c.pass, condition.Fulfills(context.Background(), c.pairs, new(Request)), "%s", c.pairs)
 	}
 }

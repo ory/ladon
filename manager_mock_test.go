@@ -24,113 +24,132 @@
 package ladon_test
 
 import (
-	gomock "github.com/golang/mock/gomock"
+	context "context"
+	reflect "reflect"
 
-	ladon "github.com/ory/ladon"
+	gomock "github.com/golang/mock/gomock"
 )
 
-// Mock of Manager interface
+// MockManager is a mock of Manager interface
 type MockManager struct {
 	ctrl     *gomock.Controller
-	recorder *_MockManagerRecorder
+	recorder *MockManagerMockRecorder
 }
 
-// Recorder for MockManager (not exported)
-type _MockManagerRecorder struct {
+// MockManagerMockRecorder is the mock recorder for MockManager
+type MockManagerMockRecorder struct {
 	mock *MockManager
 }
 
+// NewMockManager creates a new mock instance
 func NewMockManager(ctrl *gomock.Controller) *MockManager {
 	mock := &MockManager{ctrl: ctrl}
-	mock.recorder = &_MockManagerRecorder{mock}
+	mock.recorder = &MockManagerMockRecorder{mock}
 	return mock
 }
 
-func (_m *MockManager) EXPECT() *_MockManagerRecorder {
-	return _m.recorder
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockManager) EXPECT() *MockManagerMockRecorder {
+	return m.recorder
 }
 
-func (_m *MockManager) Create(_param0 ladon.Policy) error {
-	ret := _m.ctrl.Call(_m, "Create", _param0)
+// Create mocks base method
+func (m *MockManager) Create(arg0 context.Context, arg1 Policy) error {
+	ret := m.ctrl.Call(m, "Create", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockManagerRecorder) Create(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "Create", arg0)
+// Create indicates an expected call of Create
+func (mr *MockManagerMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockManager)(nil).Create), arg0, arg1)
 }
 
-func (_m *MockManager) Delete(_param0 string) error {
-	ret := _m.ctrl.Call(_m, "Delete", _param0)
+// Delete mocks base method
+func (m *MockManager) Delete(arg0 context.Context, arg1 string) error {
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockManagerRecorder) Delete(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "Delete", arg0)
+// Delete indicates an expected call of Delete
+func (mr *MockManagerMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockManager)(nil).Delete), arg0, arg1)
 }
 
-func (_m *MockManager) FindRequestCandidates(_param0 *ladon.Request) (ladon.Policies, error) {
-	ret := _m.ctrl.Call(_m, "FindRequestCandidates", _param0)
-	ret0, _ := ret[0].(ladon.Policies)
+// FindPoliciesForResource mocks base method
+func (m *MockManager) FindPoliciesForResource(arg0 context.Context, arg1 string) (Policies, error) {
+	ret := m.ctrl.Call(m, "FindPoliciesForResource", arg0, arg1)
+	ret0, _ := ret[0].(Policies)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockManagerRecorder) FindRequestCandidates(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "FindRequestCandidates", arg0)
+// FindPoliciesForResource indicates an expected call of FindPoliciesForResource
+func (mr *MockManagerMockRecorder) FindPoliciesForResource(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindPoliciesForResource", reflect.TypeOf((*MockManager)(nil).FindPoliciesForResource), arg0, arg1)
 }
 
-func (_m *MockManager) FindPoliciesForSubject(_param0 string) (ladon.Policies, error) {
-	ret := _m.ctrl.Call(_m, "FindPoliciesForSubject", _param0)
-	ret0, _ := ret[0].(ladon.Policies)
+// FindPoliciesForSubject mocks base method
+func (m *MockManager) FindPoliciesForSubject(arg0 context.Context, arg1 string) (Policies, error) {
+	ret := m.ctrl.Call(m, "FindPoliciesForSubject", arg0, arg1)
+	ret0, _ := ret[0].(Policies)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockManagerRecorder) FindPoliciesForSubject(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "FindPoliciesForSubject", arg0)
+// FindPoliciesForSubject indicates an expected call of FindPoliciesForSubject
+func (mr *MockManagerMockRecorder) FindPoliciesForSubject(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindPoliciesForSubject", reflect.TypeOf((*MockManager)(nil).FindPoliciesForSubject), arg0, arg1)
 }
 
-func (_m *MockManager) FindPoliciesForResource(_param0 string) (ladon.Policies, error) {
-	ret := _m.ctrl.Call(_m, "FindPoliciesForResource", _param0)
-	ret0, _ := ret[0].(ladon.Policies)
+// FindRequestCandidates mocks base method
+func (m *MockManager) FindRequestCandidates(arg0 context.Context, arg1 *Request) (Policies, error) {
+	ret := m.ctrl.Call(m, "FindRequestCandidates", arg0, arg1)
+	ret0, _ := ret[0].(Policies)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockManagerRecorder) FindPoliciesForResource(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "FindPoliciesForResource", arg0)
+// FindRequestCandidates indicates an expected call of FindRequestCandidates
+func (mr *MockManagerMockRecorder) FindRequestCandidates(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindRequestCandidates", reflect.TypeOf((*MockManager)(nil).FindRequestCandidates), arg0, arg1)
 }
 
-func (_m *MockManager) Get(_param0 string) (ladon.Policy, error) {
-	ret := _m.ctrl.Call(_m, "Get", _param0)
-	ret0, _ := ret[0].(ladon.Policy)
+// Get mocks base method
+func (m *MockManager) Get(arg0 context.Context, arg1 string) (Policy, error) {
+	ret := m.ctrl.Call(m, "Get", arg0, arg1)
+	ret0, _ := ret[0].(Policy)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockManagerRecorder) Get(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "Get", arg0)
+// Get indicates an expected call of Get
+func (mr *MockManagerMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockManager)(nil).Get), arg0, arg1)
 }
 
-func (_m *MockManager) GetAll(_param0 int64, _param1 int64) (ladon.Policies, error) {
-	ret := _m.ctrl.Call(_m, "GetAll", _param0, _param1)
-	ret0, _ := ret[0].(ladon.Policies)
+// GetAll mocks base method
+func (m *MockManager) GetAll(arg0 context.Context, arg1, arg2 int64) (Policies, error) {
+	ret := m.ctrl.Call(m, "GetAll", arg0, arg1, arg2)
+	ret0, _ := ret[0].(Policies)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockManagerRecorder) GetAll(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetAll", arg0, arg1)
+// GetAll indicates an expected call of GetAll
+func (mr *MockManagerMockRecorder) GetAll(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockManager)(nil).GetAll), arg0, arg1, arg2)
 }
 
-func (_m *MockManager) Update(_param0 ladon.Policy) error {
-	ret := _m.ctrl.Call(_m, "Update", _param0)
+// Update mocks base method
+func (m *MockManager) Update(arg0 context.Context, arg1 Policy) error {
+	ret := m.ctrl.Call(m, "Update", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockManagerRecorder) Update(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "Update", arg0)
+// Update indicates an expected call of Update
+func (mr *MockManagerMockRecorder) Update(arg0, arg1 interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockManager)(nil).Update), arg0, arg1)
 }

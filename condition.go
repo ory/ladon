@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -32,7 +33,7 @@ type Condition interface {
 	GetName() string
 
 	// Fulfills returns true if the request is fulfilled by the condition.
-	Fulfills(interface{}, *Request) bool
+	Fulfills(context.Context, interface{}, *Request) bool
 }
 
 // Conditions is a collection of conditions.
