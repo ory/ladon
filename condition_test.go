@@ -50,9 +50,10 @@ func TestMarshalUnmarshalNative(t *testing.T) {
 
 func TestMarshalUnmarshal(t *testing.T) {
 	css := &Conditions{
-		"clientIP": &CIDRCondition{CIDR: "127.0.0.1/0"},
-		"owner":    &EqualsSubjectCondition{},
-		"role":     &StringMatchCondition{Matches: ".*"},
+		"clientIP":              &CIDRCondition{CIDR: "127.0.0.1/0"},
+		"owner":                 &EqualsSubjectCondition{},
+		"role":                  &StringMatchCondition{Matches: ".*"},
+		"hasElevatedPrivileges": &BooleanCondition{BooleanValue: true},
 	}
 	out, err := json.Marshal(css)
 	require.Nil(t, err)
@@ -75,15 +76,22 @@ func TestMarshalUnmarshal(t *testing.T) {
 			"matches": ".*"
 		}
 	},
+	"hasElevatedPrivileges": {
+		"type": "BooleanCondition",
+		"options": {
+			"value": true
+		}
+	},
 	"resourceFilter": {
 			"type": "ResourceContainsCondition"
 		}
 }`), &cs))
 
-	require.Len(t, cs, 4)
+	require.Len(t, cs, 5)
 	assert.IsType(t, &EqualsSubjectCondition{}, cs["owner"])
 	assert.IsType(t, &CIDRCondition{}, cs["clientIP"])
 	assert.IsType(t, &StringMatchCondition{}, cs["role"])
+	assert.IsType(t, &BooleanCondition{}, cs["hasElevatedPrivileges"])
 	assert.IsType(t, &ResourceContainsCondition{}, cs["resourceFilter"])
 }
 

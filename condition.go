@@ -128,4 +128,7 @@ var ConditionFactories = map[string]func() Condition{
 	new(ResourceContainsCondition).GetName(): func() Condition {
 		return new(ResourceContainsCondition)
 	},
+	new(BooleanCondition).GetName(): func() Condition {
+		return new (BooleanCondition)
+	},
 }
