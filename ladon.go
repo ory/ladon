@@ -22,7 +22,6 @@ package ladon
 
 import (
 	"context"
-	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -32,7 +31,6 @@ type Ladon struct {
 	Manager     Manager
 	Matcher     matcher
 	AuditLogger AuditLogger
-	mu          sync.Mutex
 }
 
 func (l *Ladon) matcher() matcher {
