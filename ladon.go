@@ -22,6 +22,7 @@ package ladon
 
 import (
 	"context"
+	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -31,20 +32,21 @@ type Ladon struct {
 	Manager     Manager
 	Matcher     matcher
 	AuditLogger AuditLogger
+	mu          sync.Mutex
 }
 
 func (l *Ladon) matcher() matcher {
-	if l.Matcher == nil {
-		l.Matcher = DefaultMatcher
+	if l.Matcher != nil {
+		return l.Matcher
 	}
-	return l.Matcher
+	return DefaultMatcher
 }
 
 func (l *Ladon) auditLogger() AuditLogger {
-	if l.AuditLogger == nil {
-		l.AuditLogger = DefaultAuditLogger
+	if l.AuditLogger != nil {
+		return l.AuditLogger
 	}
-	return l.AuditLogger
+	return DefaultAuditLogger
 }
 
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
