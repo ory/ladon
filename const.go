@@ -25,3 +25,6 @@ const AllowAccess = "allow"
 
 // DenyAccess should be used as effect for policies that deny access.
 const DenyAccess = "deny"
+
+// NoMatchingPolicy should be used for metrics when no policy has been found.
+const NoMatchingPolicy = "noMatchingPolicy"
