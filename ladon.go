@@ -73,10 +73,21 @@ func (l *Ladon) IsAllowed(r *Request) (err error) {
 // The IsAllowed interface should be preferred since it uses the manager directly. This is a lower level interface for when you don't want to use the ladon manager.
 func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	var allowed = false
+	var found Policy
 	var deciders = Policies{}
 
 	// Iterate through all policies
 	for _, p := range policies {
+
+		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
+		// Should this be not the first in the loop since it overrides all allow policies?
+		if !p.AllowAccess() {
+			deciders = append(deciders, p)
+			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
+			l.Metric.Process(p, DenyAccess)
+			return errors.WithStack(ErrRequestForcefullyDenied)
+		}
+
 		// Does the action match with one of the policies?
 		// This is the first check because usually actions are a superset of get|update|delete|set
 		// and thus match faster.
@@ -125,6 +136,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		}
 
 		allowed = true
+
 		deciders = append(deciders, p)
 	}
 

@@ -127,7 +127,7 @@ and can answer access requests that look like:
 ```
 
 However, Ladon does not come with a HTTP or server implementation. It does not restrict JSON either. We believe that it is your job to decide
-if you want to use Protobuf, RESTful, HTTP, AMQP, or some other protocol. It's up to you to write server!
+if you want to use Protobuf, RESTful, HTTP, AMQP, or some other protocol. It's up to you to write the server!
 
 The following example should give you an idea what a RESTful flow *could* look like. Initially we create a policy by
 POSTing it to an artificial HTTP endpoint:
@@ -631,14 +631,15 @@ import "github.com/ory/ladon"
 func main() {
     // ...
 
-    if err := warden.IsAllowed(&ladon.Request{
+    err := warden.IsAllowed(&ladon.Request{
         Subject: "peter",
         Action: "delete",
         Resource: "myrn:some.domain.com:resource:123",
         Context: ladon.Context{
             "ip": "127.0.0.1",
         },
-    }); err != nil {
+    })
+    if err != nil {
         log.Fatal("Access denied")
     }
 
