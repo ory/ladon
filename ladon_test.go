@@ -72,6 +72,22 @@ var pols = []Policy{
 		Resources:   []string{"<.*>"},
 		Effect:      DenyAccess,
 	},
+	&DefaultPolicy{
+		ID:          "4",
+		Description: "This policy allows swen to update any resource except `protected` resources",
+		Subjects:    []string{"swen"},
+		Actions:     []string{"update"},
+		Resources:   []string{"myrn:some.domain.com:resource:<(?!protected).*>"},
+		Effect:      AllowAccess,
+	},
+	&DefaultPolicy{
+		ID:          "5",
+		Description: "This policy allows richard to update resources which names consists of digits only",
+		Subjects:    []string{"richard"},
+		Actions:     []string{"update"},
+		Resources:   []string{"myrn:some.domain.com:resource:<[[:digit:]]+>"},
+		Effect:      AllowAccess,
+	},
 }
 
 // Some test cases
@@ -153,6 +169,42 @@ var cases = []struct {
 			Action:  "broadcast",
 		},
 		expectErr: true,
+	},
+	{
+		description: "should pass because swen is allowed to update all resources except `protected` resources.",
+		accessRequest: &Request{
+			Subject:  "swen",
+			Action:   "update",
+			Resource: "myrn:some.domain.com:resource:123",
+		},
+		expectErr: false,
+	},
+	{
+		description: "should fail because swen is not allowed to update `protected` resource",
+		accessRequest: &Request{
+			Subject:  "swen",
+			Action:   "update",
+			Resource: "myrn:some.domain.com:resource:protected123",
+		},
+		expectErr: true,
+	},
+	{
+		description: "should fail because richard is not allowed to update a resource with alphanumeric name",
+		accessRequest: &Request{
+			Subject:  "richard",
+			Action:   "update",
+			Resource: "myrn:some.domain.com:resource:protected123",
+		},
+		expectErr: true,
+	},
+	{
+		description: "should pass because richard is allowed to update a resources with a name containing digits only",
+		accessRequest: &Request{
+			Subject:  "richard",
+			Action:   "update",
+			Resource: "myrn:some.domain.com:resource:25222",
+		},
+		expectErr: false,
 	},
 }
 

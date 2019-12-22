@@ -21,9 +21,9 @@
 package ladon
 
 import (
-	"regexp"
 	"strings"
 
+	"github.com/dlclark/regexp2"
 	"github.com/hashicorp/golang-lru"
 	"github.com/pkg/errors"
 
@@ -45,26 +45,26 @@ func NewRegexpMatcher(size int) *RegexpMatcher {
 type RegexpMatcher struct {
 	*lru.Cache
 
-	C map[string]*regexp.Regexp
+	C map[string]*regexp2.Regexp
 }
 
-func (m *RegexpMatcher) get(pattern string) *regexp.Regexp {
+func (m *RegexpMatcher) get(pattern string) *regexp2.Regexp {
 	if val, ok := m.Cache.Get(pattern); !ok {
 		return nil
-	} else if reg, ok := val.(*regexp.Regexp); !ok {
+	} else if reg, ok := val.(*regexp2.Regexp); !ok {
 		return nil
 	} else {
 		return reg
 	}
 }
 
-func (m *RegexpMatcher) set(pattern string, reg *regexp.Regexp) {
+func (m *RegexpMatcher) set(pattern string, reg *regexp2.Regexp) {
 	m.Cache.Add(pattern, reg)
 }
 
 // Matches a needle with an array of regular expressions and returns true if a match was found.
 func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (bool, error) {
-	var reg *regexp.Regexp
+	var reg *regexp2.Regexp
 	var err error
 	for _, h := range haystack {
 
@@ -80,7 +80,12 @@ func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (boo
 		}
 
 		if reg = m.get(h); reg != nil {
-			if reg.MatchString(needle) {
+			if matched, err := reg.MatchString(needle); err != nil {
+				// according to regexp2 documentation: https://github.com/dlclark/regexp2#usage
+				// The only error that the *Match* methods should return is a Timeout if you set the
+				// re.MatchTimeout field. Any other error is a bug in the regexp2 package.
+				return false, errors.WithStack(err)
+			} else if matched {
 				return true, nil
 			}
 			continue
@@ -92,7 +97,12 @@ func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (boo
 		}
 
 		m.set(h, reg)
-		if reg.MatchString(needle) {
+		if matched, err := reg.MatchString(needle); err != nil {
+			// according to regexp2 documentation: https://github.com/dlclark/regexp2#usage
+			// The only error that the *Match* methods should return is a Timeout if you set the
+			// re.MatchTimeout field. Any other error is a bug in the regexp2 package.
+			return false, errors.WithStack(err)
+		} else if matched {
 			return true, nil
 		}
 	}
