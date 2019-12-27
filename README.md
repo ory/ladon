@@ -52,6 +52,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
     - [Persistence](#persistence)
   - [Access Control (Warden)](#access-control-warden)
   - [Audit Log (Warden)](#audit-log-warden)
+  - [Metrics](#metrics)
 - [Limitations](#limitations)
   - [Regular expressions](#regular-expressions)
 - [Examples](#examples)
@@ -668,6 +669,28 @@ func main() {
 ```
 
 It will output to `stderr` by default.
+
+### Metrics
+
+Ability to track authorization grants,denials and errors, it is possible to implement own interface for processing metrics.
+
+```go
+type prometheusMetrics struct{}
+
+func (mtr *prometheusMetrics) RequestDeniedBy(r ladon.Request, p ladon.Policy) {}
+func (mtr *prometheusMetrics) RequestAllowedBy(r ladon.Request, policies ladon.Policies) {}
+func (mtr *prometheusMetrics) RequestNoMatch(r ladon.Request) {}
+func (mtr *prometheusMetrics) RequestProcessingError(r ladon.Request, err error) {}
+
+func main() {
+
+    warden := ladon.Ladon{
+        Manager: manager.NewMemoryManager(),
+        Metric:  &prometheusMetrics{},
+    }
+
+    // ...
+```
 
 ## Limitations
 
