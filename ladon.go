@@ -27,8 +27,9 @@ import (
 // Metric is used to expose metrics about authz
 type Metric interface {
 	RequestDeniedBy(Request, Policy)
-	RequestAllowedBy(Request, Policy)
-	RequestNoMatch(Request) // <- no match also means no policy!
+	RequestAllowedBy(Request, Policies)
+	RequestNoMatch(Request)
+	RequestProcessingError(Request, Policy, error)
 }
 
 // Ladon is an implementation of Warden.
@@ -57,9 +58,7 @@ func (l *Ladon) auditLogger() AuditLogger {
 func (l *Ladon) IsAllowed(r *Request) (err error) {
 	policies, err := l.Manager.FindRequestCandidates(r)
 	if err != nil {
-
-		// We return no match
-		go l.Metric.RequestNoMatch(*r)
+		go l.Metric.RequestProcessingError(*r, nil, err)
 		return err
 	}
 
@@ -78,44 +77,51 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	// Iterate through all policies
 	for _, p := range policies {
 
-		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
-		// Should this be not the first in the loop since it overrides all allow policies?
-		if !p.AllowAccess() {
-			deciders = append(deciders, p)
-			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
-			go l.Metric.RequestDeniedBy(*r, p)
-			return errors.WithStack(ErrRequestForcefullyDenied)
-		}
-
-		// Does the action match with one of the policies?
-		// This is the first check because usually actions are a superset of get|update|delete|set
-		// and thus match faster.
-		if pm, err := l.matcher().Matches(p, p.GetActions(), r.Action); err != nil {
-			go l.Metric.RequestDeniedBy(*r, p)
-			return errors.WithStack(err)
-		} else if !pm {
-			// no, continue to next policy
-			continue
-		}
-
 		// Does the subject match with one of the policies?
 		// There are usually less subjects than resources which is why this is checked
 		// before checking for resources.
 		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
-			go l.Metric.RequestDeniedBy(*r, p)
+			if l.Metric != nil {
+				go l.Metric.RequestProcessingError(*r, p, err)
+			}
 			return err
 		} else if !sm {
 			// no, continue to next policy
 			continue
 		}
 
+		// Does the action match with one of the policies?
+		// This is the first check because usually actions are a superset of get|update|delete|set
+		// and thus match faster.
+		if pm, err := l.matcher().Matches(p, p.GetActions(), r.Action); err != nil {
+			if l.Metric != nil {
+				go l.Metric.RequestProcessingError(*r, p, err)
+			}
+			return errors.WithStack(err)
+		} else if !pm {
+			// no, continue to next policy
+			continue
+		}
+
 		// Does the resource match with one of the policies?
 		if rm, err := l.matcher().Matches(p, p.GetResources(), r.Resource); err != nil {
-			go l.Metric.RequestDeniedBy(*r, p)
+			if l.Metric != nil {
+				go l.Metric.RequestProcessingError(*r, p, err)
+			}
 			return errors.WithStack(err)
 		} else if !rm {
 			// no, continue to next policy
 			continue
+		}
+
+		// Is the policies effect deny? If yes, this overrides all allow policies
+		if !p.AllowAccess() {
+			deciders = append(deciders, p)
+			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
+			if l.Metric != nil {
+				go l.Metric.RequestDeniedBy(*r, p)
+			}
+			return errors.WithStack(ErrRequestForcefullyDenied)
 		}
 
 		// Are the policies conditions met?
@@ -125,31 +131,21 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 			continue
 		}
 
-		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
-		// Should this be not the first in the loop since it overrides all allow policies?
-		if !p.AllowAccess() {
-			deciders = append(deciders, p)
-			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
-			go l.Metric.RequestDeniedBy(*r, p)
-			return errors.WithStack(ErrRequestForcefullyDenied)
-		}
-
 		allowed = true
-
 		deciders = append(deciders, p)
 	}
 
 	if !allowed {
-		// We return no match
-		go l.Metric.RequestNoMatch(*r)
+		if l.Metric != nil {
+			go l.Metric.RequestNoMatch(*r)
+		}
 
 		l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 		return errors.WithStack(ErrRequestDenied)
 	}
 
-	// We return first policy that matched
-	if len(deciders) > 0 {
-		l.Metric.RequestAllowedBy(*r, deciders[0])
+	if l.Metric != nil {
+		l.Metric.RequestAllowedBy(*r, deciders)
 	}
 
 	l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
