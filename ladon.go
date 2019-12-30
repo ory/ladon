@@ -125,7 +125,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 			continue
 		}
 
-		// Is the policies effect deny? If yes, this overrides all allow policies
+		// Is the policy's effect `deny`? If yes, this overrides all allow policies -> access denied.
 		if !p.AllowAccess() {
 			deciders = append(deciders, p)
 			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
