@@ -81,19 +81,6 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	// Iterate through all policies
 	for _, p := range policies {
 
-		// Does the subject match with one of the policies?
-		// There are usually less subjects than resources which is why this is checked
-		// before checking for resources.
-		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
-			if l.Metric != nil {
-				go l.Metric.RequestProcessingError(*r, p, err)
-			}
-			return err
-		} else if !sm {
-			// no, continue to next policy
-			continue
-		}
-
 		// Does the action match with one of the policies?
 		// This is the first check because usually actions are a superset of get|update|delete|set
 		// and thus match faster.
@@ -103,6 +90,19 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 			}
 			return errors.WithStack(err)
 		} else if !pm {
+			// no, continue to next policy
+			continue
+		}
+
+		// Does the subject match with one of the policies?
+		// There are usually less subjects than resources which is why this is checked
+		// before checking for resources.
+		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
+			if l.Metric != nil {
+				go l.Metric.RequestProcessingError(*r, p, err)
+			}
+			return err
+		} else if !sm {
 			// no, continue to next policy
 			continue
 		}
@@ -118,6 +118,13 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 			continue
 		}
 
+		// Are the policies conditions met?
+		// This is checked first because it usually has a small complexity.
+		if !l.passesConditions(p, r) {
+			// no, continue to next policy
+			continue
+		}
+
 		// Is the policies effect deny? If yes, this overrides all allow policies
 		if !p.AllowAccess() {
 			deciders = append(deciders, p)
@@ -126,13 +133,6 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 				go l.Metric.RequestDeniedBy(*r, p)
 			}
 			return errors.WithStack(ErrRequestForcefullyDenied)
-		}
-
-		// Are the policies conditions met?
-		// This is checked first because it usually has a small complexity.
-		if !l.passesConditions(p, r) {
-			// no, continue to next policy
-			continue
 		}
 
 		allowed = true
