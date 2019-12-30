@@ -24,18 +24,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Metric is used to expose metrics about authz
-type Metric interface {
-	// RequestDeniedBy is called when we get explicit deny by policy
-	RequestDeniedBy(Request, Policy)
-	// RequestAllowedBy is called when a matching policy has been found.
-	RequestAllowedBy(Request, Policies)
-	// RequestNoMatch is called when no policy has matched our request
-	RequestNoMatch(Request)
-	// RequestProcessingError is called when unexpected error occured
-	RequestProcessingError(Request, Policy, error)
-}
-
 // Ladon is an implementation of Warden.
 type Ladon struct {
 	Manager     Manager
@@ -58,11 +46,18 @@ func (l *Ladon) auditLogger() AuditLogger {
 	return l.AuditLogger
 }
 
+func (l *Ladon) metric() Metric {
+	if l.Metric == nil {
+		l.Metric = DefaultMetric
+	}
+	return l.Metric
+}
+
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
 func (l *Ladon) IsAllowed(r *Request) (err error) {
 	policies, err := l.Manager.FindRequestCandidates(r)
 	if err != nil {
-		go l.Metric.RequestProcessingError(*r, nil, err)
+		go l.metric().RequestProcessingError(*r, nil, err)
 		return err
 	}
 
@@ -85,9 +80,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		// This is the first check because usually actions are a superset of get|update|delete|set
 		// and thus match faster.
 		if pm, err := l.matcher().Matches(p, p.GetActions(), r.Action); err != nil {
-			if l.Metric != nil {
-				go l.Metric.RequestProcessingError(*r, p, err)
-			}
+			go l.metric().RequestProcessingError(*r, p, err)
 			return errors.WithStack(err)
 		} else if !pm {
 			// no, continue to next policy
@@ -98,9 +91,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		// There are usually less subjects than resources which is why this is checked
 		// before checking for resources.
 		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
-			if l.Metric != nil {
-				go l.Metric.RequestProcessingError(*r, p, err)
-			}
+			go l.metric().RequestProcessingError(*r, p, err)
 			return err
 		} else if !sm {
 			// no, continue to next policy
@@ -109,9 +100,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Does the resource match with one of the policies?
 		if rm, err := l.matcher().Matches(p, p.GetResources(), r.Resource); err != nil {
-			if l.Metric != nil {
-				go l.Metric.RequestProcessingError(*r, p, err)
-			}
+			go l.metric().RequestProcessingError(*r, p, err)
 			return errors.WithStack(err)
 		} else if !rm {
 			// no, continue to next policy
@@ -129,9 +118,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		if !p.AllowAccess() {
 			deciders = append(deciders, p)
 			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
-			if l.Metric != nil {
-				go l.Metric.RequestDeniedBy(*r, p)
-			}
+			go l.metric().RequestDeniedBy(*r, p)
 			return errors.WithStack(ErrRequestForcefullyDenied)
 		}
 
@@ -140,17 +127,13 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	}
 
 	if !allowed {
-		if l.Metric != nil {
-			go l.Metric.RequestNoMatch(*r)
-		}
+		go l.metric().RequestNoMatch(*r)
 
 		l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 		return errors.WithStack(ErrRequestDenied)
 	}
 
-	if l.Metric != nil {
-		l.Metric.RequestAllowedBy(*r, deciders)
-	}
+	l.metric().RequestAllowedBy(*r, deciders)
 
 	l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
 	return nil
