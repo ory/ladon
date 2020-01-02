@@ -29,6 +29,7 @@ type Ladon struct {
 	Manager     Manager
 	Matcher     matcher
 	AuditLogger AuditLogger
+	Metric      Metric
 }
 
 func (l *Ladon) matcher() matcher {
@@ -45,10 +46,18 @@ func (l *Ladon) auditLogger() AuditLogger {
 	return l.AuditLogger
 }
 
+func (l *Ladon) metric() Metric {
+	if l.Metric == nil {
+		l.Metric = DefaultMetric
+	}
+	return l.Metric
+}
+
 // IsAllowed returns nil if subject s has permission p on resource r with context c or an error otherwise.
 func (l *Ladon) IsAllowed(r *Request) (err error) {
 	policies, err := l.Manager.FindRequestCandidates(r)
 	if err != nil {
+		go l.metric().RequestProcessingError(*r, nil, err)
 		return err
 	}
 
@@ -66,10 +75,12 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 	// Iterate through all policies
 	for _, p := range policies {
+
 		// Does the action match with one of the policies?
 		// This is the first check because usually actions are a superset of get|update|delete|set
 		// and thus match faster.
 		if pm, err := l.matcher().Matches(p, p.GetActions(), r.Action); err != nil {
+			go l.metric().RequestProcessingError(*r, p, err)
 			return errors.WithStack(err)
 		} else if !pm {
 			// no, continue to next policy
@@ -80,6 +91,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 		// There are usually less subjects than resources which is why this is checked
 		// before checking for resources.
 		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
+			go l.metric().RequestProcessingError(*r, p, err)
 			return err
 		} else if !sm {
 			// no, continue to next policy
@@ -88,6 +100,7 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 
 		// Does the resource match with one of the policies?
 		if rm, err := l.matcher().Matches(p, p.GetResources(), r.Resource); err != nil {
+			go l.metric().RequestProcessingError(*r, p, err)
 			return errors.WithStack(err)
 		} else if !rm {
 			// no, continue to next policy
@@ -101,10 +114,11 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 			continue
 		}
 
-		// Is the policies effect deny? If yes, this overrides all allow policies -> access denied.
+		// Is the policy's effect `deny`? If yes, this overrides all allow policies -> access denied.
 		if !p.AllowAccess() {
 			deciders = append(deciders, p)
 			l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
+			go l.metric().RequestDeniedBy(*r, p)
 			return errors.WithStack(ErrRequestForcefullyDenied)
 		}
 
@@ -113,9 +127,13 @@ func (l *Ladon) DoPoliciesAllow(r *Request, policies []Policy) (err error) {
 	}
 
 	if !allowed {
+		go l.metric().RequestNoMatch(*r)
+
 		l.auditLogger().LogRejectedAccessRequest(r, policies, deciders)
 		return errors.WithStack(ErrRequestDenied)
 	}
+
+	l.metric().RequestAllowedBy(*r, deciders)
 
 	l.auditLogger().LogGrantedAccessRequest(r, policies, deciders)
 	return nil
