@@ -209,7 +209,11 @@ var pol = &ladon.DefaultPolicy{
 
 	// Which resources this policy affects.
 	// Again, you can put regular expressions in inside < >.
-	Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+	Resources: []string{
+            "myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345",
+            "myrn:something:foo:<.+>", "myrn:some.domain.com:resource:<(?!protected).*>",
+            "myrn:some.domain.com:resource:<[[:digit:]]+>"
+        },
 
 	// Which actions this policy affects. Supports RegExp
 	// Again, you can put regular expressions in inside < >.
@@ -698,7 +702,7 @@ Ladon's limitations are listed here.
 
 ### Regular expressions
 
-Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not
+Matching regular expressions has a complexity of `O(n)` ([except](https://groups.google.com/d/msg/golang-nuts/7qgSDWPIh_E/OHTAm4wRZL0J) lookahead/lookbehind assertions) and databases such as MySQL or Postgres can not
 leverage indexes when parsing regular expressions. Thus, there is considerable overhead when using regular
 expressions.
 
