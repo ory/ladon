@@ -18,13 +18,14 @@
  * @license 	Apache-2.0
  */
 
-package ladon
+package ladon_test
 
 import (
 	"fmt"
 	"reflect"
 	"testing"
 
+    . "github.com/ory/ladon"
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -255,7 +256,7 @@ var testPolicies = []*DefaultPolicy{
 	},
 }
 
-func TestHelperFindPoliciesForSubject(k string, s Manager) func(t *testing.T) {
+func testHelperFindPoliciesForSubject(k string, s Manager) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, c := range testPolicies {
 			t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
@@ -291,7 +292,7 @@ func TestHelperFindPoliciesForSubject(k string, s Manager) func(t *testing.T) {
 	}
 }
 
-func TestHelperFindPoliciesForResource(k string, s Manager) func(t *testing.T) {
+func testHelperFindPoliciesForResource(k string, s Manager) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, c := range testPolicies {
 			t.Run(fmt.Sprintf("create=%s", k), func(t *testing.T) {
@@ -368,7 +369,7 @@ func testEq(a, b []string) error {
 	return nil
 }
 
-func TestHelperGetErrors(s Manager) func(t *testing.T) {
+func testHelperGetErrors(s Manager) func(t *testing.T) {
 	return func(t *testing.T) {
 		_, err := s.Get(uuid.New())
 		assert.Error(t, err)
@@ -378,7 +379,7 @@ func TestHelperGetErrors(s Manager) func(t *testing.T) {
 	}
 }
 
-func TestHelperCreateGetDelete(s Manager) func(t *testing.T) {
+func testHelperCreateGetDelete(s Manager) func(t *testing.T) {
 	return func(t *testing.T) {
 		for i, c := range TestManagerPolicies {
 			t.Run(fmt.Sprintf("case=%d/id=%s/type=create", i, c.GetID()), func(t *testing.T) {
