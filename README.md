@@ -665,7 +665,7 @@ func main() {
 
     warden := ladon.Ladon{
         Manager: manager.NewMemoryManager(),
-        AuditLogger: ladon.AuditLoggerInfo{}
+        AuditLogger: &ladon.AuditLoggerInfo{}
     }
 
     // ...
