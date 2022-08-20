@@ -212,7 +212,7 @@ var pol = &ladon.DefaultPolicy{
 	Resources: []string{
             "myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345",
             "myrn:something:foo:<.+>", "myrn:some.domain.com:resource:<(?!protected).*>",
-            "myrn:some.domain.com:resource:<[[:digit:]]+>"
+            "myrn:some.domain.com:resource:<[[:digit:]]+>",
         },
 
 	// Which actions this policy affects. Supports RegExp
