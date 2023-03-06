@@ -36,39 +36,44 @@ package compiler
 // Use of this source code is governed by a BSD-style
 // license as follows:
 
-//Copyright (c) 2012 Rodrigo Moraes. All rights reserved.
+// Copyright (c) 2012 Rodrigo Moraes. All rights reserved.
 //
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions are
-//met:
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
 //
-//* Redistributions of source code must retain the above copyright
-//notice, this list of conditions and the following disclaimer.
-//* Redistributions in binary form must reproduce the above
-//copyright notice, this list of conditions and the following disclaimer
-//in the documentation and/or other materials provided with the
-//distribution.
-//* Neither the name of Google Inc. nor the names of its
-//contributors may be used to endorse or promote products derived from
-//this software without specific prior written permission.
+// * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+// * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+// * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
 //
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-//A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-//OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-//SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-//LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-//DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-//THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-//(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-//OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"time"
+
+	"github.com/dlclark/regexp2"
 )
+
+const regexp2MatchTimeout = time.Millisecond * 250
 
 // delimiterIndices returns the first level delimiter indices from a string.
 // It returns an error in case of unbalanced delimiters.
@@ -105,18 +110,17 @@ func delimiterIndices(s string, delimiterStart, delimiterEnd byte) ([]int, error
 //  reg, err := compiler.CompileRegex("foo:bar.baz:<[0-9]{2,10}>", '<', '>')
 //  // if err != nil ...
 //  reg.MatchString("foo:bar.baz:123")
-func CompileRegex(tpl string, delimiterStart, delimiterEnd byte) (*regexp.Regexp, error) {
+func CompileRegex(tpl string, delimiterStart, delimiterEnd byte) (*regexp2.Regexp, error) {
 	// Check if it is well-formed.
 	idxs, errBraces := delimiterIndices(tpl, delimiterStart, delimiterEnd)
 	if errBraces != nil {
 		return nil, errBraces
 	}
-	varsR := make([]*regexp.Regexp, len(idxs)/2)
+	varsR := make([]*regexp2.Regexp, len(idxs)/2)
 	pattern := bytes.NewBufferString("")
 	pattern.WriteByte('^')
 
 	var end int
-	var err error
 	for i := 0; i < len(idxs); i += 2 {
 		// Set all values we are interested in.
 		raw := tpl[end:idxs[i]]
@@ -125,10 +129,12 @@ func CompileRegex(tpl string, delimiterStart, delimiterEnd byte) (*regexp.Regexp
 		// Build the regexp pattern.
 		varIdx := i / 2
 		fmt.Fprintf(pattern, "%s(%s)", regexp.QuoteMeta(raw), patt)
-		varsR[varIdx], err = regexp.Compile(fmt.Sprintf("^%s$", patt))
+		reg, err := regexp2.Compile(fmt.Sprintf("^%s$", patt), regexp2.RE2)
 		if err != nil {
 			return nil, err
 		}
+		reg.MatchTimeout = regexp2MatchTimeout
+		varsR[varIdx] = reg
 	}
 
 	// Add the remaining.
@@ -137,10 +143,11 @@ func CompileRegex(tpl string, delimiterStart, delimiterEnd byte) (*regexp.Regexp
 	pattern.WriteByte('$')
 
 	// Compile full regexp.
-	reg, errCompile := regexp.Compile(pattern.String())
+	reg, errCompile := regexp2.Compile(pattern.String(), regexp2.RE2)
 	if errCompile != nil {
 		return nil, errCompile
 	}
+	reg.MatchTimeout = regexp2MatchTimeout
 
 	return reg, nil
 }

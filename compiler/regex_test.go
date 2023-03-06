@@ -21,9 +21,9 @@
 package compiler
 
 import (
-	"regexp"
 	"testing"
 
+	"github.com/dlclark/regexp2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,8 +45,18 @@ func TestRegexCompiler(t *testing.T) {
 		{"urn:foo.bar.com:{.*{}", '{', '}', true, "", true},
 		{"urn:foo:<.*>", '<', '>', false, "urn:foo:bar:baz", false},
 
+		{`urn:foo:<user=(?!admin).*>`, '<', '>', false, "urn:foo:user=john", false},
+		{`urn:foo:<user=(?!admin).*>`, '<', '>', false, "urn:foo:user=admin", true},
+
+		{`urn:foo:user=<[[:digit:]]*>`, '<', '>', false, "urn:foo:user=admin", true},
+		{`urn:foo:user=<[[:digit:]]*>`, '<', '>', false, "urn:foo:user=62235", false},
+
+		{`urn:foo:user={(?P<id>\d{3})}`, '{', '}', false, "urn:foo:user=622", false},
+		{`urn:foo:user=<(?P<id>\d{3})>`, '<', '>', false, "urn:foo:user=622", false},
+		{`urn:foo:user=<(?P<id>\d{3})>`, '<', '>', false, "urn:foo:user=aaa", true},
+
 		// Ignoring this case for now...
-		//{"urn:foo.bar.com:{.*\\{}", '{', '}', false, "", true},
+		// {"urn:foo.bar.com:{.*\\{}", '{', '}', false, "", true},
 	} {
 		k++
 		result, err := CompileRegex(c.template, c.delimiterStart, c.delimiterEnd)
@@ -56,8 +66,10 @@ func TestRegexCompiler(t *testing.T) {
 		}
 
 		t.Logf("Case %d compiled to: %s", k, result.String())
-		ok, err := regexp.MatchString(result.String(), c.matchAgainst)
+		re := regexp2.MustCompile(result.String(), regexp2.RE2)
+		ok, err := re.MatchString(c.matchAgainst)
 		assert.Nil(t, err, "Case %d", k)
 		assert.Equal(t, !c.failMatch, ok, "Case %d", k)
+
 	}
 }

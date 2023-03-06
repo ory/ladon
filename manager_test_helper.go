@@ -1,3 +1,5 @@
+// +build test
+
 /*
  * Copyright © 2016-2018 Aeneas Rekkas <aeneas+oss@aeneas.io>
  *

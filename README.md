@@ -3,7 +3,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/08aac8b6e4f444b2bad89cf21ce2ac70)](https://app.codacy.com/gh/namely/ladon/dashboard)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/08aac8b6e4f444b2bad89cf21ce2ac70)](https://app.codacy.com/gh/namely/ladon/dashboard)
 
-[![Join the chat at https://discord.gg/PAMQWkr](https://img.shields.io/badge/join-chat-00cc99.svg)](https://discord.gg/PAMQWkr)
+[![Join the chat at https://www.ory.sh/chat](https://img.shields.io/badge/join-chat-00cc99.svg)](https://www.ory.sh/chat)
 [![Join newsletter](https://img.shields.io/badge/join-newsletter-00cc99.svg)](http://eepurl.com/bKT3N9)
 
 [![Build Status](https://travis-ci.org/ory/ladon.svg?branch=master)](https://travis-ci.org/ory/ladon)
@@ -55,6 +55,7 @@ ORY builds solutions for better internet security and accessibility. We have a c
     - [Persistence](#persistence)
   - [Access Control (Warden)](#access-control-warden)
   - [Audit Log (Warden)](#audit-log-warden)
+  - [Metrics](#metrics)
 - [Limitations](#limitations)
   - [Regular expressions](#regular-expressions)
 - [Examples](#examples)
@@ -211,7 +212,11 @@ var pol = &ladon.DefaultPolicy{
 
 	// Which resources this policy affects.
 	// Again, you can put regular expressions in inside < >.
-	Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+	Resources: []string{
+            "myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345",
+            "myrn:something:foo:<.+>", "myrn:some.domain.com:resource:<(?!protected).*>",
+            "myrn:some.domain.com:resource:<[[:digit:]]+>",
+        },
 
 	// Which actions this policy affects. Supports RegExp
 	// Again, you can put regular expressions in inside < >.
@@ -663,7 +668,7 @@ func main() {
 
     warden := ladon.Ladon{
         Manager: manager.NewMemoryManager(),
-        AuditLogger: ladon.AuditLoggerInfo{}
+        AuditLogger: &ladon.AuditLoggerInfo{}
     }
 
     // ...
@@ -672,13 +677,35 @@ func main() {
 
 It will output to `stderr` by default.
 
+### Metrics
+
+Ability to track authorization grants,denials and errors, it is possible to implement own interface for processing metrics.
+
+```go
+type prometheusMetrics struct{}
+
+func (mtr *prometheusMetrics) RequestDeniedBy(r ladon.Request, p ladon.Policy) {}
+func (mtr *prometheusMetrics) RequestAllowedBy(r ladon.Request, policies ladon.Policies) {}
+func (mtr *prometheusMetrics) RequestNoMatch(r ladon.Request) {}
+func (mtr *prometheusMetrics) RequestProcessingError(r ladon.Request, err error) {}
+
+func main() {
+
+    warden := ladon.Ladon{
+        Manager: manager.NewMemoryManager(),
+        Metric:  &prometheusMetrics{},
+    }
+
+    // ...
+```
+
 ## Limitations
 
 Ladon's limitations are listed here.
 
 ### Regular expressions
 
-Matching regular expressions has a complexity of `O(n)` and databases such as MySQL or Postgres can not
+Matching regular expressions has a complexity of `O(n)` ([except](https://groups.google.com/d/msg/golang-nuts/7qgSDWPIh_E/OHTAm4wRZL0J) lookahead/lookbehind assertions) and databases such as MySQL or Postgres can not
 leverage indexes when parsing regular expressions. Thus, there is considerable overhead when using regular
 expressions.
 
