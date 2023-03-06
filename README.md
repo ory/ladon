@@ -1,7 +1,4 @@
 <h1 align="center"><img src="./docs/images/banner_ladon.png" alt="ORY Ladon - Policy-based Access Control"></h1>
- 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/08aac8b6e4f444b2bad89cf21ce2ac70)](https://app.codacy.com/gh/namely/ladon/dashboard)
-[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/08aac8b6e4f444b2bad89cf21ce2ac70)](https://app.codacy.com/gh/namely/ladon/dashboard)
 
 [![Join the chat at https://www.ory.sh/chat](https://img.shields.io/badge/join-chat-00cc99.svg)](https://www.ory.sh/chat)
 [![Join newsletter](https://img.shields.io/badge/join-newsletter-00cc99.svg)](http://eepurl.com/bKT3N9)
