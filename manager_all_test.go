@@ -41,13 +41,13 @@ func connectMEM() {
 func TestManagers(t *testing.T) {
 	t.Run("type=get errors", func(t *testing.T) {
 		for k, s := range managers {
-			t.Run("manager="+k, TestHelperGetErrors(s))
+			t.Run("manager="+k, HelperTestGetErrors(s))
 		}
 	})
 
 	t.Run("type=CRUD", func(t *testing.T) {
 		for k, s := range managers {
-			t.Run(fmt.Sprintf("manager=%s", k), TestHelperCreateGetDelete(s))
+			t.Run(fmt.Sprintf("manager=%s", k), HelperTestCreateGetDelete(s))
 		}
 	})
 
@@ -56,8 +56,8 @@ func TestManagers(t *testing.T) {
 			"postgres": managers["postgres"],
 			"mysql":    managers["mysql"],
 		} {
-			t.Run(fmt.Sprintf("manager=%s", k), TestHelperFindPoliciesForSubject(k, s))
-			t.Run(fmt.Sprintf("manager=%s", k), TestHelperFindPoliciesForResource(k, s))
+			t.Run(fmt.Sprintf("manager=%s", k), HelperTestFindPoliciesForSubject(k, s))
+			t.Run(fmt.Sprintf("manager=%s", k), HelperTestFindPoliciesForResource(k, s))
 		}
 	})
 }
