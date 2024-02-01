@@ -47,6 +47,9 @@ func TestRegexCompiler(t *testing.T) {
 
 		{`urn:foo:<user=(?!admin).*>`, '<', '>', false, "urn:foo:user=john", false},
 		{`urn:foo:<user=(?!admin).*>`, '<', '>', false, "urn:foo:user=admin", true},
+		{`urn:foo:user=«(?<=user=).*»`, '«', '»', false, "urn:foo:user=admin", false},
+		{`urn:foo:user=«(?<!admin=).*»`, '«', '»', false, "urn:foo:user=admin", false},
+		{`urn:foo:admin=«(?<!admin=).*»`, '«', '»', false, "urn:foo:admin=admin", true},
 
 		{`urn:foo:user=<[[:digit:]]*>`, '<', '>', false, "urn:foo:user=admin", true},
 		{`urn:foo:user=<[[:digit:]]*>`, '<', '>', false, "urn:foo:user=62235", false},
