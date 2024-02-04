@@ -47,6 +47,7 @@ func TestRegexCompiler(t *testing.T) {
 
 		{`urn:foo:<user=(?!admin).*>`, '<', '>', false, "urn:foo:user=john", false},
 		{`urn:foo:<user=(?!admin).*>`, '<', '>', false, "urn:foo:user=admin", true},
+		{`urn:foo:user=<(?<=user=).*>`, '<', '>', true, "urn:foo:user=admin", false},
 		{`urn:foo:user=«(?<=user=).*»`, '«', '»', false, "urn:foo:user=admin", false},
 		{`urn:foo:user=«(?<!admin=).*»`, '«', '»', false, "urn:foo:user=admin", false},
 		{`urn:foo:admin=«(?<!admin=).*»`, '«', '»', false, "urn:foo:admin=admin", true},
@@ -65,6 +66,7 @@ func TestRegexCompiler(t *testing.T) {
 		result, err := CompileRegex(c.template, c.delimiterStart, c.delimiterEnd)
 		assert.Equal(t, c.failCompile, err != nil, "Case %d", k)
 		if c.failCompile || err != nil {
+			t.Logf("Case %d failed successfully: %s", k, c.template)
 			continue
 		}
 
