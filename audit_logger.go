@@ -20,8 +20,10 @@
 
 package ladon
 
+import "context"
+
 // AuditLogger tracks denied and granted authorizations.
 type AuditLogger interface {
-	LogRejectedAccessRequest(request *Request, pool Policies, deciders Policies)
-	LogGrantedAccessRequest(request *Request, pool Policies, deciders Policies)
+	LogRejectedAccessRequest(ctx context.Context, request *Request, pool Policies, deciders Policies)
+	LogGrantedAccessRequest(ctx context.Context, request *Request, pool Policies, deciders Policies)
 }
