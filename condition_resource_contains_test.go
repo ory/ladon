@@ -33,6 +33,7 @@
 package ladon
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -82,7 +83,7 @@ func TestResourceContains(t *testing.T) {
 		}
 		resourceFilter["value"] = c.value
 
-		assert.Equal(t, c.pass, condition.Fulfills(resourceFilter, request), "%s", c.matches)
+		assert.Equal(t, c.pass, condition.Fulfills(context.Background(), resourceFilter, request), "%s", c.matches)
 		assert.Equal(t, condition.GetName(), "ResourceContainsCondition", "should be called ResourceContainsCondition")
 	}
 }

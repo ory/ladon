@@ -21,13 +21,14 @@
 package memory
 
 import (
+	"context"
+	"sort"
 	"sync"
 
 	"github.com/pkg/errors"
 
 	. "github.com/ory/ladon"
 	"github.com/ory/pagination"
-	"sort"
 )
 
 // MemoryManager is an in-memory (non-persistent) implementation of Manager.
@@ -44,7 +45,7 @@ func NewMemoryManager() *MemoryManager {
 }
 
 // Update updates an existing policy.
-func (m *MemoryManager) Update(policy Policy) error {
+func (m *MemoryManager) Update(ctx context.Context, policy Policy) error {
 	m.Lock()
 	defer m.Unlock()
 	m.Policies[policy.GetID()] = policy
@@ -52,7 +53,7 @@ func (m *MemoryManager) Update(policy Policy) error {
 }
 
 // GetAll returns all policies.
-func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
+func (m *MemoryManager) GetAll(ctx context.Context, limit, offset int64) (Policies, error) {
 	keys := make([]string, len(m.Policies))
 	i := 0
 	m.RLock()
@@ -74,7 +75,7 @@ func (m *MemoryManager) GetAll(limit, offset int64) (Policies, error) {
 }
 
 // Create a new pollicy to MemoryManager.
-func (m *MemoryManager) Create(policy Policy) error {
+func (m *MemoryManager) Create(ctx context.Context, policy Policy) error {
 	m.Lock()
 	defer m.Unlock()
 
@@ -87,7 +88,7 @@ func (m *MemoryManager) Create(policy Policy) error {
 }
 
 // Get retrieves a policy.
-func (m *MemoryManager) Get(id string) (Policy, error) {
+func (m *MemoryManager) Get(ctx context.Context, id string) (Policy, error) {
 	m.RLock()
 	defer m.RUnlock()
 	p, ok := m.Policies[id]
@@ -99,7 +100,7 @@ func (m *MemoryManager) Get(id string) (Policy, error) {
 }
 
 // Delete removes a policy.
-func (m *MemoryManager) Delete(id string) error {
+func (m *MemoryManager) Delete(ctx context.Context, id string) error {
 	m.Lock()
 	defer m.Unlock()
 	delete(m.Policies, id)
@@ -121,20 +122,20 @@ func (m *MemoryManager) findAllPolicies() (Policies, error) {
 // FindRequestCandidates returns candidates that could match the request object. It either returns
 // a set that exactly matches the request, or a superset of it. If an error occurs, it returns nil and
 // the error.
-func (m *MemoryManager) FindRequestCandidates(r *Request) (Policies, error) {
+func (m *MemoryManager) FindRequestCandidates(ctx context.Context, r *Request) (Policies, error) {
 	return m.findAllPolicies()
 }
 
 // FindPoliciesForSubject returns policies that could match the subject. It either returns
 // a set of policies that applies to the subject, or a superset of it.
 // If an error occurs, it returns nil and the error.
-func (m *MemoryManager) FindPoliciesForSubject(subject string) (Policies, error) {
+func (m *MemoryManager) FindPoliciesForSubject(ctx context.Context, subject string) (Policies, error) {
 	return m.findAllPolicies()
 }
 
 // FindPoliciesForResource returns policies that could match the resource. It either returns
 // a set of policies that apply to the resource, or a superset of it.
 // If an error occurs, it returns nil and the error.
-func (m *MemoryManager) FindPoliciesForResource(resource string) (Policies, error) {
+func (m *MemoryManager) FindPoliciesForResource(ctx context.Context, resource string) (Policies, error) {
 	return m.findAllPolicies()
 }

@@ -1,5 +1,7 @@
 package ladon
 
+import "context"
+
 /*
 BooleanCondition is used to determine if a boolean context matches an expected
 boolean condition.
@@ -18,7 +20,7 @@ func (c *BooleanCondition) GetName() string {
 
 // Fulfills determines if the BooleanCondition is fulfilled.
 // The BooleanCondition is fulfilled if the provided boolean value matches the conditions boolean value.
-func (c *BooleanCondition) Fulfills(value interface{}, _ *Request) bool {
+func (c *BooleanCondition) Fulfills(ctx context.Context, value interface{}, _ *Request) bool {
 	val, ok := value.(bool)
 
 	return ok && val == c.BooleanValue

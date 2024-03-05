@@ -20,13 +20,16 @@
 
 package ladon
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 // ResourceContainsCondition is fulfilled if the context matches a substring within the resource name
 type ResourceContainsCondition struct{}
 
 // Fulfills returns true if the request's resouce contains the given value string
-func (c *ResourceContainsCondition) Fulfills(value interface{}, r *Request) bool {
+func (c *ResourceContainsCondition) Fulfills(ctx context.Context, value interface{}, r *Request) bool {
 
 	filter, ok := value.(map[string]interface{})
 	if !ok {

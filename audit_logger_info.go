@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"log"
 	"os"
 	"strings"
@@ -38,7 +39,7 @@ func (a *AuditLoggerInfo) logger() *log.Logger {
 	return a.Logger
 }
 
-func (a *AuditLoggerInfo) LogRejectedAccessRequest(r *Request, p Policies, d Policies) {
+func (a *AuditLoggerInfo) LogRejectedAccessRequest(ctx context.Context, r *Request, p Policies, d Policies) {
 	if len(d) > 1 {
 		allowed := joinPoliciesNames(d[0 : len(d)-1])
 		denied := d[len(d)-1].GetID()
@@ -51,7 +52,7 @@ func (a *AuditLoggerInfo) LogRejectedAccessRequest(r *Request, p Policies, d Pol
 	}
 }
 
-func (a *AuditLoggerInfo) LogGrantedAccessRequest(r *Request, p Policies, d Policies) {
+func (a *AuditLoggerInfo) LogGrantedAccessRequest(ctx context.Context, r *Request, p Policies, d Policies) {
 	a.logger().Printf("policies %s allow access", joinPoliciesNames(d))
 }
 

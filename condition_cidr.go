@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"net"
 )
 
@@ -30,7 +31,7 @@ type CIDRCondition struct {
 }
 
 // Fulfills returns true if the the request is fulfilled by the condition.
-func (c *CIDRCondition) Fulfills(value interface{}, _ *Request) bool {
+func (c *CIDRCondition) Fulfills(ctx context.Context, value interface{}, _ *Request) bool {
 	ips, ok := value.(string)
 	if !ok {
 		return false
