@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,6 +43,6 @@ func TestCIDRMatch(t *testing.T) {
 			CIDR: c.cidr,
 		}
 
-		assert.Equal(t, c.pass, condition.Fulfills(c.ip, new(Request)), "%s; %s", c.ip, c.cidr)
+		assert.Equal(t, c.pass, condition.Fulfills(context.Background(), c.ip, new(Request)), "%s; %s", c.ip, c.cidr)
 	}
 }

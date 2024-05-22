@@ -21,6 +21,7 @@
 package ladon
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,6 +41,6 @@ func TestStringMatch(t *testing.T) {
 			Matches: c.matches,
 		}
 
-		assert.Equal(t, c.pass, condition.Fulfills(c.value, new(Request)), "%s", c.matches)
+		assert.Equal(t, c.pass, condition.Fulfills(context.Background(), c.value, new(Request)), "%s", c.matches)
 	}
 }

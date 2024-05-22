@@ -20,6 +20,8 @@
 
 package ladon
 
+import "context"
+
 // Request is the warden's request object.
 type Request struct {
 	// Resource is the resource that access is requested to.
@@ -41,5 +43,5 @@ type Warden interface {
 	//  if err := guard.IsAllowed(&Request{Resource: "article/1234", Action: "update", Subject: "peter"}); err != nil {
 	//    return errors.New("Not allowed")
 	//  }
-	IsAllowed(r *Request) error
+	IsAllowed(ctx context.Context, r *Request) error
 }

@@ -21,6 +21,7 @@
 package ladon_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -40,6 +41,8 @@ func TestWardenIsGranted(t *testing.T) {
 		Manager: m,
 	}
 
+	ctx := context.Background()
+
 	for k, c := range []struct {
 		r           *Request
 		description string
@@ -50,7 +53,7 @@ func TestWardenIsGranted(t *testing.T) {
 			description: "should fail because no policies are found for peter",
 			r:           &Request{Subject: "peter"},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{Subject: "peter"})).Return(Policies{}, nil)
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{Subject: "peter"})).Return(Policies{}, nil)
 			},
 			expectErr: true,
 		},
@@ -58,7 +61,7 @@ func TestWardenIsGranted(t *testing.T) {
 			description: "should fail because lookup failure when accessing policies for peter",
 			r:           &Request{Subject: "peter"},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{Subject: "peter"})).Return(Policies{}, errors.New("asdf"))
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{Subject: "peter"})).Return(Policies{}, errors.New("asdf"))
 			},
 			expectErr: true,
 		},
@@ -70,7 +73,7 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{
 					Subject:  "peter",
 					Resource: "articles:1234",
 					Action:   "view",
@@ -93,7 +96,7 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{
 					Subject:  "ken",
 					Resource: "articles:1234",
 					Action:   "view",
@@ -116,7 +119,7 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{
 					Subject:  "ken",
 					Resource: "printers:321",
 					Action:   "view",
@@ -139,7 +142,7 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "view",
 			},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{
 					Subject:  "ken",
 					Resource: "articles:321",
 					Action:   "view",
@@ -162,7 +165,7 @@ func TestWardenIsGranted(t *testing.T) {
 				Action:   "foo",
 			},
 			setup: func() {
-				m.EXPECT().FindRequestCandidates(gomock.Eq(&Request{
+				m.EXPECT().FindRequestCandidates(ctx, gomock.Eq(&Request{
 					Subject:  "ken",
 					Resource: "articles:321",
 					Action:   "foo",
@@ -180,7 +183,7 @@ func TestWardenIsGranted(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("case=%d/description=%s", k, c.description), func(t *testing.T) {
 			c.setup()
-			err := w.IsAllowed(c.r)
+			err := w.IsAllowed(ctx, c.r)
 			if c.expectErr {
 				assert.NotNil(t, err)
 			} else {
