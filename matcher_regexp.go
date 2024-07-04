@@ -44,8 +44,6 @@ func NewRegexpMatcher(size int) *RegexpMatcher {
 
 type RegexpMatcher struct {
 	*lru.Cache
-
-	C map[string]*regexp2.Regexp
 }
 
 func (m *RegexpMatcher) get(pattern string) *regexp2.Regexp {
