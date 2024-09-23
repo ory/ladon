@@ -67,19 +67,19 @@ package compiler
 import (
 	"bytes"
 	"fmt"
+	"github.com/dlclark/regexp2"
 	"regexp"
 	"time"
-
-	"github.com/dlclark/regexp2"
 )
 
 const regexp2MatchTimeout = time.Millisecond * 250
 
 // delimiterIndices returns the first level delimiter indices from a string.
 // It returns an error in case of unbalanced delimiters.
-func delimiterIndices(s string, delimiterStart, delimiterEnd byte) ([]int, error) {
+func delimiterIndices(s []rune, delimiterStart, delimiterEnd rune) ([]int, error) {
 	var level, idx int
 	idxs := make([]int, 0)
+
 	for i := 0; i < len(s); i++ {
 		switch s[i] {
 		case delimiterStart:
@@ -90,13 +90,13 @@ func delimiterIndices(s string, delimiterStart, delimiterEnd byte) ([]int, error
 			if level--; level == 0 {
 				idxs = append(idxs, idx, i+1)
 			} else if level < 0 {
-				return nil, fmt.Errorf(`Unbalanced braces in "%q"`, s)
+				return nil, fmt.Errorf(`unbalanced braces in "%q"`, s)
 			}
 		}
 	}
 
 	if level != 0 {
-		return nil, fmt.Errorf(`Unbalanced braces in "%q"`, s)
+		return nil, fmt.Errorf(`unbalanced braces in "%q"`, s)
 	}
 
 	return idxs, nil
@@ -107,29 +107,30 @@ func delimiterIndices(s string, delimiterStart, delimiterEnd byte) ([]int, error
 // You can define your own delimiters. It is e.g. common to use curly braces {} but I recommend using characters
 // which have no special meaning in Regex, e.g.: <, >
 //
-//  reg, err := compiler.CompileRegex("foo:bar.baz:<[0-9]{2,10}>", '<', '>')
-//  // if err != nil ...
-//  reg.MatchString("foo:bar.baz:123")
+//	reg, err := compiler.CompileRegex("foo:bar.baz:<[0-9]{2,10}>", '<', '>')
+//	// if err != nil ...
+//	reg.MatchString("foo:bar.baz:123")
 func CompileRegex(tpl string, delimiterStart, delimiterEnd byte) (*regexp2.Regexp, error) {
 	// Check if it is well-formed.
-	idxs, errBraces := delimiterIndices(tpl, delimiterStart, delimiterEnd)
+	rtpl := []rune(tpl)
+	idxs, errBraces := delimiterIndices(rtpl, rune(delimiterStart), rune(delimiterEnd))
 	if errBraces != nil {
 		return nil, errBraces
 	}
 	varsR := make([]*regexp2.Regexp, len(idxs)/2)
 	pattern := bytes.NewBufferString("")
-	pattern.WriteByte('^')
+	pattern.WriteRune('^')
 
 	var end int
 	for i := 0; i < len(idxs); i += 2 {
 		// Set all values we are interested in.
-		raw := tpl[end:idxs[i]]
+		raw := rtpl[end:idxs[i]]
 		end = idxs[i+1]
-		patt := tpl[idxs[i]+1 : end-1]
+		patt := rtpl[idxs[i]+1 : end-1]
 		// Build the regexp pattern.
 		varIdx := i / 2
-		fmt.Fprintf(pattern, "%s(%s)", regexp.QuoteMeta(raw), patt)
-		reg, err := regexp2.Compile(fmt.Sprintf("^%s$", patt), regexp2.RE2)
+		_, _ = fmt.Fprintf(pattern, "%s(%s)", regexp.QuoteMeta(string(raw)), string(patt))
+		reg, err := regexp2.Compile(fmt.Sprintf("^%s$", string(patt)), regexp2.RE2)
 		if err != nil {
 			return nil, err
 		}
@@ -138,9 +139,9 @@ func CompileRegex(tpl string, delimiterStart, delimiterEnd byte) (*regexp2.Regex
 	}
 
 	// Add the remaining.
-	raw := tpl[end:]
-	pattern.WriteString(regexp.QuoteMeta(raw))
-	pattern.WriteByte('$')
+	raw := rtpl[end:]
+	pattern.WriteString(regexp.QuoteMeta(string(raw)))
+	pattern.WriteRune('$')
 
 	// Compile full regexp.
 	reg, errCompile := regexp2.Compile(pattern.String(), regexp2.RE2)
