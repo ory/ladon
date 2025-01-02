@@ -1,19 +1,13 @@
 #!/bin/sh
 set -e
 
+bin_dir="$(cd "$(dirname "$0")" && pwd)"
+
 # list Node licenses
 if [ -f package.json ]; then
-	if grep -q '"dependencies":\s+{[^}]*"[^"]+":' package.json; then
-		# List all direct Go module dependencies, transform their paths to root module paths
-		# (e.g., github.com/ory/x instead of github.com/ory/x/foo/bar), and generate a license report
-		# for each unique root module. This ensures that the license report is generated for the root
-		# module of a repository, where licenses are typically defined.
-		go list -f "{{if not .Indirect}}{{.Path}}{{end}}" -m ... |
-			sort -u |
-			awk -F/ '{ if ($1 == "github.com" && NF >= 3) { print $1"/"$2"/"$3 } else { print } }' |
-			sort -u |
-			xargs -I {} sh -c '.bin/go-licenses report --template .bin/license-template-go.tpl {}' 2>/dev/null |
-			grep -v '^$'
+	if jq -e '.dependencies and (.dependencies | keys | length > 0)' package.json >/dev/null; then
+		npm install >/dev/null 2>&1
+		npm exec --yes license-checker -- --production --csv --excludePrivatePackages --customPath "${bin_dir}"/license-template-node.json | grep -v '^$'
 		{ echo; } 2>/dev/null
 	else
 		echo "No dependencies found in package.json" >&2
@@ -22,20 +16,23 @@ fi
 
 # list Go licenses
 if [ -f go.mod ]; then
-	module_name=$(grep "^module" go.mod | awk '{print $2}')
-	if [ -z "$module_name" ]; then
-		echo "Cannot determine the Go module name" >&2
-		exit 1
-	fi
-
-	go_modules=$(go list -f "{{if not .Indirect}}{{.Path}}{{end}}" -m ... | sort -u)
+	# List all direct Go module dependencies, transform their paths to root module paths
+	# (e.g., github.com/ory/x instead of github.com/ory/x/foo/bar), and generate a license report
+	# for each unique root module. This ensures that the license report is generated for the root
+	# module of a repository, where licenses are typically defined.
+	go_modules=$(
+		go list -f "{{if not .Indirect}}{{.Path}}{{end}}" -m ... |
+			sort -u |
+			awk -F/ '{ if ($1 == "github.com" && NF >= 3) { print $1"/"$2"/"$3 } else { print } }' |
+			sort -u
+		{ echo; } 2>/dev/null
+	)
 	if [ -z "$go_modules" ]; then
 		echo "No Go modules found" >&2
-		exit 0
+	else
+		# Workaround until https://github.com/google/go-licenses/issues/307 is fixed
+		# .bin/go-licenses report "$module_name" --template .bin/license-template-go.tpl 2>/dev/null
+		#
+		echo "$go_modules" | xargs -I {} sh -c '.bin/go-licenses report --template .bin/license-template-go.tpl {}' 2>/dev/null | grep -v '^$'
 	fi
-
-	# Workaround until https://github.com/google/go-licenses/issues/307 is fixed
-	# .bin/go-licenses report "$module_name" --template .bin/license-template-go.tpl 2>/dev/null
-	echo "$go_modules" | xargs -I {} sh -c '.bin/go-licenses report --template .bin/license-template-go.tpl {}' 2>/dev/null | grep -v '^$'
-	{ echo; } 2>/dev/null
 fi

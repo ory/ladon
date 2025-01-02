@@ -1,5 +1,8 @@
 #!/bin/sh
 set -e
 
+# Get the directory where this script is located
+bin_dir="$(cd "$(dirname "$0")" && pwd)"
+
 { echo "Checking licenses ..."; } 2>/dev/null
-.bin/list-licenses | .bin/license-engine.sh
+"${bin_dir}/list-licenses" | "${bin_dir}/license-engine.sh"

@@ -98,8 +98,8 @@ done
 
 # remove pre-approved modules
 for approved in "${APPROVED_MODULES[@]}"; do
-	input=$(echo "$input" | grep -v "\"${approved}\"")
-	input=$(echo "$input" | grep -v "\"Custom: ${approved}\"")
+	input=$(echo "$input" | grep -vE "\"${approved}\"")
+	input=$(echo "$input" | grep -vE "\"Custom: ${approved}\"")
 done
 
 # remove allowed licenses
