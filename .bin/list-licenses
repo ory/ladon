@@ -11,6 +11,7 @@ if [ -f package.json ]; then
 		{ echo; } 2>/dev/null
 	else
 		echo "No dependencies found in package.json" >&2
+		{ echo; } 2>/dev/null
 	fi
 fi
 
@@ -34,5 +35,6 @@ if [ -f go.mod ]; then
 		# .bin/go-licenses report "$module_name" --template .bin/license-template-go.tpl 2>/dev/null
 		#
 		echo "$go_modules" | xargs -I {} sh -c '.bin/go-licenses report --template .bin/license-template-go.tpl {}' 2>/dev/null | grep -v '^$'
+		{ echo; } 2>/dev/null
 	fi
 fi
