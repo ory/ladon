@@ -24,6 +24,7 @@ ALLOWED_LICENSES=(
 	'BSD-3-Clause'
 	'(BSD-3-Clause OR GPL-2.0)'
 	'BSD-3-Clause OR MIT'
+	'(BSD-3-Clause AND Apache-2.0)'
 	'CC0-1.0'
 	'CC-BY-3.0'
 	'CC-BY-4.0'
@@ -73,6 +74,12 @@ APPROVED_MODULES=(
 	'github.com/jmespath/go-jmespath'                                                     # Apache-2.0 https://github.com/jmespath/go-jmespath/blob/master/LICENSE
 	'github.com/ory/keto/proto/ory/keto/opl/v1alpha1'                                     # Apache-2.0 - submodule of keto
 	'github.com/ory/keto/proto/ory/keto/relation_tuples/v1alpha2'                         # Apache-2.0 - submodule of keto
+	'@ory-corp/.*'                                                                        # Ory IP
+	'github.com/apache/arrow/.*'                                                          # Apache-2.0 https://github.com/apache/arrow/blob/main/LICENSE.txt
+	'github.com/ory-corp/webhook-target'                                                  # Ory IP
+	'@ory/keto-grpc-client.*'                                                             # Apache-2.0 - submodule of keto
+	'golden-fleece@1.0.9'                                                                 # MIT: https://github.com/Rich-Harris/golden-fleece/blob/master/LICENSE
+	'github.com/gogo/googleapis/.*'                                                       # Apache-2.0 https://github.com/gogo/googleapis/blob/master/LICENSE
 )
 
 # These lines in the output should be ignored (plain text, no regex).

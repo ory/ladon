@@ -6,12 +6,11 @@ bin_dir="$(cd "$(dirname "$0")" && pwd)"
 # list Node licenses
 if [ -f package.json ]; then
 	if jq -e '.dependencies and (.dependencies | keys | length > 0)' package.json >/dev/null; then
-		npm install >/dev/null 2>&1
-		npm exec --yes license-checker -- --production --csv --excludePrivatePackages --customPath "${bin_dir}"/license-template-node.json | grep -v '^$'
-		{ echo; } 2>/dev/null
+		npx --yes license-checker --production --csv --excludePrivatePackages --customPath "${bin_dir}"/license-template-node.json | grep -v '^$'
+		echo
 	else
 		echo "No dependencies found in package.json" >&2
-		{ echo; } 2>/dev/null
+		echo
 	fi
 fi
 
@@ -26,7 +25,6 @@ if [ -f go.mod ]; then
 			sort -u |
 			awk -F/ '{ if ($1 == "github.com" && NF >= 3) { print $1"/"$2"/"$3 } else { print } }' |
 			sort -u
-		{ echo; } 2>/dev/null
 	)
 	if [ -z "$go_modules" ]; then
 		echo "No Go modules found" >&2
@@ -34,7 +32,7 @@ if [ -f go.mod ]; then
 		# Workaround until https://github.com/google/go-licenses/issues/307 is fixed
 		# .bin/go-licenses report "$module_name" --template .bin/license-template-go.tpl 2>/dev/null
 		#
-		echo "$go_modules" | xargs -I {} sh -c '.bin/go-licenses report --template .bin/license-template-go.tpl {}' 2>/dev/null | grep -v '^$'
-		{ echo; } 2>/dev/null
+		echo "$go_modules" | xargs -I {} sh -c '.bin/go-licenses report --template .bin/license-template-go.tpl {}' | grep -v '^$'
+		echo
 	fi
 fi
