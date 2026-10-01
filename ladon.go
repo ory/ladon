@@ -92,7 +92,7 @@ func (l *Ladon) DoPoliciesAllow(ctx context.Context, r *Request, policies []Poli
 		// Does the subject match with one of the policies?
 		// There are usually less subjects than resources which is why this is checked
 		// before checking for resources.
-		if sm, err := l.matcher().Matches(p, p.GetSubjects(), r.Subject); err != nil {
+		if sm, err := l.matcher().MatchesAny(p, p.GetSubjects(), r.Subjects); err != nil {
 			go l.metric().RequestProcessingError(*r, p, err)
 			return err
 		} else if !sm {

@@ -106,3 +106,15 @@ func (m *RegexpMatcher) Matches(p Policy, haystack []string, needle string) (boo
 	}
 	return false, nil
 }
+
+// Matches any needles with an array of regular expressions and returns true if a match was found.
+func (m *RegexpMatcher) MatchesAny(p Policy, haystack []string, needles []string) (bool, error) {
+	for _, needle := range needles {
+		matched, err := m.Matches(p, haystack, needle)
+		if matched {
+			return matched, err
+		}
+	}
+
+	return false, nil
+}

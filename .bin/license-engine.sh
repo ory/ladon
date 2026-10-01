@@ -62,6 +62,7 @@ APPROVED_MODULES=(
 	'github.com/ory/kratos-client-go'                                                     # Apache-2.0
 	'github.com/gobuffalo/github_flavored_markdown'                                       # MIT
 	'buffers@0.1.1'                                                                       # MIT: original source at http://github.com/substack/node-bufferlist is deleted but a fork at https://github.com/pkrumins/node-bufferlist/blob/master/LICENSE contains the original license by the original author (James Halliday)
+	'@mapbox/jsonlint-lines-primitives@2.0.2'                                             # MIT: https://github.com/tmcw/jsonlint
 	'https://github.com/iconify/iconify/packages/react'                                   # MIT: license is in root of monorepo at https://github.com/iconify/iconify/blob/main/license.txt
 	'github.com/gobuffalo/.*'                                                             # MIT: license is in root of monorepo at https://github.com/gobuffalo/github_flavored_markdown/blob/main/LICENSE
 	'github.com/ory-corp/cloud/.*'                                                        # Ory IP
